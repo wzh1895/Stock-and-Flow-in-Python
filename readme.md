@@ -3,7 +3,7 @@
 
 ## Introduction
 
-This is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
+This is a python realization of Stock and Flow Diagram display, based on ***Tkinter***.
 
 The intention is to allow users of PySD to visually view the model.
 
@@ -16,7 +16,7 @@ Here you can have a quick glance of it:
 
 Stock and flow diagrams created by Stella can be displayed using this software.
 
-No additional package other than Python3 is need.
+No additional package other than ***Python3*** is need.
 
 ```
 python3 sfdCanvas.py [filename of the model]
