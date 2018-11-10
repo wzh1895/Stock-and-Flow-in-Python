@@ -6,7 +6,7 @@ This is a python realization of Stock and Flow Diagram display, based on **Tkint
 
 The intention is to allow users of PySD to visually view the model.
 
---
+***
 
 Here you can have a quick glance of it:
 
