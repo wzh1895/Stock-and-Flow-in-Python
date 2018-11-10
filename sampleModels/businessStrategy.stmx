@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xmile version="1.0" xmlns="http://docs.oasis-open.org/xmile/ns/XMILE/v1.0" xmlns:isee="http://iseesystems.com/XMILE">
+	<header>
+		<smile version="1.0" namespace="std, isee"/>
+		<name>14Nov</name>
+		<uuid>b7f8137e-e463-445e-8a1b-c690db57153c</uuid>
+		<vendor>isee systems, inc.</vendor>
+		<product version="1.4.3" isee:build_number="1229" isee:saved_by_v1="true" lang="en">Stella Architect</product>
+	</header>
+	<sim_specs isee:simulation_delay="0.0254902" method="Euler" time_units="Months" isee:pause_after_rates="false" isee:instantaneous_flows="false">
+		<start>0</start>
+		<stop>50</stop>
+		<dt reciprocal="true">4</dt>
+	</sim_specs>
+	<isee:prefs show_module_prefix="true" live_update_on_drag="true" show_restore_buttons="false" layer="model" saved_runs="5" keep="false" rifp="true"/>
+	<isee:multiplayer_settings include_chat="true" allow_observers="false" advance_time_increment="1" observer_start_page="home_page" enabled="false"/>
+	<model_units>
+		<unit name="People">
+			<eqn/>
+			<alias>person</alias>
+			<alias>persons</alias>
+		</unit>
+		<unit name="Dimensionless">
+			<eqn>1</eqn>
+			<alias>dmnl</alias>
+			<alias>unitless</alias>
+		</unit>
+		<unit name="Months">
+			<eqn/>
+			<alias>mo</alias>
+			<alias>month</alias>
+		</unit>
+	</model_units>
+	<model>
+		<variables>
+			<stock name="work to do">
+				<eqn>Initial_work_to_do</eqn>
+				<inflow>rework_discovery_rate</inflow>
+				<outflow>completion_rate</outflow>
+				<outflow>progress_error_rate</outflow>
+				<non_negative/>
+				<units>tasks</units>
+			</stock>
+			<stock name="undiscovered rework">
+				<eqn>0.01</eqn>
+				<inflow>progress_error_rate</inflow>
+				<outflow>rework_discovery_rate</outflow>
+				<non_negative/>
+				<units>tasks</units>
+			</stock>
+			<stock name="work done">
+				<eqn>0.01</eqn>
+				<inflow>completion_rate</inflow>
+				<non_negative/>
+				<units>tasks</units>
+			</stock>
+			<flow name="completion rate">
+				<eqn>potential_completion_rate*Fraction_correct_and_complete</eqn>
+				<non_negative/>
+				<units>tasks/months</units>
+			</flow>
+			<flow name="progress error rate">
+				<eqn>potential_completion_rate*(1-Fraction_correct_and_complete)</eqn>
+				<non_negative/>
+				<units>tasks/months</units>
+			</flow>
+			<aux name="Fraction correct and complete">
+				<eqn>Effect_of_average_work_quality_on_fraction_correct*Normal_fraction_correct_and_complete*Effectiveness_of_staff</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Normal productivity">
+				<eqn>1</eqn>
+				<units>tasks/persons/months</units>
+			</aux>
+			<aux name="potential completion rate">
+				<eqn>MIN(Total_Staff*Productivity, maximum_completion_rate)</eqn>
+				<units>tasks/months</units>
+			</aux>
+			<aux name="minimun time to perform a task">
+				<eqn>0.25</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="maximum completion rate">
+				<eqn>work_to_do/minimun_time_to_perform_a_task</eqn>
+				<units>tasks/months</units>
+			</aux>
+			<aux name="time to discover errors">
+				<eqn>Normal_time_to_discover_errors*Effect_of_work_progress_on_time_to_discover_rework</eqn>
+				<units>Months</units>
+			</aux>
+			<stock name="Cumulative work done">
+				<eqn>0.01</eqn>
+				<inflow>work_finished_rate</inflow>
+				<non_negative/>
+				<units>tasks</units>
+			</stock>
+			<flow name="work finished rate">
+				<eqn>progress_error_rate+completion_rate</eqn>
+				<non_negative/>
+				<units>tasks/months</units>
+			</flow>
+			<aux name="Initial work to do">
+				<eqn>100</eqn>
+				<units>tasks</units>
+			</aux>
+			<flow name="rework discovery rate">
+				<eqn>undiscovered_rework/time_to_discover_errors</eqn>
+				<non_negative/>
+				<units>tasks/months</units>
+			</flow>
+			<aux name="Fraction believed to be completed">
+				<eqn>Work_believed_to_be_done/Initial_work_to_do</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Work believed to be done">
+				<eqn>work_done+undiscovered_rework</eqn>
+				<units>tasks</units>
+			</aux>
+			<aux name="Normal time to discover errors">
+				<eqn>12</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Effect of work progress on time to discover rework">
+				<eqn>Fraction_believed_to_be_completed</eqn>
+				<gf>
+					<xscale min="0" max="1"/>
+					<yscale min="0" max="1"/>
+					<ypts>1,1,1,1,1,1,0.957,0.884,0.754,0.483,0.08</ypts>
+				</gf>
+				<units>unitless</units>
+			</aux>
+			<aux name="Average work quality">
+				<eqn>MAX(0.01, work_done)/MAX(0.01, Work_believed_to_be_done)</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Effect of average work quality on fraction correct">
+				<eqn>Average_work_quality</eqn>
+				<gf>
+					<xscale min="0" max="1"/>
+					<yscale min="0" max="1"/>
+					<ypts>0.1,0.25,0.35,0.45,0.55,0.65,0.725,0.8,0.875,0.95,1</ypts>
+				</gf>
+				<units>unitless</units>
+			</aux>
+			<aux name="Normal fraction\ncorrect and complete">
+				<eqn>0.85</eqn>
+				<units>unitless</units>
+			</aux>
+			<stock name="Cumulative person months">
+				<eqn>0.01</eqn>
+				<inflow>effort_spended</inflow>
+				<non_negative/>
+				<units>persons*months</units>
+			</stock>
+			<flow name="effort spended">
+				<eqn>Total_Staff*Time_worked_per_staff_per_month</eqn>
+				<non_negative/>
+				<units>persons</units>
+			</flow>
+			<aux name="Time worked per staff per month">
+				<eqn>1</eqn>
+				<units>1</units>
+			</aux>
+			<stock name="New staff">
+				<eqn>0</eqn>
+				<inflow>Hiring_rate</inflow>
+				<outflow>Staff_gaining_experience</outflow>
+				<outflow>New_staff_leaving_rate</outflow>
+				<non_negative/>
+				<units>persons</units>
+			</stock>
+			<stock name="Experienced staff">
+				<eqn>4</eqn>
+				<inflow>Staff_gaining_experience</inflow>
+				<outflow>Experienced_staff_leaving</outflow>
+				<non_negative/>
+				<units>persons</units>
+			</stock>
+			<flow name="Hiring rate">
+				<eqn>Extra_staff_needed/Time_to_hire_new_staff</eqn>
+				<non_negative/>
+				<units>persons/months</units>
+			</flow>
+			<flow name="Staff gaining experience">
+				<eqn>New_staff/Time_to_be_experienced</eqn>
+				<non_negative/>
+				<units>persons/months</units>
+			</flow>
+			<flow name="Experienced staff leaving">
+				<eqn>Required_leaving_rate-New_staff_leaving_rate</eqn>
+				<non_negative/>
+				<units>persons/months</units>
+			</flow>
+			<aux name="Extra staff needed">
+				<eqn>MAX(Required_staff-Total_Staff, 0)</eqn>
+				<units>persons</units>
+			</aux>
+			<aux name="Time to hire new staff">
+				<eqn>4</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Total Staff">
+				<eqn>New_staff+Experienced_staff</eqn>
+				<units>persons</units>
+			</aux>
+			<aux name="Required staff">
+				<eqn>Perceived_work_remaining/(Perceived_productivity*Time_remaining)</eqn>
+				<units>persons</units>
+			</aux>
+			<aux name="Perceived work remaining">
+				<eqn>Initial_work_to_do-Work_believed_to_be_done</eqn>
+				<units>tasks</units>
+			</aux>
+			<aux name="Perceived productivity">
+				<eqn>Cumulative_work_done/Cumulative_person_months</eqn>
+				<units>tasks/persons/months</units>
+			</aux>
+			<flow name="New staff leaving rate">
+				<eqn>MIN(Required_leaving_rate, maximum_leaving_rate_new_staff)</eqn>
+				<non_negative/>
+				<units>persons/months</units>
+			</flow>
+			<aux name="Excess Staff">
+				<eqn>MAX(Total_Staff-Required_staff, 0)</eqn>
+				<units>persons</units>
+			</aux>
+			<aux name="Time remaining">
+				<eqn>MAX(1, Project_completion_deadline-Time_Elapsed)</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Time Elapsed">
+				<eqn>TIME</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Project completion deadline">
+				<eqn>30</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Required leaving rate">
+				<eqn>Excess_Staff/Leaving_time</eqn>
+				<units>persons/months</units>
+			</aux>
+			<aux name="Leaving time">
+				<eqn>0.5</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Time to be experienced">
+				<eqn>24</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="maximum leaving rate new staff">
+				<eqn>New_staff/Leaving_time</eqn>
+				<units>persons/months</units>
+			</aux>
+			<aux name="Rookie fraction">
+				<eqn>New_staff/(New_staff+Experienced_staff)</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Effectiveness experienced staff">
+				<eqn>1</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Effectiveness of staff">
+				<eqn>Effectiveness_new_staff*Rookie_fraction+Effectiveness_experienced_staff*(1-Rookie_fraction)</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Effectiveness new staff">
+				<eqn>0.5</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Productivity">
+				<eqn>Normal_productivity*Effectiveness_of_staff</eqn>
+				<units>tasks/persons/months</units>
+			</aux>
+			<isee:dependencies>
+				<var name="work_to_do">
+					<in>Initial_work_to_do</in>
+				</var>
+				<var name="completion_rate">
+					<in>Fraction_correct_and_complete</in>
+					<in>potential_completion_rate</in>
+				</var>
+				<var name="progress_error_rate">
+					<in>potential_completion_rate</in>
+					<in>Fraction_correct_and_complete</in>
+				</var>
+				<var name="Fraction_correct_and_complete">
+					<in>Effect_of_average_work_quality_on_fraction_correct</in>
+					<in>Normal_fraction_correct_and_complete</in>
+					<in>Effectiveness_of_staff</in>
+				</var>
+				<var name="potential_completion_rate">
+					<in>maximum_completion_rate</in>
+					<in>Total_Staff</in>
+					<in>Productivity</in>
+				</var>
+				<var name="maximum_completion_rate">
+					<in>minimun_time_to_perform_a_task</in>
+					<in>work_to_do</in>
+				</var>
+				<var name="time_to_discover_errors">
+					<in>Normal_time_to_discover_errors</in>
+					<in>Effect_of_work_progress_on_time_to_discover_rework</in>
+				</var>
+				<var name="work_finished_rate">
+					<in>completion_rate</in>
+					<in>progress_error_rate</in>
+				</var>
+				<var name="rework_discovery_rate">
+					<in>time_to_discover_errors</in>
+					<in>undiscovered_rework</in>
+				</var>
+				<var name="Fraction_believed_to_be_completed">
+					<in>Initial_work_to_do</in>
+					<in>Work_believed_to_be_done</in>
+				</var>
+				<var name="Work_believed_to_be_done">
+					<in>work_done</in>
+					<in>undiscovered_rework</in>
+				</var>
+				<var name="Effect_of_work_progress_on_time_to_discover_rework">
+					<in>Fraction_believed_to_be_completed</in>
+				</var>
+				<var name="Average_work_quality">
+					<in>Work_believed_to_be_done</in>
+					<in>work_done</in>
+				</var>
+				<var name="Effect_of_average_work_quality_on_fraction_correct">
+					<in>Average_work_quality</in>
+				</var>
+				<var name="effort_spended">
+					<in>Time_worked_per_staff_per_month</in>
+					<in>Total_Staff</in>
+				</var>
+				<var name="Hiring_rate">
+					<in>Time_to_hire_new_staff</in>
+					<in>Extra_staff_needed</in>
+				</var>
+				<var name="Staff_gaining_experience">
+					<in>New_staff</in>
+					<in>Time_to_be_experienced</in>
+				</var>
+				<var name="Experienced_staff_leaving">
+					<in>Required_leaving_rate</in>
+					<in>New_staff_leaving_rate</in>
+				</var>
+				<var name="Extra_staff_needed">
+					<in>Required_staff</in>
+					<in>Total_Staff</in>
+				</var>
+				<var name="Total_Staff">
+					<in>New_staff</in>
+					<in>Experienced_staff</in>
+				</var>
+				<var name="Required_staff">
+					<in>Perceived_productivity</in>
+					<in>Perceived_work_remaining</in>
+					<in>Time_remaining</in>
+				</var>
+				<var name="Perceived_work_remaining">
+					<in>Initial_work_to_do</in>
+					<in>Work_believed_to_be_done</in>
+				</var>
+				<var name="Perceived_productivity">
+					<in>Cumulative_work_done</in>
+					<in>Cumulative_person_months</in>
+				</var>
+				<var name="New_staff_leaving_rate">
+					<in>Required_leaving_rate</in>
+					<in>maximum_leaving_rate_new_staff</in>
+				</var>
+				<var name="Excess_Staff">
+					<in>Required_staff</in>
+					<in>Total_Staff</in>
+				</var>
+				<var name="Time_remaining">
+					<in>Time_Elapsed</in>
+					<in>Project_completion_deadline</in>
+				</var>
+				<var name="Required_leaving_rate">
+					<in>Leaving_time</in>
+					<in>Excess_Staff</in>
+				</var>
+				<var name="maximum_leaving_rate_new_staff">
+					<in>Leaving_time</in>
+					<in>New_staff</in>
+				</var>
+				<var name="Rookie_fraction">
+					<in>New_staff</in>
+					<in>Experienced_staff</in>
+				</var>
+				<var name="Effectiveness_of_staff">
+					<in>Effectiveness_new_staff</in>
+					<in>Effectiveness_experienced_staff</in>
+					<in>Rookie_fraction</in>
+				</var>
+				<var name="Productivity">
+					<in>Normal_productivity</in>
+					<in>Effectiveness_of_staff</in>
+				</var>
+			</isee:dependencies>
+		</variables>
+		<views>
+			<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+				<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+				<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false">
+					<isee:series_styles>
+						<isee:series_style color="blue" thickness="1"/>
+						<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF7F00" thickness="1"/>
+						<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF007F" thickness="1"/>
+						<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#C8C8C8" thickness="1"/>
+					</isee:series_styles>
+				</graph>
+				<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" isee:report_month_names="false" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_family="Arial"/>
+				<button color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top"/>
+				<isee:annotation color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" popup_background_color="#FFFECF"/>
+				<slider color="black" background="#E0E0E0" font_size="12pt" num_ticks="3" label_side="top" wrap_title="true" isee:always_show_hover_tip="false" input_expands="true" input_width="100"/>
+				<isee:pie_input color="black" background="white" font_size="12pt" legend_position="bottom" isee:transparent="false"/>
+				<knob color="#66CC66" background="#E0E0E0" font_size="12pt" label_side="bottom" wrap_title="true"/>
+				<numeric_input color="black" background="#E0E0E0" font_size="12pt" label_side="left" wrap_title="true" input_expands="false" input_width="100"/>
+				<switch color="black" background="#E0E0E0" font_size="12pt" label_side="top" wrap_title="true" isee:appearance="switch"/>
+				<options color="black" background="white" appearance="radio-buttons" arrangement="vertical"/>
+				<graphical_input color="black" background="#E0E0E0" font_size="12pt"/>
+				<group_input color="black" background="#E0E0E0" font_size="12pt" header_font_family="Arial"/>
+				<lamp color="black" background="white" font_size="9pt"/>
+				<gauge color="black" background="white" font_size="9pt" needle_color="#F09F72" bar_color="#EEEEEE" bar_progress_color="black" appearance="radial" num_major_ticks="11" num_minor_ticks="11" show_numeric_value="true"/>
+				<isee:spatial_map color="black" background="white" font_size="12pt"/>
+				<isee:animation_object color="black" background="white" font_size="12pt"/>
+			</style>
+			<view isee:show_pages="false" page_width="822" page_height="571" isee:page_cols="3" isee:page_rows="2" isee:scroll_y="59" isee:popup_graphs_are_comparative="true" type="stock_flow">
+				<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+					<stock color="blue" background="white" font_color="blue" font_size="9pt" label_side="top">
+						<shape type="rectangle" width="45" height="35"/>
+					</stock>
+					<flow color="blue" background="white" font_color="blue" font_size="9pt" label_side="bottom"/>
+					<module color="blue" background="white" font_color="blue" font_size="9pt" label_side="top">
+						<shape type="rectangle" width="55" height="45"/>
+					</module>
+					<aux color="blue" background="white" font_color="blue" font_size="9pt" label_side="bottom">
+						<shape type="circle" radius="18"/>
+					</aux>
+					<group color="red" background="white" font_color="red" font_size="9pt"/>
+					<connector color="#FF007F" background="white" font_color="#FF007F" font_size="9pt" isee:thickness="1"/>
+					<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+					<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false">
+						<isee:series_styles>
+							<isee:series_style color="blue" thickness="1"/>
+							<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF7F00" thickness="1"/>
+							<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF007F" thickness="1"/>
+							<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#C8C8C8" thickness="1"/>
+						</isee:series_styles>
+					</graph>
+					<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" isee:report_month_names="false" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_family=""/>
+				</style>
+				<stock x="168.742" y="606.464" name="work to do"/>
+				<stock x="430.554" y="605.286" name="undiscovered rework"/>
+				<stock x="430" y="468.125" name="work done"/>
+				<flow x="282.121" y="468.125" name="completion rate">
+					<pts>
+						<pt x="168.742" y="588.964"/>
+						<pt x="168.742" y="468.125"/>
+						<pt x="407.5" y="468.125"/>
+					</pts>
+				</flow>
+				<flow x="293.648" y="605.286" name="progress error rate">
+					<pts>
+						<pt x="191.242" y="605.286"/>
+						<pt x="408.054" y="605.286"/>
+					</pts>
+				</flow>
+				<aux x="347.765" y="392.482" name="Fraction correct and complete"/>
+				<aux background="#FFCC66" x="177.304" y="133.417" name="Normal productivity"/>
+				<aux x="137.242" y="428.482" name="potential completion rate"/>
+				<connector uid="1" color="#FF0080" font_color="#FF0080" angle="229.048">
+					<from>Fraction_correct_and_complete</from>
+					<to>completion_rate</to>
+				</connector>
+				<connector uid="2" angle="344.697">
+					<from>potential_completion_rate</from>
+					<to>completion_rate</to>
+				</connector>
+				<aux background="#FFCC66" x="81.7857" y="579.964" name="minimun time to perform a task"/>
+				<aux x="118.232" y="499.482" width="18" height="18" name="maximum completion rate"/>
+				<connector uid="3" color="black" font_color="black" angle="76.7092">
+					<from>minimun_time_to_perform_a_task</from>
+					<to>maximum_completion_rate</to>
+				</connector>
+				<connector uid="4" angle="112.96">
+					<from>work_to_do</from>
+					<to>maximum_completion_rate</to>
+				</connector>
+				<connector uid="5" angle="87.1844">
+					<from>maximum_completion_rate</from>
+					<to>potential_completion_rate</to>
+				</connector>
+				<aux x="347.765" y="783.64" name="time to discover errors"/>
+				<connector uid="6" angle="311.497">
+					<from>potential_completion_rate</from>
+					<to>progress_error_rate</to>
+				</connector>
+				<connector uid="7" color="#FF0080" font_color="#FF0080" angle="255.732">
+					<from>Fraction_correct_and_complete</from>
+					<to>progress_error_rate</to>
+				</connector>
+				<stock label_side="bottom" x="482.024" y="534.94" name="Cumulative work done"/>
+				<flow x="406.22" y="534.94" name="work finished rate">
+					<pts>
+						<pt x="352.917" y="534.94"/>
+						<pt x="459.524" y="534.94"/>
+					</pts>
+				</flow>
+				<connector uid="8" angle="331.702">
+					<from>completion_rate</from>
+					<to>work_finished_rate</to>
+				</connector>
+				<connector uid="9" angle="32.0007">
+					<from>progress_error_rate</from>
+					<to>work_finished_rate</to>
+				</connector>
+				<aux background="#FFCC66" x="634.5" y="718.893" name="Initial work to do"/>
+				<flow x="299.156" y="714.083" name="rework discovery rate">
+					<pts>
+						<pt x="428.768" y="622.786"/>
+						<pt x="428.768" y="714.083"/>
+						<pt x="169.545" y="714.083"/>
+						<pt x="169.545" y="623.964"/>
+					</pts>
+				</flow>
+				<connector uid="10" angle="124.947">
+					<from>time_to_discover_errors</from>
+					<to>rework_discovery_rate</to>
+				</connector>
+				<connector uid="11" angle="296.114">
+					<from>undiscovered_rework</from>
+					<to>rework_discovery_rate</to>
+				</connector>
+				<aux x="500.643" y="723.083" width="18" height="18" name="Fraction believed to be completed"/>
+				<connector uid="12" color="black" font_color="black" angle="186.031">
+					<from>Initial_work_to_do</from>
+					<to>Fraction_believed_to_be_completed</to>
+				</connector>
+				<aux x="542.643" y="660.417" name="Work believed to be done"/>
+				<connector uid="13" angle="342.044">
+					<from>work_done</from>
+					<to>Work_believed_to_be_done</to>
+				</connector>
+				<connector uid="14" angle="6.6903">
+					<from>undiscovered_rework</from>
+					<to>Work_believed_to_be_done</to>
+				</connector>
+				<connector uid="15" angle="268.597">
+					<from>Work_believed_to_be_done</from>
+					<to>Fraction_believed_to_be_completed</to>
+				</connector>
+				<aux background="#FFCC66" x="383.333" y="842.083" name="Normal time to discover errors"/>
+				<connector uid="16" color="black" font_color="black" angle="122.125">
+					<from>Normal_time_to_discover_errors</from>
+					<to>time_to_discover_errors</to>
+				</connector>
+				<aux x="440.833" y="783.64" name="Effect of work progress on time to discover rework"/>
+				<connector uid="17" angle="226.016">
+					<from>Fraction_believed_to_be_completed</from>
+					<to>Effect_of_work_progress_on_time_to_discover_rework</to>
+				</connector>
+				<connector uid="18" angle="180">
+					<from>Effect_of_work_progress_on_time_to_discover_rework</from>
+					<to>time_to_discover_errors</to>
+				</connector>
+				<aux x="625" y="503.75" name="Average work quality"/>
+				<connector uid="19" angle="41.0939">
+					<from>Work_believed_to_be_done</from>
+					<to>Average_work_quality</to>
+				</connector>
+				<connector uid="20" angle="20.3949">
+					<from>work_done</from>
+					<to>Average_work_quality</to>
+				</connector>
+				<aux x="538.75" y="392.482" name="Effect of average work quality on fraction correct"/>
+				<connector uid="21" angle="152.146">
+					<from>Effect_of_average_work_quality_on_fraction_correct</from>
+					<to>Fraction_correct_and_complete</to>
+				</connector>
+				<connector uid="22" angle="100.125">
+					<from>Average_work_quality</from>
+					<to>Effect_of_average_work_quality_on_fraction_correct</to>
+				</connector>
+				<aux background="#FFCC66" x="317.157" y="341.667" name="Normal fraction\ncorrect and complete"/>
+				<connector uid="23" angle="301.062">
+					<from>Normal_fraction_correct_and_complete</from>
+					<to>Fraction_correct_and_complete</to>
+				</connector>
+				<stock x="399.887" y="284.167" name="Cumulative person months"/>
+				<flow x="322.027" y="284.167" name="effort spended">
+					<pts>
+						<pt x="266.667" y="284.167"/>
+						<pt x="377.387" y="284.167"/>
+					</pts>
+				</flow>
+				<aux background="#FFCC66" x="365.333" y="218.667" name="Time worked per staff per month"/>
+				<connector uid="24" angle="236.529">
+					<from>Time_worked_per_staff_per_month</from>
+					<to>effort_spended</to>
+				</connector>
+				<stock x="903.75" y="261.167" name="New staff"/>
+				<stock x="1031.25" y="261.167" name="Experienced staff"/>
+				<flow x="837.5" y="262.417" name="Hiring rate">
+					<pts>
+						<pt x="793.75" y="262.417"/>
+						<pt x="881.25" y="262.417"/>
+					</pts>
+				</flow>
+				<flow x="961.5" y="261.167" name="Staff gaining experience">
+					<pts>
+						<pt x="926.25" y="261.167"/>
+						<pt x="1008.75" y="261.167"/>
+					</pts>
+				</flow>
+				<flow x="1099.25" y="261.167" name="Experienced staff leaving">
+					<pts>
+						<pt x="1053.75" y="261.167"/>
+						<pt x="1168.75" y="261.167"/>
+					</pts>
+				</flow>
+				<connector uid="25" angle="90">
+					<from>New_staff</from>
+					<to>Staff_gaining_experience</to>
+				</connector>
+				<aux x="855.5" y="372.667" name="Extra staff needed"/>
+				<aux background="#FFCC66" x="785.25" y="310.667" name="Time to hire new staff"/>
+				<aux x="963.25" y="348.667" name="Total Staff"/>
+				<connector uid="26" angle="42.7208">
+					<from>Time_to_hire_new_staff</from>
+					<to>Hiring_rate</to>
+				</connector>
+				<connector uid="27" angle="99.2726">
+					<from>Extra_staff_needed</from>
+					<to>Hiring_rate</to>
+				</connector>
+				<connector uid="28" angle="291.801">
+					<from>New_staff</from>
+					<to>Total_Staff</to>
+				</connector>
+				<connector uid="29" angle="264.958">
+					<from>Experienced_staff</from>
+					<to>Total_Staff</to>
+				</connector>
+				<aux x="881.083" y="459.417" name="Required staff"/>
+				<connector uid="30" angle="106.431">
+					<from>Required_staff</from>
+					<to>Extra_staff_needed</to>
+				</connector>
+				<connector uid="31" angle="199.654">
+					<from>Total_Staff</from>
+					<to>Extra_staff_needed</to>
+				</connector>
+				<aux x="718.667" y="613.94" name="Perceived work remaining"/>
+				<connector uid="32" angle="23.6385">
+					<from>Initial_work_to_do</from>
+					<to>Perceived_work_remaining</to>
+				</connector>
+				<connector uid="33" angle="357.297">
+					<from>Work_believed_to_be_done</from>
+					<to>Perceived_work_remaining</to>
+				</connector>
+				<aux x="658.083" y="448.667" name="Perceived productivity"/>
+				<connector uid="34" angle="26.1061">
+					<from>Cumulative_work_done</from>
+					<to>Perceived_productivity</to>
+				</connector>
+				<connector uid="35" angle="0">
+					<from>Cumulative_person_months</from>
+					<to>Perceived_productivity</to>
+				</connector>
+				<flow x="891.25" y="191.667" name="New staff leaving rate">
+					<pts>
+						<pt x="891.25" y="243.667"/>
+						<pt x="891.25" y="118.667"/>
+					</pts>
+				</flow>
+				<aux x="1062.75" y="423.667" name="Excess Staff"/>
+				<connector uid="36" angle="11.1329">
+					<from>Required_staff</from>
+					<to>Excess_Staff</to>
+				</connector>
+				<aux x="808.333" y="632.976" name="Time remaining"/>
+				<aux background="#FFCC66" x="790.333" y="750.083" name="Time Elapsed"/>
+				<aux background="#FFCC66" x="835.167" y="705.774" name="Project completion deadline"/>
+				<connector uid="37" angle="81.2617">
+					<from>Time_Elapsed</from>
+					<to>Time_remaining</to>
+				</connector>
+				<connector uid="38" angle="110.234">
+					<from>Project_completion_deadline</from>
+					<to>Time_remaining</to>
+				</connector>
+				<connector uid="39" angle="316.975">
+					<from>Perceived_productivity</from>
+					<to>Required_staff</to>
+				</connector>
+				<connector uid="40" angle="35.9116">
+					<from>Perceived_work_remaining</from>
+					<to>Required_staff</to>
+				</connector>
+				<connector uid="41" angle="67.2583">
+					<from>Time_remaining</from>
+					<to>Required_staff</to>
+				</connector>
+				<connector uid="42" angle="322.992">
+					<from>Total_Staff</from>
+					<to>Excess_Staff</to>
+				</connector>
+				<aux label_side="right" label_angle="315" x="1092.25" y="341.667" name="Required leaving rate"/>
+				<aux background="#FFCC66" x="1137.25" y="78.5" name="Leaving time"/>
+				<connector uid="43" angle="326.31">
+					<from>Leaving_time</from>
+					<to>Required_leaving_rate</to>
+				</connector>
+				<connector uid="44" angle="67.2327">
+					<from>Excess_Staff</from>
+					<to>Required_leaving_rate</to>
+				</connector>
+				<connector uid="45" angle="65.6646">
+					<from>Required_leaving_rate</from>
+					<to>Experienced_staff_leaving</to>
+				</connector>
+				<connector uid="46" angle="45.674">
+					<from>Required_leaving_rate</from>
+					<to>New_staff_leaving_rate</to>
+				</connector>
+				<aux background="#FFCC66" x="969" y="302.667" name="Time to be experienced"/>
+				<connector uid="47" angle="103.546">
+					<from>Time_to_be_experienced</from>
+					<to>Staff_gaining_experience</to>
+				</connector>
+				<aux x="797.25" y="181.5" name="maximum leaving rate new staff"/>
+				<connector uid="48" angle="155.556">
+					<from>Leaving_time</from>
+					<to>maximum_leaving_rate_new_staff</to>
+				</connector>
+				<connector uid="49" angle="143.202">
+					<from>New_staff</from>
+					<to>maximum_leaving_rate_new_staff</to>
+				</connector>
+				<connector uid="50" angle="353.827">
+					<from>maximum_leaving_rate_new_staff</from>
+					<to>New_staff_leaving_rate</to>
+				</connector>
+				<connector uid="51" angle="11.0035">
+					<from>New_staff_leaving_rate</from>
+					<to>Experienced_staff_leaving</to>
+				</connector>
+				<text_box uid="52" x="1101.25" y="371.167" width="303" height="155">关于两个离职率：
+if required leaving rate &gt; new staff leaving rate, 
+光新人离职还不够，还得裁员老人
+反之，若new staff leaving rate  能够满足 (=)required leaving rate,
+因为光裁新人就够了，new staff leaving rate = required leaving rate, 正好也保证了Experienced staff leaving rate中两项相剪为0，即不开除老人</text_box>
+				<aux x="634.5" y="91.25" name="Rookie fraction"/>
+				<connector uid="53" angle="163.817">
+					<from>New_staff</from>
+					<to>Rookie_fraction</to>
+				</connector>
+				<connector uid="54" angle="116.661">
+					<from>Experienced_staff</from>
+					<to>Rookie_fraction</to>
+				</connector>
+				<connector uid="55" angle="38.6598">
+					<from>
+						<alias uid="56"/>
+					</from>
+					<to>effort_spended</to>
+				</connector>
+				<connector uid="57" angle="230.194">
+					<from>
+						<alias uid="56"/>
+					</from>
+					<to>potential_completion_rate</to>
+				</connector>
+				<aux background="#FFCC66" x="576.75" y="53.75" name="Effectiveness experienced staff"/>
+				<aux x="475.083" y="109.25" name="Effectiveness of staff"/>
+				<aux background="#FFCC66" x="500.643" y="23.0833" width="18" height="18" name="Effectiveness new staff"/>
+				<connector uid="58" angle="244.537">
+					<from>Effectiveness_new_staff</from>
+					<to>Effectiveness_of_staff</to>
+				</connector>
+				<connector uid="59" angle="208.63">
+					<from>Effectiveness_experienced_staff</from>
+					<to>Effectiveness_of_staff</to>
+				</connector>
+				<connector uid="60" angle="180">
+					<from>Rookie_fraction</from>
+					<to>Effectiveness_of_staff</to>
+				</connector>
+				<aux x="149.742" y="209.667" name="Productivity"/>
+				<connector uid="61" angle="221.381">
+					<from>Normal_productivity</from>
+					<to>Productivity</to>
+				</connector>
+				<connector uid="62" angle="197.153">
+					<from>Effectiveness_of_staff</from>
+					<to>Productivity</to>
+				</connector>
+				<connector uid="63" angle="250.891">
+					<from>Productivity</from>
+					<to>potential_completion_rate</to>
+				</connector>
+				<connector uid="64" angle="226.118">
+					<from>Effectiveness_of_staff</from>
+					<to>Fraction_correct_and_complete</to>
+				</connector>
+				<stacked_container uid="65" x="1099.25" y="870">
+					<graph x="924.25" y="745" width="350" height="250" type="time_series" show_grid="true" include_units_in_legend="false" plot_numbers="false" isee:label_pie_slices="false" num_x_grid_lines="6" num_y_grid_lines="5" num_x_labels="6" num_y_labels="5" title="Graph" isee:stacked_area_alpha="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
+						<plot color="blue" pen_width="1" index="0" show_y_axis="true">
+							<entity name="work_done"/>
+						</plot>
+					</graph>
+				</stacked_container>
+				<alias color="blue" background="white" font_style="italic" uid="56" x="186.304" y="321.667" width="18" height="18">
+					<shape type="circle" radius="18"/>
+					<of>Total_Staff</of>
+				</alias>
+			</view>
+		</views>
+	</model>
+</xmile>
+

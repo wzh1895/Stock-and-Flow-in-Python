@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xmile version="1.0" xmlns="http://docs.oasis-open.org/xmile/ns/XMILE/v1.0" xmlns:isee="http://iseesystems.com/XMILE">
+	<header>
+		<smile version="1.0" namespace="std, isee"/>
+		<name>marketGrowth</name>
+		<uuid>0bfeeab0-d45a-49fb-9e87-d852483cc6e5</uuid>
+		<vendor>isee systems, inc.</vendor>
+		<product version="1.7.1" isee:build_number="1576" isee:saved_by_v1="true" lang="en">Stella Architect</product>
+	</header>
+	<sim_specs isee:simulation_delay="0.1" method="Euler" time_units="Months" isee:instantaneous_flows="false">
+		<start>1</start>
+		<stop>13</stop>
+		<dt reciprocal="true">4</dt>
+	</sim_specs>
+	<isee:prefs show_module_prefix="true" live_update_on_drag="true" show_restore_buttons="false" layer="map" interface_scale_ui="true" interface_max_page_width="10000" interface_max_page_height="10000" interface_min_page_width="0" interface_min_page_height="0" saved_runs="5" keep="false" rifp="true"/>
+	<isee:multiplayer_settings include_chat="true" allow_observers="false" advance_time_increment="1" observer_start_page="home_page" enabled="false"/>
+	<isee:time_formats default_format="Builtin">
+		<isee:time_format name="Builtin" type="adaptive"/>
+	</isee:time_formats>
+	<default_format/>
+	<model_units>
+		<unit name="People">
+			<eqn/>
+			<alias>person</alias>
+			<alias>persons</alias>
+		</unit>
+		<unit name="Dimensionless">
+			<eqn>1</eqn>
+			<alias>dmnl</alias>
+			<alias>unitless</alias>
+			<alias>fraction</alias>
+		</unit>
+		<unit name="Euros">
+			<eqn/>
+			<alias>EUR</alias>
+			<alias>euro</alias>
+		</unit>
+		<unit name="Months">
+			<eqn/>
+			<alias>mo</alias>
+			<alias>month</alias>
+		</unit>
+	</model_units>
+	<model>
+		<variables>
+			<stock name="Sales Force">
+				<eqn>Target_Sales_Force</eqn>
+				<inflow>Sales_Force_Net_Hiring_Rate</inflow>
+				<units>persons</units>
+			</stock>
+			<stock name="Backlog">
+				<eqn>80</eqn>
+				<inflow>Order_Rate</inflow>
+				<outflow>Shipment_Rate</outflow>
+				<units>batches</units>
+			</stock>
+			<flow name="Order Rate">
+				<eqn>Sales_Force*Sales_Effectiveness</eqn>
+				<units>batches/months</units>
+			</flow>
+			<aux name="Sales Effectiveness">
+				<eqn>Reference_Sales_Effectiveness*Effect_of_Market_Saturation_on_Sales_Effectiveness</eqn>
+				<units>batches/months/persons</units>
+			</aux>
+			<flow name="Shipment Rate">
+				<eqn>Desired_Production</eqn>
+				<non_negative/>
+				<units>batches/months</units>
+			</flow>
+			<aux name="Desired Production">
+				<eqn>Backlog/Company_Goal_for_Normal_Delivery_Delay</eqn>
+				<units>batches/months</units>
+			</aux>
+			<aux name="Company Goal for\nNormal Delivery Delay">
+				<eqn>2</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Revenues">
+				<eqn>Shipment_Rate*Price</eqn>
+				<units>Euros/months</units>
+			</aux>
+			<aux name="Price">
+				<eqn>10000</eqn>
+				<units>Euros/batches</units>
+			</aux>
+			<stock name="Recent Revenues">
+				<eqn>Revenues</eqn>
+				<inflow>Change_in_Recent_Revenues</inflow>
+				<units>Euros/Months</units>
+			</stock>
+			<flow name="Change in Recent Revenues">
+				<eqn>(Revenues-Recent_Revenues)/Recent_Revenues_Reporting_Time</eqn>
+				<units>Euros/Months/Months</units>
+			</flow>
+			<aux name="Recent Revenues Reporting Time">
+				<eqn>3</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Sales Budgets">
+				<eqn>Recent_Revenues*Fraction_Revenues_To_Sales</eqn>
+				<units>Euros/months</units>
+			</aux>
+			<aux name="Fraction Revenues To Sales">
+				<eqn>0.2</eqn>
+				<units>unitless</units>
+			</aux>
+			<aux name="Cost Per Sales Representative">
+				<eqn>8000</eqn>
+				<units>Euros/months/persons</units>
+			</aux>
+			<aux name="Target Sales Force">
+				<eqn>Sales_Budgets/Cost_Per_Sales_Representative</eqn>
+				<units>persons</units>
+			</aux>
+			<flow name="Sales Force Net Hiring Rate">
+				<eqn>(Target_Sales_Force-Sales_Force)/Sales_Force_Adjustment_Time</eqn>
+				<units>persons/Months</units>
+			</flow>
+			<aux name="Sales Force Adjustment Time">
+				<eqn>18</eqn>
+				<units>Months</units>
+			</aux>
+			<aux name="Ratio1">
+				<eqn>Sales_Force/Recent_Revenues</eqn>
+			</aux>
+			<aux name="Reference Sales Potential">
+				<eqn>Sales_Force*Reference_Sales_Effectiveness</eqn>
+			</aux>
+			<aux name="Reference Sales Effectiveness">
+				<eqn>10</eqn>
+				<units>batches/persons/months</units>
+			</aux>
+			<aux name="Market Sales Potential">
+				<eqn>8000</eqn>
+				<units>batches/months</units>
+			</aux>
+			<aux name="Effect of Market Saturation\non Sales Effectiveness">
+				<eqn>MAX(1-Reference_Sales_Potential/Market_Sales_Potential, 0)</eqn>
+			</aux>
+			<aux name="Capacity Utilization"/>
+			<aux name="Capacity 1"/>
+			<aux name="Capacity Constraint"/>
+			<aux name="Desired Capacity"/>
+			<aux name="Capacity Acquisition delay"/>
+			<stock name="Recent Capacity">
+				<inflow>Change_recent_capacity</inflow>
+			</stock>
+			<flow name="Change recent capacity"/>
+			<aux name="Effect of expansion pressure\non current capacity"/>
+			<aux name="Pressure to expand\ncapacity">
+				<eqn>Delivery_Delay_Perceived_by_Company/Company_Goal_for_Normal_Delivery_Delay</eqn>
+			</aux>
+			<aux name="Delivery Delay\nPerceived by Company"/>
+			<aux name="Delivery Delay"/>
+			<aux name="Time for company to perceive delivery delay">
+				<eqn>3</eqn>
+				<units>months</units>
+			</aux>
+			<stock name="Recent shipment rate">
+				<eqn>Shipment_Rate</eqn>
+				<inflow>Change_Recent_Shipment_Rate</inflow>
+			</stock>
+			<flow name="Change Recent Shipment Rate">
+				<eqn>(Shipment_Rate-Recent_shipment_rate)/0.5</eqn>
+			</flow>
+			<aux name="Effect of Delivery Delay\nOn Sales Effectiveness"/>
+			<aux name="Delivery Delay perceived by Makrket"/>
+			<aux name="Time for market to perceive delivery delay"/>
+			<isee:dependencies>
+				<var name="Sales_Force">
+					<in>Target_Sales_Force</in>
+				</var>
+				<var name="Order_Rate">
+					<in>Sales_Force</in>
+					<in>Sales_Effectiveness</in>
+				</var>
+				<var name="Sales_Effectiveness">
+					<in>Reference_Sales_Effectiveness</in>
+					<in>Effect_of_Market_Saturation_on_Sales_Effectiveness</in>
+					<in>Effect_of_Delivery_Delay_On_Sales_Effectiveness</in>
+				</var>
+				<var name="Shipment_Rate">
+					<in>Desired_Production</in>
+					<in>Capacity_1</in>
+					<in>Capacity_Constraint</in>
+					<in>Capacity_Utilization</in>
+				</var>
+				<var name="Desired_Production">
+					<in>Company_Goal_for_Normal_Delivery_Delay</in>
+					<in>Backlog</in>
+				</var>
+				<var name="Revenues">
+					<in>Shipment_Rate</in>
+					<in>Price</in>
+				</var>
+				<var name="Recent_Revenues">
+					<in>Revenues</in>
+				</var>
+				<var name="Change_in_Recent_Revenues">
+					<in>Recent_Revenues</in>
+					<in>Revenues</in>
+					<in>Recent_Revenues_Reporting_Time</in>
+				</var>
+				<var name="Sales_Budgets">
+					<in>Recent_Revenues</in>
+					<in>Fraction_Revenues_To_Sales</in>
+				</var>
+				<var name="Target_Sales_Force">
+					<in>Cost_Per_Sales_Representative</in>
+					<in>Sales_Budgets</in>
+				</var>
+				<var name="Sales_Force_Net_Hiring_Rate">
+					<in>Target_Sales_Force</in>
+					<in>Sales_Force_Adjustment_Time</in>
+					<in>Sales_Force</in>
+				</var>
+				<var name="Ratio1">
+					<in>Sales_Force</in>
+					<in>Recent_Revenues</in>
+				</var>
+				<var name="Reference_Sales_Potential">
+					<in>Sales_Force</in>
+					<in>Reference_Sales_Effectiveness</in>
+				</var>
+				<var name="Effect_of_Market_Saturation_on_Sales_Effectiveness">
+					<in>Reference_Sales_Potential</in>
+					<in>Market_Sales_Potential</in>
+				</var>
+				<var name="Capacity_Utilization">
+					<in>Capacity_1</in>
+					<in>Desired_Production</in>
+				</var>
+				<var name="Capacity_1">
+					<in>Desired_Capacity</in>
+					<in>Capacity_Acquisition_delay</in>
+				</var>
+				<var name="Desired_Capacity">
+					<in>Recent_Capacity</in>
+					<in>Effect_of_expansion_pressure_on_current_capacity</in>
+				</var>
+				<var name="Change_recent_capacity">
+					<in>Recent_Capacity</in>
+					<in>Capacity_1</in>
+				</var>
+				<var name="Effect_of_expansion_pressure_on_current_capacity">
+					<in>Pressure_to_expand_capacity</in>
+				</var>
+				<var name="Pressure_to_expand_capacity">
+					<in>Delivery_Delay_Perceived_by_Company</in>
+					<in>Company_Goal_for_Normal_Delivery_Delay</in>
+				</var>
+				<var name="Delivery_Delay_Perceived_by_Company">
+					<in>Delivery_Delay</in>
+					<in>Time_for_company_to_perceive_delivery_delay</in>
+				</var>
+				<var name="Delivery_Delay">
+					<in>Backlog</in>
+					<in>Recent_shipment_rate</in>
+				</var>
+				<var name="Recent_shipment_rate">
+					<in>Shipment_Rate</in>
+				</var>
+				<var name="Change_Recent_Shipment_Rate">
+					<in>Shipment_Rate</in>
+					<in>Recent_shipment_rate</in>
+				</var>
+				<var name="Effect_of_Delivery_Delay_On_Sales_Effectiveness">
+					<in>Delivery_Delay_perceived_by_Makrket</in>
+					<in>Company_Goal_for_Normal_Delivery_Delay</in>
+				</var>
+				<var name="Delivery_Delay_perceived_by_Makrket">
+					<in>Delivery_Delay_Perceived_by_Company</in>
+					<in>Time_for_market_to_perceive_delivery_delay</in>
+				</var>
+			</isee:dependencies>
+		</variables>
+		<views>
+			<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+				<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+				<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
+					<isee:series_styles>
+						<isee:series_style color="blue" thickness="1"/>
+						<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF7F00" thickness="1"/>
+						<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF007F" thickness="1"/>
+						<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#C8C8C8" thickness="1"/>
+					</isee:series_styles>
+				</graph>
+				<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
+				<button color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595"/>
+				<isee:annotation color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595" popup_background_color="#FFFECF"/>
+				<slider color="black" background="#E0E0E0" font_size="12pt" num_ticks="3" label_side="top" wrap_title="true" vertical="false" isee:always_show_hover_tip="false" input_expands="true" input_width="100"/>
+				<isee:sim_speed_slider color="black" background="white"/>
+				<isee:time_slider color="#E95F74" background="silver"/>
+				<isee:pie_input color="black" background="white" font_size="12pt" legend_position="bottom" isee:transparent="false"/>
+				<knob color="#66CC66" background="#E0E0E0" font_size="12pt" label_side="bottom" wrap_title="true"/>
+				<numeric_input color="black" background="#E0E0E0" font_size="12pt" label_side="left" wrap_title="true" input_expands="false" input_width="100"/>
+				<switch color="black" background="#E0E0E0" font_size="12pt" label_side="top" wrap_title="true" isee:appearance="switch"/>
+				<options color="black" background="white" appearance="radio-buttons" arrangement="vertical"/>
+				<graphical_input color="black" background="#E0E0E0" font_size="12pt"/>
+				<group_input color="black" background="#E0E0E0" font_size="12pt"/>
+				<lamp color="black" background="white" font_size="9pt"/>
+				<gauge color="black" background="white" font_size="9pt" needle_color="#F09F72" bar_color="#EEEEEE" bar_progress_color="black" appearance="radial" num_major_ticks="11" num_minor_ticks="11" show_numeric_value="true"/>
+				<isee:spatial_map color="black" background="white" font_size="12pt"/>
+				<isee:animation_object color="black" background="white" font_size="12pt"/>
+			</style>
+			<view isee:show_pages="false" isee:name_only_modules="true" page_width="818" page_height="571" isee:page_cols="2" isee:page_rows="2" isee:scroll_y="230" isee:popup_graphs_are_comparative="true" type="stock_flow">
+				<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+					<stock color="blue" background="white" font_color="blue" font_size="13pt" label_side="top">
+						<shape type="rectangle" width="45" height="35"/>
+					</stock>
+					<flow color="blue" background="white" font_color="blue" font_size="13pt" label_side="bottom"/>
+					<module color="blue" background="white" font_color="blue" font_size="13pt" label_side="top">
+						<shape type="name_only"/>
+					</module>
+					<aux color="blue" background="white" font_color="blue" font_size="13pt" label_side="bottom">
+						<shape type="circle" radius="18"/>
+					</aux>
+					<group color="red" background="white" font_color="red" font_size="9pt"/>
+					<connector color="#FF007F" background="white" font_color="#FF007F" font_size="9pt" isee:thickness="1"/>
+					<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+					<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
+						<isee:series_styles>
+							<isee:series_style color="blue" thickness="1"/>
+							<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF7F00" thickness="1"/>
+							<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF007F" thickness="1"/>
+							<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#C8C8C8" thickness="1"/>
+						</isee:series_styles>
+					</graph>
+					<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
+				</style>
+				<stock x="393.75" y="311.25" name="Sales Force"/>
+				<stock x="508.75" y="418.5" name="Backlog"/>
+				<flow x="508.75" y="334.25" name="Order Rate">
+					<pts>
+						<pt x="508.75" y="258.5"/>
+						<pt x="508.75" y="401"/>
+					</pts>
+				</flow>
+				<connector uid="1" angle="14.6474">
+					<from>Sales_Force</from>
+					<to>Order_Rate</to>
+				</connector>
+				<aux x="654.75" y="311.25" name="Sales Effectiveness"/>
+				<connector uid="2" angle="142.826">
+					<from>Sales_Effectiveness</from>
+					<to>Order_Rate</to>
+				</connector>
+				<flow x="508.75" y="485.75" name="Shipment Rate">
+					<pts>
+						<pt x="508.75" y="436"/>
+						<pt x="508.75" y="556.5"/>
+					</pts>
+				</flow>
+				<aux x="583.083" y="460.833" name="Desired Production"/>
+				<aux x="798.25" y="431.875" name="Company Goal for\nNormal Delivery Delay"/>
+				<connector uid="3" angle="187.665">
+					<from>Company_Goal_for_Normal_Delivery_Delay</from>
+					<to>Desired_Production</to>
+				</connector>
+				<connector uid="4" angle="15.2551">
+					<from>Backlog</from>
+					<to>Desired_Production</to>
+				</connector>
+				<connector uid="5" angle="221.186">
+					<from>Desired_Production</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<aux x="457.083" y="609" name="Revenues"/>
+				<connector uid="6" angle="234.324">
+					<from>Shipment_Rate</from>
+					<to>Revenues</to>
+				</connector>
+				<aux x="549.75" y="633.5" name="Price"/>
+				<connector uid="7" angle="183.18">
+					<from>Price</from>
+					<to>Revenues</to>
+				</connector>
+				<stock label_side="bottom" x="223.75" y="677.5" name="Recent Revenues"/>
+				<flow x="357.5" y="677.5" name="Change in Recent Revenues">
+					<pts>
+						<pt x="480.75" y="677.5"/>
+						<pt x="246.25" y="677.5"/>
+					</pts>
+				</flow>
+				<connector uid="8" angle="68.8387">
+					<from>Recent_Revenues</from>
+					<to>Change_in_Recent_Revenues</to>
+				</connector>
+				<connector uid="9" angle="214.523">
+					<from>Revenues</from>
+					<to>Change_in_Recent_Revenues</to>
+				</connector>
+				<aux x="347.75" y="780.5" name="Recent Revenues Reporting Time"/>
+				<connector uid="10" angle="116.565">
+					<from>Recent_Revenues_Reporting_Time</from>
+					<to>Change_in_Recent_Revenues</to>
+				</connector>
+				<aux x="173.917" y="470.25" name="Sales Budgets"/>
+				<connector uid="11" angle="116.03">
+					<from>Recent_Revenues</from>
+					<to>Sales_Budgets</to>
+				</connector>
+				<aux x="313.75" y="488.25" name="Fraction Revenues To Sales"/>
+				<connector uid="12" angle="172.665">
+					<from>Fraction_Revenues_To_Sales</from>
+					<to>Sales_Budgets</to>
+				</connector>
+				<aux x="320.75" y="418.5" name="Cost Per Sales Representative"/>
+				<aux x="217.25" y="380" name="Target Sales Force"/>
+				<flow x="273" y="304.5" name="Sales Force Net Hiring Rate">
+					<pts>
+						<pt x="162.75" y="304.5"/>
+						<pt x="371.25" y="304.5"/>
+					</pts>
+				</flow>
+				<connector uid="13" angle="53.5574">
+					<from>Target_Sales_Force</from>
+					<to>Sales_Force_Net_Hiring_Rate</to>
+				</connector>
+				<connector uid="14" angle="159.596">
+					<from>Cost_Per_Sales_Representative</from>
+					<to>Target_Sales_Force</to>
+				</connector>
+				<connector uid="15" angle="91.232">
+					<from>Sales_Budgets</from>
+					<to>Target_Sales_Force</to>
+				</connector>
+				<aux x="185.75" y="223.5" name="Sales Force Adjustment Time"/>
+				<connector uid="16" angle="317.127">
+					<from>Sales_Force_Adjustment_Time</from>
+					<to>Sales_Force_Net_Hiring_Rate</to>
+				</connector>
+				<connector uid="17" angle="110.472">
+					<from>Sales_Force</from>
+					<to>Sales_Force_Net_Hiring_Rate</to>
+				</connector>
+				<isee:loop_indicator text="B" orientation="counter_clockwise" uid="18" x="311.75" y="263.75" width="30" height="30"/>
+				<isee:loop_indicator text="B" orientation="clockwise" uid="19" x="271.75" y="630" width="30" height="30"/>
+				<isee:loop_indicator text="R" orientation="clockwise" uid="20" x="397.75" y="378" width="30" height="30"/>
+				<aux x="29.75" y="387.083" name="Ratio1"/>
+				<connector uid="21" angle="183.141">
+					<from>Sales_Force</from>
+					<to>Ratio1</to>
+				</connector>
+				<connector uid="22" angle="123.743">
+					<from>Recent_Revenues</from>
+					<to>Ratio1</to>
+				</connector>
+				<aux x="575.75" y="99.5" name="Reference Sales Potential"/>
+				<aux x="723.75" y="179.5" name="Reference Sales Effectiveness"/>
+				<connector uid="23" angle="49.3208">
+					<from>Sales_Force</from>
+					<to>Reference_Sales_Potential</to>
+				</connector>
+				<connector uid="24" angle="113.604">
+					<from>Reference_Sales_Effectiveness</from>
+					<to>Reference_Sales_Potential</to>
+				</connector>
+				<aux x="626.75" y="152.5" name="Market Sales Potential"/>
+				<aux x="568.75" y="201.167" name="Effect of Market Saturation\non Sales Effectiveness"/>
+				<connector uid="25" angle="276.52">
+					<from>Reference_Sales_Potential</from>
+					<to>Effect_of_Market_Saturation_on_Sales_Effectiveness</to>
+				</connector>
+				<connector uid="26" angle="219.999">
+					<from>Market_Sales_Potential</from>
+					<to>Effect_of_Market_Saturation_on_Sales_Effectiveness</to>
+				</connector>
+				<connector uid="27" angle="242.358">
+					<from>Reference_Sales_Effectiveness</from>
+					<to>Sales_Effectiveness</to>
+				</connector>
+				<connector uid="28" angle="307.998">
+					<from>Effect_of_Market_Saturation_on_Sales_Effectiveness</from>
+					<to>Sales_Effectiveness</to>
+				</connector>
+				<numeric_display uid="29" x="652.75" y="139.5" width="177" height="16" retain_ending_value="true" isee:navigate_to="true" show_name="true">
+					<entity name="Market_Sales_Potential"/>
+				</numeric_display>
+				<numeric_display uid="30" x="372.083" y="82" width="177" height="16" retain_ending_value="true" isee:navigate_to="false" show_name="true">
+					<entity name="Reference_Sales_Potential"/>
+				</numeric_display>
+				<aux x="636.75" y="525.25" name="Capacity Utilization"/>
+				<aux x="636.75" y="601" name="Capacity 1"/>
+				<connector uid="31" angle="133.677">
+					<from>Capacity_1</from>
+					<to>Capacity_Utilization</to>
+				</connector>
+				<connector uid="32" angle="177.869">
+					<from>Capacity_1</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<aux x="425.25" y="471.25" name="Capacity Constraint"/>
+				<connector uid="33" angle="19.8606">
+					<from>Capacity_Constraint</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<connector uid="34" angle="5.49159">
+					<from>Desired_Production</from>
+					<to>Capacity_Utilization</to>
+				</connector>
+				<connector uid="35" angle="184.086">
+					<from>Capacity_Utilization</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<aux x="791.75" y="651.5" name="Desired Capacity"/>
+				<connector uid="36" angle="161.954">
+					<from>Desired_Capacity</from>
+					<to>Capacity_1</to>
+				</connector>
+				<aux x="816.25" y="507.25" name="Capacity Acquisition delay"/>
+				<connector uid="37" angle="240.945">
+					<from>Capacity_Acquisition_delay</from>
+					<to>Capacity_1</to>
+				</connector>
+				<stock label_side="bottom" x="598.125" y="704" name="Recent Capacity"/>
+				<flow x="694.938" y="700" name="Change recent capacity">
+					<pts>
+						<pt x="781.25" y="700"/>
+						<pt x="620.625" y="700"/>
+					</pts>
+				</flow>
+				<connector uid="38" angle="305.76">
+					<from>Recent_Capacity</from>
+					<to>Desired_Capacity</to>
+				</connector>
+				<connector uid="39" angle="339.546">
+					<from>Recent_Capacity</from>
+					<to>Change_recent_capacity</to>
+				</connector>
+				<connector uid="40" angle="257.239">
+					<from>Capacity_1</from>
+					<to>Change_recent_capacity</to>
+				</connector>
+				<aux x="927.5" y="591" name="Effect of expansion pressure\non current capacity"/>
+				<connector uid="41" angle="208.072">
+					<from>Effect_of_expansion_pressure_on_current_capacity</from>
+					<to>Desired_Capacity</to>
+				</connector>
+				<aux x="988.75" y="466.25" name="Pressure to expand\ncapacity"/>
+				<connector uid="42" angle="291.801">
+					<from>Pressure_to_expand_capacity</from>
+					<to>Effect_of_expansion_pressure_on_current_capacity</to>
+				</connector>
+				<aux x="967.5" y="354.75" name="Delivery Delay\nPerceived by Company"/>
+				<connector uid="43" angle="290.4">
+					<from>Delivery_Delay_Perceived_by_Company</from>
+					<to>Pressure_to_expand_capacity</to>
+				</connector>
+				<connector uid="44" angle="6.38712">
+					<from>Company_Goal_for_Normal_Delivery_Delay</from>
+					<to>Pressure_to_expand_capacity</to>
+				</connector>
+				<aux x="895" y="329.25" name="Delivery Delay"/>
+				<connector uid="45" angle="19.692">
+					<from>Delivery_Delay</from>
+					<to>Delivery_Delay_Perceived_by_Company</to>
+				</connector>
+				<aux x="1072.5" y="319.75" name="Time for company to perceive delivery delay"/>
+				<connector uid="46" angle="174.289">
+					<from>Time_for_company_to_perceive_delivery_delay</from>
+					<to>Delivery_Delay_Perceived_by_Company</to>
+				</connector>
+				<stock x="798.25" y="393" name="Recent shipment rate"/>
+				<flow x="728.875" y="393" name="Change Recent Shipment Rate">
+					<pts>
+						<pt x="670" y="393"/>
+						<pt x="775.75" y="393"/>
+					</pts>
+				</flow>
+				<connector uid="47" angle="48.1548">
+					<from>Shipment_Rate</from>
+					<to>Change_Recent_Shipment_Rate</to>
+				</connector>
+				<connector uid="48" angle="215.134">
+					<from>Recent_shipment_rate</from>
+					<to>Change_Recent_Shipment_Rate</to>
+				</connector>
+				<connector uid="49" angle="28.951">
+					<from>Backlog</from>
+					<to>Delivery_Delay</to>
+				</connector>
+				<connector uid="50" angle="2.38594">
+					<from>Recent_shipment_rate</from>
+					<to>Delivery_Delay</to>
+				</connector>
+				<aux x="877" y="240.25" name="Effect of Delivery Delay\nOn Sales Effectiveness"/>
+				<connector uid="51" angle="197.717">
+					<from>Effect_of_Delivery_Delay_On_Sales_Effectiveness</from>
+					<to>Sales_Effectiveness</to>
+				</connector>
+				<aux x="980" y="215.5" name="Delivery Delay perceived by Makrket"/>
+				<connector uid="52" angle="223.279">
+					<from>Delivery_Delay_perceived_by_Makrket</from>
+					<to>Effect_of_Delivery_Delay_On_Sales_Effectiveness</to>
+				</connector>
+				<connector uid="53" angle="261.469">
+					<from>
+						<alias uid="54"/>
+					</from>
+					<to>Effect_of_Delivery_Delay_On_Sales_Effectiveness</to>
+				</connector>
+				<connector uid="55" angle="58.6959">
+					<from>Delivery_Delay_Perceived_by_Company</from>
+					<to>Delivery_Delay_perceived_by_Makrket</to>
+				</connector>
+				<aux x="1108.75" y="187.25" name="Time for market to perceive delivery delay"/>
+				<connector uid="56" angle="160.201">
+					<from>Time_for_market_to_perceive_delivery_delay</from>
+					<to>Delivery_Delay_perceived_by_Makrket</to>
+				</connector>
+				<alias color="blue" background="white" font_style="italic" uid="54" x="948.5" y="108.5" width="18" height="18">
+					<shape type="circle" radius="18"/>
+					<of>Company_Goal_for_Normal_Delivery_Delay</of>
+				</alias>
+			</view>
+		</views>
+	</model>
+</xmile>
+

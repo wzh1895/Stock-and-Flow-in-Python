@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xmile version="1.0" xmlns="http://docs.oasis-open.org/xmile/ns/XMILE/v1.0" xmlns:isee="http://iseesystems.com/XMILE">
+	<header>
+		<smile version="1.0" namespace="std, isee"/>
+		<name>beerGame</name>
+		<uuid>097ad196-2428-42d7-bfb0-e3f342abfaf5</uuid>
+		<vendor>isee systems, inc.</vendor>
+		<product version="1.7.1" isee:build_number="1576" isee:saved_by_v1="true" lang="en">Stella Architect</product>
+	</header>
+	<sim_specs isee:simulation_delay="0.0254902" method="Euler" time_units="Months" isee:instantaneous_flows="false">
+		<start>0</start>
+		<stop>50</stop>
+		<dt reciprocal="true">10</dt>
+	</sim_specs>
+	<isee:prefs show_module_prefix="true" live_update_on_drag="true" show_restore_buttons="false" layer="model" interface_scale_ui="true" interface_max_page_width="10000" interface_max_page_height="10000" interface_min_page_width="0" interface_min_page_height="0" saved_runs="5" keep="false" rifp="true"/>
+	<isee:multiplayer_settings include_chat="true" allow_observers="false" advance_time_increment="1" observer_start_page="home_page" enabled="false"/>
+	<isee:time_formats default_format="Builtin">
+		<isee:time_format name="Builtin" type="adaptive"/>
+	</isee:time_formats>
+	<default_format/>
+	<model_units>
+		<unit name="Days">
+			<eqn/>
+			<alias>day</alias>
+		</unit>
+		<unit name="Months">
+			<eqn/>
+			<alias>mo</alias>
+			<alias>month</alias>
+		</unit>
+	</model_units>
+	<model>
+		<variables>
+			<aux name="Orders\nPlaced by Downstream">
+				<eqn>4</eqn>
+				<units>units</units>
+			</aux>
+			<aux name="Orders Received Rate">
+				<eqn>Orders_Placed_by_Downstream+STEP(Orders_Placed_by_Downstream, 10)+0*DELAY(Orders_Placed_by_Downstream, Time_to_Receive_Orders)</eqn>
+				<units>units/days</units>
+			</aux>
+			<aux name="Time to Receive Orders">
+				<eqn>2</eqn>
+				<units>Days</units>
+			</aux>
+			<stock name="Inventory">
+				<eqn>Desired_Effective_Inventory</eqn>
+				<inflow>Acquisition_Rate</inflow>
+				<outflow>Shipment_Rate</outflow>
+				<units>units</units>
+			</stock>
+			<aux name="Desired Shipment Rate">
+				<eqn>Orders_Received_Rate+Backlog/DT</eqn>
+				<units>units/days</units>
+			</aux>
+			<flow name="Shipment Rate">
+				<eqn>MIN(Desired_Shipment_Rate, Inventory/DT)</eqn>
+				<units>units/Months</units>
+			</flow>
+			<stock name="Backlog">
+				<eqn>0</eqn>
+				<inflow>Backlog_Adj_Rate</inflow>
+			</stock>
+			<flow name="Backlog Adj Rate">
+				<eqn>Orders_Received_Rate-Shipment_Rate</eqn>
+			</flow>
+			<aux name="Effective Inventory">
+				<eqn>Inventory-Backlog</eqn>
+			</aux>
+			<aux name="Desired Effective Inventory">
+				<eqn>Orders_Received_Rate*Inventory_Coverage</eqn>
+				<units>units</units>
+			</aux>
+			<aux name="Inventory Coverage">
+				<eqn>3</eqn>
+				<units>Days</units>
+			</aux>
+			<aux name="Desired Effective\nInventory Correction Rate">
+				<eqn>(Desired_Effective_Inventory-Effective_Inventory)/Inventory_Correction_Time</eqn>
+				<units>units/days</units>
+			</aux>
+			<aux name="Inventory\nCorrection Time">
+				<eqn>4</eqn>
+				<units>Days</units>
+			</aux>
+			<flow name="Order Rate">
+				<eqn>Orders_Received_Rate+Desired_Effective_Inventory_Correction_Rate*1+Orders_Placed_Correction_Rate*1</eqn>
+			</flow>
+			<stock name="Orders Placed">
+				<eqn>Desired_Orders_Placed</eqn>
+				<inflow>Order_Rate</inflow>
+				<outflow>Order_Fulfillment_Rate</outflow>
+			</stock>
+			<flow name="Acquisition Rate">
+				<eqn>DELAY(Order_Rate, Time_to_Produce_or_Deliver_Bear)</eqn>
+				<units>units/Months</units>
+			</flow>
+			<flow name="Order Fulfillment Rate">
+				<eqn>Acquisition_Rate</eqn>
+			</flow>
+			<aux name="Time to Produce or Deliver Bear">
+				<eqn>4</eqn>
+				<units>Days</units>
+			</aux>
+			<aux name="Desired Orders Placed">
+				<eqn>Orders_Received_Rate*Desired_Supply_Line_Coverage</eqn>
+				<units>units</units>
+			</aux>
+			<aux name="Desired Supply Line Coverage">
+				<eqn>4</eqn>
+				<units>Days</units>
+			</aux>
+			<aux name="Orders Placed Correction Rate">
+				<eqn>(Desired_Orders_Placed-Orders_Placed)/Supply_Line_Correction_Time</eqn>
+			</aux>
+			<aux name="Supply Line Correction Time">
+				<eqn>12</eqn>
+				<units>Days</units>
+			</aux>
+			<isee:dependencies>
+				<var name="Orders_Received_Rate">
+					<in>Orders_Placed_by_Downstream</in>
+					<in>Time_to_Receive_Orders</in>
+				</var>
+				<var name="Inventory">
+					<in>Desired_Effective_Inventory</in>
+				</var>
+				<var name="Desired_Shipment_Rate">
+					<in>Orders_Received_Rate</in>
+					<in>Backlog</in>
+				</var>
+				<var name="Shipment_Rate">
+					<in>Desired_Shipment_Rate</in>
+					<in>Inventory</in>
+				</var>
+				<var name="Backlog_Adj_Rate">
+					<in>Shipment_Rate</in>
+					<in>Orders_Received_Rate</in>
+				</var>
+				<var name="Effective_Inventory">
+					<in>Backlog</in>
+					<in>Inventory</in>
+				</var>
+				<var name="Desired_Effective_Inventory">
+					<in>Orders_Received_Rate</in>
+					<in>Inventory_Coverage</in>
+				</var>
+				<var name="Desired_Effective_Inventory_Correction_Rate">
+					<in>Desired_Effective_Inventory</in>
+					<in>Inventory_Correction_Time</in>
+					<in>Effective_Inventory</in>
+				</var>
+				<var name="Order_Rate">
+					<in>Orders_Received_Rate</in>
+					<in>Desired_Effective_Inventory_Correction_Rate</in>
+					<in>Orders_Placed_Correction_Rate</in>
+				</var>
+				<var name="Orders_Placed">
+					<in>Desired_Orders_Placed</in>
+				</var>
+				<var name="Acquisition_Rate">
+					<in>Time_to_Produce_or_Deliver_Bear</in>
+					<in>Order_Rate</in>
+				</var>
+				<var name="Order_Fulfillment_Rate">
+					<in>Acquisition_Rate</in>
+				</var>
+				<var name="Desired_Orders_Placed">
+					<in>Orders_Received_Rate</in>
+					<in>Desired_Supply_Line_Coverage</in>
+				</var>
+				<var name="Orders_Placed_Correction_Rate">
+					<in>Desired_Orders_Placed</in>
+					<in>Orders_Placed</in>
+					<in>Supply_Line_Correction_Time</in>
+				</var>
+			</isee:dependencies>
+		</variables>
+		<views>
+			<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+				<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+				<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+				<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
+					<isee:series_styles>
+						<isee:series_style color="blue" thickness="1"/>
+						<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF7F00" thickness="1"/>
+						<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#FF007F" thickness="1"/>
+						<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+						<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+						<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+						<isee:series_style color="#C8C8C8" thickness="1"/>
+					</isee:series_styles>
+				</graph>
+				<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
+				<button color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595"/>
+				<isee:annotation color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595" popup_background_color="#FFFECF"/>
+				<slider color="black" background="#E0E0E0" font_size="12pt" num_ticks="3" label_side="top" wrap_title="true" vertical="false" isee:always_show_hover_tip="false" input_expands="true" input_width="100"/>
+				<isee:sim_speed_slider color="black" background="white"/>
+				<isee:time_slider color="black" background="white"/>
+				<isee:pie_input color="black" background="white" font_size="12pt" legend_position="bottom" isee:transparent="false"/>
+				<knob color="#66CC66" background="#E0E0E0" font_size="12pt" label_side="bottom" wrap_title="true"/>
+				<numeric_input color="black" background="#E0E0E0" font_size="12pt" label_side="left" wrap_title="true" input_expands="false" input_width="100"/>
+				<switch color="black" background="#E0E0E0" font_size="12pt" label_side="top" wrap_title="true" isee:appearance="switch"/>
+				<options color="black" background="white" appearance="radio-buttons" arrangement="vertical"/>
+				<graphical_input color="black" background="#E0E0E0" font_size="12pt"/>
+				<group_input color="black" background="#E0E0E0" font_size="12pt"/>
+				<lamp color="black" background="white" font_size="9pt"/>
+				<gauge color="black" background="white" font_size="9pt" needle_color="#F09F72" bar_color="#EEEEEE" bar_progress_color="black" appearance="radial" num_major_ticks="11" num_minor_ticks="11" show_numeric_value="true"/>
+				<isee:spatial_map color="black" background="white" font_size="12pt"/>
+				<isee:animation_object color="black" background="white" font_size="12pt"/>
+			</style>
+			<view isee:show_pages="true" page_width="818" page_height="571" isee:page_cols="2" isee:page_rows="2" isee:popup_graphs_are_comparative="true" type="stock_flow">
+				<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
+					<stock color="blue" background="white" font_color="blue" font_size="13pt" label_side="top">
+						<shape type="rectangle" width="45" height="35"/>
+					</stock>
+					<flow color="blue" background="white" font_color="blue" font_size="13pt" label_side="bottom"/>
+					<module color="blue" background="white" font_color="blue" font_size="13pt" label_side="top">
+						<shape type="rectangle" width="55" height="45"/>
+					</module>
+					<aux color="blue" background="white" font_color="blue" font_size="13pt" label_side="bottom">
+						<shape type="circle" radius="18"/>
+					</aux>
+					<group color="red" background="white" font_color="red" font_size="9pt"/>
+					<connector color="#FF007F" background="white" font_color="#FF007F" font_size="9pt" isee:thickness="1"/>
+					<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
+					<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
+					<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
+						<isee:series_styles>
+							<isee:series_style color="blue" thickness="1"/>
+							<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="fuchsia" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="#008F44" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF7F00" thickness="1"/>
+							<isee:series_style color="#7F00FF" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#0CA0FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="lime" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#FF007F" thickness="1"/>
+							<isee:series_style color="aqua" thickness="1" pen_style="dot_dashed"/>
+							<isee:series_style color="#F586FF" thickness="1" pen_style="dotted"/>
+							<isee:series_style color="black" thickness="1" pen_style="dashed"/>
+							<isee:series_style color="#C8C8C8" thickness="1"/>
+						</isee:series_styles>
+					</graph>
+					<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
+				</style>
+				<aux x="81" y="401" name="Orders\nPlaced by Downstream"/>
+				<aux x="149" y="451" width="30" height="30" name="Orders Received Rate"/>
+				<connector uid="1" angle="278.13">
+					<from>Orders_Placed_by_Downstream</from>
+					<to>Orders_Received_Rate</to>
+				</connector>
+				<aux x="126.75" y="208.25" name="Time to Receive Orders"/>
+				<connector uid="2" angle="225">
+					<from>Time_to_Receive_Orders</from>
+					<to>Orders_Received_Rate</to>
+				</connector>
+				<stock label_side="bottom" x="486" y="463" name="Inventory"/>
+				<aux x="270" y="672" name="Desired Shipment Rate"/>
+				<connector uid="3" angle="225">
+					<from>Orders_Received_Rate</from>
+					<to>Desired_Shipment_Rate</to>
+				</connector>
+				<flow x="375.25" y="463" name="Shipment Rate">
+					<pts>
+						<pt x="463.5" y="463"/>
+						<pt x="275" y="463"/>
+					</pts>
+				</flow>
+				<connector uid="4" angle="29.3578">
+					<from>Desired_Shipment_Rate</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<connector uid="5" angle="108.853">
+					<from>Inventory</from>
+					<to>Shipment_Rate</to>
+				</connector>
+				<stock x="200" y="557" name="Backlog"/>
+				<flow x="273.25" y="559" name="Backlog Adj Rate">
+					<pts>
+						<pt x="336" y="559"/>
+						<pt x="222.5" y="559"/>
+					</pts>
+				</flow>
+				<connector uid="6" angle="212.714">
+					<from>Shipment_Rate</from>
+					<to>Backlog_Adj_Rate</to>
+				</connector>
+				<connector uid="7" angle="285.751">
+					<from>Backlog</from>
+					<to>Desired_Shipment_Rate</to>
+				</connector>
+				<aux x="288" y="398" name="Effective Inventory"/>
+				<connector uid="8" angle="85.9144">
+					<from>Backlog</from>
+					<to>Effective_Inventory</to>
+				</connector>
+				<connector uid="9" angle="97.125">
+					<from>Inventory</from>
+					<to>Effective_Inventory</to>
+				</connector>
+				<connector uid="10" angle="234.246">
+					<from>Orders_Received_Rate</from>
+					<to>Backlog_Adj_Rate</to>
+				</connector>
+				<aux x="288" y="249" name="Desired Effective Inventory"/>
+				<connector uid="11" angle="97.125">
+					<from>Orders_Received_Rate</from>
+					<to>Desired_Effective_Inventory</to>
+				</connector>
+				<aux x="288" y="185" name="Inventory Coverage"/>
+				<connector uid="12" angle="270">
+					<from>Inventory_Coverage</from>
+					<to>Desired_Effective_Inventory</to>
+				</connector>
+				<aux background="#FFCC66" x="288" y="319" name="Desired Effective\nInventory Correction Rate"/>
+				<connector uid="13" angle="270">
+					<from>Desired_Effective_Inventory</from>
+					<to>Desired_Effective_Inventory_Correction_Rate</to>
+				</connector>
+				<aux x="218" y="294" name="Inventory\nCorrection Time"/>
+				<connector uid="14" angle="25.1148">
+					<from>Inventory_Correction_Time</from>
+					<to>Desired_Effective_Inventory_Correction_Rate</to>
+				</connector>
+				<connector uid="15" angle="90">
+					<from>Effective_Inventory</from>
+					<to>Desired_Effective_Inventory_Correction_Rate</to>
+				</connector>
+				<flow x="441.875" y="247.5" name="Order Rate">
+					<pts>
+						<pt x="348.75" y="247.5"/>
+						<pt x="523" y="247.5"/>
+					</pts>
+				</flow>
+				<connector uid="16" angle="131.186">
+					<from>Orders_Received_Rate</from>
+					<to>Order_Rate</to>
+				</connector>
+				<connector uid="17" angle="24.9225">
+					<from>Desired_Effective_Inventory_Correction_Rate</from>
+					<to>Order_Rate</to>
+				</connector>
+				<stock label_side="bottom" x="545.5" y="247" name="Orders Placed"/>
+				<flow x="597.25" y="463" name="Acquisition Rate">
+					<pts>
+						<pt x="698" y="463"/>
+						<pt x="508.5" y="463"/>
+					</pts>
+				</flow>
+				<flow x="638.75" y="250" name="Order Fulfillment Rate">
+					<pts>
+						<pt x="568" y="250"/>
+						<pt x="721.5" y="250"/>
+					</pts>
+				</flow>
+				<connector uid="18" angle="78.9749">
+					<from>Acquisition_Rate</from>
+					<to>Order_Fulfillment_Rate</to>
+				</connector>
+				<aux x="567" y="604" name="Time to Produce or Deliver Bear"/>
+				<connector uid="19" angle="135">
+					<from>Time_to_Produce_or_Deliver_Bear</from>
+					<to>Acquisition_Rate</to>
+				</connector>
+				<connector uid="20" angle="305.792">
+					<from>Order_Rate</from>
+					<to>Acquisition_Rate</to>
+				</connector>
+				<aux x="513" y="77" name="Desired Orders Placed"/>
+				<connector uid="21" angle="98.8807">
+					<from>Orders_Received_Rate</from>
+					<to>Desired_Orders_Placed</to>
+				</connector>
+				<aux x="513" y="14" name="Desired Supply Line Coverage"/>
+				<connector uid="22" angle="275.711">
+					<from>Desired_Supply_Line_Coverage</from>
+					<to>Desired_Orders_Placed</to>
+				</connector>
+				<aux background="#FFCC66" x="513" y="147" name="Orders Placed Correction Rate"/>
+				<connector uid="23" angle="270">
+					<from>Desired_Orders_Placed</from>
+					<to>Orders_Placed_Correction_Rate</to>
+				</connector>
+				<connector uid="24" angle="78.1785">
+					<from>Orders_Placed</from>
+					<to>Orders_Placed_Correction_Rate</to>
+				</connector>
+				<aux x="381.25" y="126" name="Supply Line Correction Time"/>
+				<connector uid="25" angle="350.944">
+					<from>Supply_Line_Correction_Time</from>
+					<to>Orders_Placed_Correction_Rate</to>
+				</connector>
+				<connector uid="26" angle="234.713">
+					<from>Orders_Placed_Correction_Rate</from>
+					<to>Order_Rate</to>
+				</connector>
+				<stacked_container uid="27" x="753" y="359.5" width="519" height="250">
+					<graph x="753" y="359.5" width="519" height="250" type="time_series" isee:points_only="false" show_grid="true" include_units_in_legend="false" plot_numbers="true" isee:label_pie_slices="false" num_x_grid_lines="5" num_y_grid_lines="3" num_x_labels="5" num_y_labels="3" title="Graph" isee:fill_intensity="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
+						<plot color="blue" pen_width="2" index="0" show_y_axis="true">
+							<entity name="Inventory"/>
+							<scale max="40"/>
+						</plot>
+						<plot color="red" pen_style="dot_dashed" pen_width="2" index="1" show_y_axis="true">
+							<entity name="Backlog"/>
+						</plot>
+						<plot color="fuchsia" pen_style="dotted" pen_width="2" index="2" show_y_axis="true">
+							<entity name="Desired_Effective_Inventory"/>
+						</plot>
+					</graph>
+				</stacked_container>
+				<stacked_container uid="28" x="753" y="74" width="519" height="250">
+					<graph x="753" y="74" width="519" height="250" type="time_series" isee:points_only="false" show_grid="true" include_units_in_legend="false" plot_numbers="true" isee:label_pie_slices="false" num_x_grid_lines="5" num_y_grid_lines="3" num_x_labels="5" num_y_labels="3" title="Graph" isee:fill_intensity="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
+						<plot color="blue" pen_width="2" index="0" show_y_axis="true">
+							<entity name="Orders_Received_Rate"/>
+							<scale max="15"/>
+						</plot>
+						<plot color="red" pen_style="dot_dashed" pen_width="2" index="1" show_y_axis="true">
+							<entity name="Order_Rate"/>
+							<scale max="15"/>
+						</plot>
+						<plot color="fuchsia" pen_style="dotted" pen_width="2" index="2" show_y_axis="true">
+							<entity name="Shipment_Rate"/>
+							<scale max="15"/>
+						</plot>
+						<plot color="#008F44" pen_style="dashed" pen_width="2" index="3" show_y_axis="true">
+							<entity name="Acquisition_Rate"/>
+							<scale max="15"/>
+						</plot>
+					</graph>
+				</stacked_container>
+				<stacked_container uid="29" x="753" y="640.75" width="519" height="250">
+					<graph x="753" y="640.75" width="519" height="250" type="time_series" isee:points_only="false" show_grid="true" include_units_in_legend="false" plot_numbers="true" isee:label_pie_slices="false" num_x_grid_lines="5" num_y_grid_lines="3" num_x_labels="5" num_y_labels="3" title="Graph" isee:fill_intensity="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
+						<plot color="blue" pen_width="2" index="0" show_y_axis="true">
+							<entity name="Desired_Orders_Placed"/>
+							<scale max="60"/>
+						</plot>
+						<plot color="red" pen_width="2" index="1" show_y_axis="true">
+							<entity name="Orders_Placed"/>
+						</plot>
+					</graph>
+				</stacked_container>
+			</view>
+		</views>
+	</model>
+</xmile>
+
