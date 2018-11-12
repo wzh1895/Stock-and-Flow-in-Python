@@ -9,19 +9,21 @@ The intention is to allow users of PySD to visually view the model.
 
 Here you can have a quick glance of it:
 
-![ScreenShot](https://github.com/Rutherford1895/SFD_Canvas/blob/master/screenShot_01.png)
+![ScreenShot](screenShot_01.png)
 
 
 ## How to use
 
 Stock and flow diagrams created by Stella can be displayed using this software.
 
-No additional package other than ***Python3*** is need.
+No additional package other than ***Python3*** is needed.
+
+The program could be run from terminal, powershell, or CMD by executing:
 
 ```
 python3 sfdCanvas.py [filename of the model]
 ```
-for example
+for example,
 
 ```
 python3 sfdCanvas.py /sampleModels/beerGame.stmx
