@@ -18,7 +18,10 @@ python3 sfdCanvas.py /sampleModels/beerGame.stmx
 ```
 ## TODO
 1.Function to display bended flows;
+
 2.A specific data structure for loops;
+
 3.Rewrite the display function for connectors;
+
 ## Change Log
 10 Nov 2018: v0.1
