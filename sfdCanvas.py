@@ -61,13 +61,13 @@ class SFDCanvas(tk.Frame):
         filename = sys.argv[1]
         DOMTree = xml.dom.minidom.parse(filename)
         model = DOMTree.documentElement
-
+        '''
         # fetch all variables in the file
         # since there is only one "variables" in the file, the outcome
         # is a list containing only one element of "variables"
         allvariables = model.getElementsByTagName("variables")
 
-        '''
+        
         # fetch all stocks/flows/aux/connectors in all variables (the only element in the list)
         stock_defs = allvariables[0].getElementsByTagName("stock")
         flow_defs = allvariables[0].getElementsByTagName("flow")
