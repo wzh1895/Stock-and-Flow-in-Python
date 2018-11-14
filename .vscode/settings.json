@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "/usr/local/Cellar/python3/3.7.0/bin/python3"
+    "python.pythonPath": "/usr/local/Cellar/python3/3.7.0/bin/python3",
+    "python.linting.pylintEnabled": true
 }
