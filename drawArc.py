@@ -128,7 +128,7 @@ class SFDCanvas(tk.Frame):
             m += a[i]**2
             n += b[i]**2
         return l/((m*n)**0.5)
-
+'''
 def main():
 
     root = tk.Tk()
@@ -136,5 +136,7 @@ def main():
     root.geometry("1000x1000+900+100")
     root.mainloop()
 
+
 if __name__=='__main__':
     main()
+'''
