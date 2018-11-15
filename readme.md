@@ -28,8 +28,12 @@ python3 sfdCanvas.py /sampleModels/beerGame.stmx
 
 2.A specific data structure for loops;
 
-3.Rewrite the display function for connectors;
+3.Rewrite the display function for connectors; **Almost Done**
 
 ## Change Log
 
-10 Nov 2018: v0.1
+***15 Nov 2018: v0.11***
+
+Connector display function rewritten. Now connectors could be displayed in almost the identical way Stella is using.
+
+***10 Nov 2018: v0.1***
