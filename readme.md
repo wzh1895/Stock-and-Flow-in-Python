@@ -6,7 +6,7 @@ This is a python realization of Stock and Flow Diagram display, based on ***Tkin
 The intention is to allow users of PySD to visually view the model.
 Here you can have a quick glance of it:
 
-![ScreenShot](screenShot_01.png)
+![ScreenShot](screenShot_02.png)
 
 ## How to use
 
