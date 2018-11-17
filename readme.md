@@ -10,7 +10,7 @@ Here you can have a quick glance of it:
 
 ![ScreenShot](screenShot_02.png)
 
-**Simulation outcome display:**
+**Simulation result display:**
 
 ![ScreenShot](screenShot_03.png)
 
@@ -20,7 +20,7 @@ Stock and flow diagrams created by Stella can be displayed using this software.
 
 To display the diagram itself, no additional package other than ***Python3*** is needed.
 
-To simulate the the model and display the outmoce, ***PySD*** and ***matplotlib*** are also needed.
+To simulate the the model and display the result, ***PySD*** and ***matplotlib*** are also needed.
 
 The program could be run from terminal, powershell, or CMD by executing:
 
