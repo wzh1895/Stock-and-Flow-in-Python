@@ -6,10 +6,12 @@ This is a python realization of Stock and Flow Diagram display, based on ***Tkin
 The intention is to allow users to visually view the model.
 Here you can have a quick glance of it:
 
-Model display:
+**Model display:**
+
 ![ScreenShot](screenShot_02.png)
 
-Simulation outcome display:
+**Simulation outcome display:**
+
 ![ScreenShot](screenShot_03.png)
 
 ## How to use
