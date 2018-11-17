@@ -6,29 +6,37 @@ This is a python realization of Stock and Flow Diagram display, based on ***Tkin
 The intention is to allow users to visually view the model.
 Here you can have a quick glance of it:
 
+Model display:
 ![ScreenShot](screenShot_02.png)
+
+Simulation outcome display:
+![ScreenShot](screenShot_03.png)
 
 ## How to use
 
 Stock and flow diagrams created by Stella can be displayed using this software.
-No additional package other than ***Python3*** is needed.
+
+To display the diagram itself, no additional package other than ***Python3*** is needed.
+
+To simulate the the model and display the outmoce, ***PySD*** and ***matplotlib*** are also needed.
+
 The program could be run from terminal, powershell, or CMD by executing:
+
 
 ```
 python3 main.py
 ```
 
-Then you can load the model in the graphic interface.
+Then you can load the model, simulate and view the outcome in the graphic interface.
 
-## TODO
-
-1. Function to display bended flows;
-
-2. A specific data structure for loops;
-
-3. Rewrite the display function for connectors; **Almost Done**
+Many thanks given to the ***PySD*** project.
 
 ## Change Log
+
+**17 Nov 2018: v0.2**
+
+1.  Initial interface to PySD. Now able to run the model.
+2.  Incorporated graph display using matplotlib to display simulation result of one variable. (Still testing, now only work with reindeerModel.stmx)
 
 **15 Nov 2018: v0.1.1**
 

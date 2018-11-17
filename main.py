@@ -1,52 +1,63 @@
-import tkinter as tk
 import math
-import tkinter.filedialog
 import xml.dom.minidom
 from tkinter import *
+from tkinter import filedialog
+
+import matplotlib
+matplotlib.use('TkAgg')
+
+from numpy import arange, sin, pi
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+import os, shutil
 
 from sdClasses import Stock, Flow, Aux, Connector, Alias
 
-class SFDCanvas(tk.Frame):
-    def __init__(self, master = None):
+global root
+
+class SFDCanvas(Frame):
+    def __init__(self, master):
         super().__init__(master)
+        self.master = master
+
+        self.canvas = Canvas(self)
         self.createWidgets()
 
-        self.pack(fill=tk.BOTH, expand=1)
-
-        self.canvas = tk.Canvas(self)
+        self.pack(fill=BOTH, expand=1)
         self.filename = ''
 
-        self.canvas.pack(fill=tk.BOTH, expand=1)
+        self.canvas.pack(fill=BOTH, expand=1)
 
     def create_stock(self, x, y, w, h, label):
         '''
         Center x, Center y, width, height, label
         '''
         self.canvas.create_rectangle(x - w * 0.5, y - h * 0.5, x + w * 0.5, y + h * 0.5, fill="#fff")
-        self.canvas.create_text(x, y + 30, anchor=tk.CENTER, font=("Arial", 9), text=label)
+        self.canvas.create_text(x, y + 30, anchor=CENTER, font=("Arial", 13), text=label)
 
     def create_flow(self, x, y, xA, yA, xB, yB, l, r, label):
         '''
         Starting point x, y, ending point x, y, length, circle radius, label
         '''
-        self.canvas.create_line(xA, yA, xB, yB, arrow=tk.LAST)
+        self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
-        self.canvas.create_text(x, y + r + 10, anchor=tk.CENTER, font=("Arial", 9), text=label)
+        self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13), text=label)
 
     def create_aux(self, x, y, r, label):
         '''
         Central point x, y, radius, label
         '''
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
-        self.canvas.create_text(x, y + r + 10, anchor=tk.CENTER, font=("Arial", 9), text=label)
+        self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13), text=label)
 
     def create_alias(self, x, y, r, label):
         '''
         Central point x, y, radius, label
         '''
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="gray70")
-        self.canvas.create_text(x, y, anchor=tk.CENTER, font=("Arial", 10), text="G")
-        self.canvas.create_text(x, y + r + 10, anchor=tk.CENTER, font=("Arial", 9), text=label)
+        self.canvas.create_text(x, y, anchor=CENTER, font=("Arial", 10), text="G")
+        self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13, "italic"), text=label)
 
     def create_connector(self, xA, yA, xB, yB, angle, color='black'):
         # self.create_dot(xA,yA,3,'black')
@@ -153,7 +164,7 @@ class SFDCanvas(tk.Frame):
         y.append(yB)
 
         self.canvas.create_line(x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3], x[4], y[4], x[5], y[5], x[6], y[6],
-                                x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=tk.LAST)
+                                x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=LAST)
 
         print('\n')
 
@@ -203,15 +214,23 @@ class SFDCanvas(tk.Frame):
     # Here starts Widgets and Commands
 
     def createWidgets(self):
-        self.lb = Label(self,text='Load and display a Stella SD Model')
+        fm_1 = Frame(self.master)
+        self.lb = Label(fm_1,text='Load and display a Stella SD Model')
         self.lb.pack()
-        self.btn1 = Button(self, text="Select model", command = self.fileLoad)
-        self.btn1.pack()
-        self.btn2 = Button(self, text="Reset canvas", command = self.clearCanvas)
-        self.btn2.pack()
+        fm_1.pack(side = TOP)
+        fm_btn = Frame(fm_1)
+        self.btn1 = Button(fm_btn, text="Select model", command = self.fileLoad)
+        self.btn1.pack(side = LEFT)
+        self.btn2 = Button(fm_btn, text="Reset canvas", command = self.clearCanvas)
+        self.btn2.pack(side = LEFT)
+        self.btn3 = Button(fm_btn, text="Run", command = self.simulationHandler)
+        self.btn3.pack(side = LEFT)
+        self.btn4 = Button(fm_btn, text="Show Figure", command = self.showFigure)
+        self.btn4.pack(side = LEFT)
+        fm_btn.pack(side = TOP)
 
     def fileLoad(self):
-        self.filename = tk.filedialog.askopenfilename()
+        self.filename = filedialog.askopenfilename()
         if self.filename != '':
             self.lb.config(text = "File selected: " + self.filename)
             self.fileHandler(self.filename)
@@ -379,12 +398,43 @@ class SFDCanvas(tk.Frame):
         for al in self.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
 
+    # Here starts the simulation part
+
+    def simulationHandler(self):
+
+        import pysd
+
+        if self.filename != '':
+            new_name = self.filename[:-5]+".xmile"
+            shutil.copy(self.filename,new_name)
+            self.model_run = pysd.read_xmile(new_name)
+            os.remove(new_name)
+            os.remove(new_name[:-6]+".py")
+            self.values = self.model_run.run()
+    # TODO
+    def showFigure(self,y_var='Reindeer Population'):
+        f = Figure(figsize=(5, 4), dpi=100)
+        a = f.add_subplot(111)
+        x = self.values['TIME'].tolist()
+        y = self.values[y_var].tolist()
+        a.plot(x,y)
+        a.set_title(y_var)
+        a.set_xlabel('Time')
+        a.set_ylabel(y_var)
+
+        # a DrawingArea
+        canvas = FigureCanvasTkAgg(f, master=self)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+        canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
+
 def main():
-    root = tk.Tk()
+    root = Tk()
+    Frame1 = SFDCanvas(root)
     root.wm_title("Stock and Flow Canvas")
-    root.geometry("1280x960+100+100")
-    app = SFDCanvas(master = root)
-    app.mainloop()
+    root.geometry("900x800+100+100")
+    #app = SFDCanvas(master = root)
+    root.mainloop()
 
 if __name__ == '__main__':
     main()
