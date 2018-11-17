@@ -18,7 +18,7 @@ The program could be run from terminal, powershell, or CMD by executing:
 python3 main.py
 ```
 
-Then you can load the model with graphic interface.
+Then you can load the model in the graphic interface.
 
 ## TODO
 
