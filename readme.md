@@ -18,9 +18,9 @@ Here you can have a quick glance of it:
 
 Stock and flow diagrams created by Stella can be displayed using this software.
 
-To display the diagram itself, no additional package other than ***Python3*** is needed.
+To display the diagram itself, no additional package other than **Python3** is needed.
 
-To simulate the the model and display the result, ***PySD*** and ***matplotlib*** are also needed.
+To simulate the the model and display the result, **PySD** and **matplotlib** are also needed.
 
 The program could be run from terminal, powershell, or CMD by executing:
 
@@ -31,7 +31,7 @@ python3 main.py
 
 Then you can load the model, simulate and view the outcome in the graphic interface.
 
-Many thanks given to the ***PySD*** project.
+Many thanks given to the **PySD** project.
 
 ## Change Log
 
