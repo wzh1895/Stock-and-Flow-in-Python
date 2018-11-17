@@ -11,29 +11,7 @@ class SFDCanvas(tk.Frame):
         self.pack(fill=tk.BOTH, expand=1)
 
         self.canvas = tk.Canvas(self)
-        xA = 220
-        yA = 30
-        xB = 310
-        yB = 300
-        r = 2
-        angle = 340
 
-        self.create_connector(300,300,450,450,1,'blue')
-        self.create_connector(300,300,600,600,26,'blue')
-        self.create_connector(300,300,600,600,51,'gray')
-        self.create_connector(300,300,450,450,90,'green')
-        self.create_connector(300,300,600,600,100,'red')
-        #self.create_connector(300,300,600,600,125,'yellow')
-        self.create_connector(300,300,450,450,150)
-        self.create_connector(300,300,450,450,181,'red')
-        self.create_connector(300,300,600,600,200,'pink')
-        self.create_connector(300,300,450,450,210,'yellow')
-        self.create_connector(300,300,600,600,226,'gray')
-        self.create_connector(300,300,450,450,250,'brown')
-        self.create_connector(300,300,600,600,275,'yellow')
-        self.create_connector(300,300,600,600,300,'pink4')
-        self.create_connector(300,300,600,600,325)
-        self.create_connector(300,300,600,600,350,'red4')
 
         self.canvas.pack(fill=tk.BOTH, expand=1)
 
