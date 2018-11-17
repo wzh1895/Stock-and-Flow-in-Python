@@ -8,11 +8,11 @@ Here you can have a quick glance of it:
 
 **Model display:**
 
-![ScreenShot](screenShot_02.png)
+![ScreenShot](./screenShots/screenShot_02.png)
 
 **Simulation result display:**
 
-![ScreenShot](screenShot_03.png)
+![ScreenShot](./screenShots/screenShot_03.png)
 
 ## How to use
 
