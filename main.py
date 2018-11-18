@@ -2,6 +2,7 @@ import math
 import xml.dom.minidom
 from tkinter import *
 from tkinter import filedialog
+from tkinter import ttk
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -218,16 +219,23 @@ class SFDCanvas(Frame):
         self.lb = Label(fm_1,text='Load and display a Stella SD Model')
         self.lb.pack()
         fm_1.pack(side = TOP)
-        fm_btn = Frame(fm_1)
-        self.btn1 = Button(fm_btn, text="Select model", command = self.fileLoad)
+
+        fm_2 = Frame(fm_1)
+        self.btn1 = Button(fm_2, text="Select model", command = self.fileLoad)
         self.btn1.pack(side = LEFT)
-        self.btn2 = Button(fm_btn, text="Reset canvas", command = self.clearCanvas)
+        self.btn2 = Button(fm_2, text="Run", command = self.simulationHandler)
         self.btn2.pack(side = LEFT)
-        self.btn3 = Button(fm_btn, text="Run", command = self.simulationHandler)
+        self.comboxlist = ttk.Combobox(fm_2)
+        self.variablesInModel = ["Variable"]
+        self.comboxlist["values"] = self.variablesInModel
+        self.comboxlist.current(0)
+        self.comboxlist.bind("<<ComboboxSelected>>",self.selectVariable)
+        self.comboxlist.pack(side = LEFT)
+        self.btn3 = Button(fm_2, text="Show Figure", command = self.showFigure)
         self.btn3.pack(side = LEFT)
-        self.btn4 = Button(fm_btn, text="Show Figure", command = self.showFigure)
+        self.btn4 = Button(fm_2, text="Reset canvas", command = self.resetCanvas)
         self.btn4.pack(side = LEFT)
-        fm_btn.pack(side = TOP)
+        fm_2.pack(side = TOP)
 
     def fileLoad(self):
         self.filename = filedialog.askopenfilename()
@@ -240,9 +248,12 @@ class SFDCanvas(Frame):
         else:
             self.lb.config(text = "No file is selected.")
 
-    def clearCanvas(self):
+    def resetCanvas(self):
         self.canvas.delete('all')
         self.lb.config(text = 'Load and display a Stella SD Model')
+        self.variablesInModel = ["Variable"]
+        self.comboxlist["values"] = self.variablesInModel
+        self.comboxlist.current(0)
 
     def fileHandler(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
@@ -410,23 +421,34 @@ class SFDCanvas(Frame):
             self.model_run = pysd.read_xmile(new_name)
             os.remove(new_name)
             os.remove(new_name[:-6]+".py")
-            self.values = self.model_run.run()
-    # TODO
-    def showFigure(self,y_var='Reindeer Population'):
+            self.results = self.model_run.run()
+            self.variablesInModel = self.results.columns.values.tolist()
+            self.variablesInModel.remove("TIME")
+            self.comboxlist["values"] = self.variablesInModel
+
+    def selectVariable(self,*args):
+        self.selectedVariable = self.comboxlist.get()
+
+    def showFigure(self):
         f = Figure(figsize=(5, 4), dpi=100)
         a = f.add_subplot(111)
-        x = self.values['TIME'].tolist()
-        y = self.values[y_var].tolist()
+        x = self.results['TIME'].tolist()
+        y = self.results[self.selectedVariable].tolist()
         a.plot(x,y)
-        a.set_title(y_var)
+        a.set_title(self.selectedVariable)
         a.set_xlabel('Time')
-        a.set_ylabel(y_var)
+        a.set_ylabel(self.selectedVariable)
 
-        # a DrawingArea
-        canvas = FigureCanvasTkAgg(f, master=self)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
-        canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
+        figure1 = GraphWindow(self.selectedVariable, f)
+
+
+class GraphWindow():
+    def __init__(self,title,figure):
+        top = Toplevel()
+        top.title = title
+        graph = FigureCanvasTkAgg(figure, master = top)
+        graph.draw()
+        graph._tkcanvas.pack()
 
 def main():
     root = Tk()

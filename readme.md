@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a python realization of Stock and Flow Diagram display, based on ***Tkinter***.
+This is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
 The intention is to allow users to visually view the model.
 Here you can have a quick glance of it:
 
@@ -12,7 +12,7 @@ Here you can have a quick glance of it:
 
 **Simulation result display:**
 
-![ScreenShot](./screenShots/screenShot_03.png)
+![ScreenShot](./screenShots/screenShot_04.png)
 
 ## How to use
 
@@ -34,6 +34,11 @@ Then you can load the model, simulate and view the outcome in the graphic interf
 Many thanks given to the **PySD** project.
 
 ## Change Log
+
+**18 Nov 2018: v0.2.1**
+
+1.  Able to select variable.
+2.  Show result in a standalone window.
 
 **17 Nov 2018: v0.2**
 
