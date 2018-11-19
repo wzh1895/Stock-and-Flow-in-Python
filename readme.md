@@ -34,6 +34,9 @@ Then you can load the model, simulate and view the outcome in the graphic interf
 Many thanks given to the **PySD** project.
 
 ## Change Log
+**19 Nov 2018: v0.2.2**
+
+1.  Canvas scrolling feature added.
 
 **18 Nov 2018: v0.2.1**
 
