@@ -7,7 +7,6 @@ from tkinter import ttk
 import matplotlib
 matplotlib.use('TkAgg')
 
-from numpy import arange, sin, pi
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -15,20 +14,27 @@ import os, shutil
 
 from sdClasses import Stock, Flow, Aux, Connector, Alias
 
-global root
-
 class SFDCanvas(Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
+        self.xmost = 300
+        self.ymost = 300
 
         self.canvas = Canvas(self)
+
+        self.hbar = Scrollbar(self,orient = HORIZONTAL)
+        self.hbar.pack(side = BOTTOM, fill = X)
+        self.hbar.config(command = self.canvas.xview)
+
+        self.vbar = Scrollbar(self,orient = VERTICAL)
+        self.vbar.pack(side = RIGHT, fill = Y)
+        self.vbar.config(command = self.canvas.yview)
+
         self.createWidgets()
 
         self.pack(fill=BOTH, expand=1)
         self.filename = ''
-
-        self.canvas.pack(fill=BOTH, expand=1)
 
     def create_stock(self, x, y, w, h, label):
         '''
@@ -108,7 +114,7 @@ class SFDCanvas(Frame):
 
         print('baseArc in degrees, ', math.degrees(baseArc))
 
-        print("checking 优弧劣弧")
+        print("checking youhu or liehu")
         # vectors, this part seems to be correct
 
         vecStarting = [math.cos(alpha), math.sin(alpha)]
@@ -117,14 +123,14 @@ class SFDCanvas(Frame):
         angleCos = self.cosFormula(vecStarting, vecAtoB)
         print('Cosine of the angle in Between, ', angleCos)
 
-        # checking 优弧劣弧 the direction
+        # checking youhu or liehu the direction
 
         inverse = 1
 
         if angleCos < 0:  # you hu
             print('deg_CA, ', math.degrees(rad_CA),'deg_CB',math.degrees(rad_CB))
             diff = rad_CB-rad_CA
-            print('优弧')
+            print('youhu')
         else: # lie hu
             if rad_CA*rad_CB<0 and rad_CA <= rad_CB: # yi hao
                 diff = rad_CB-rad_CA
@@ -144,7 +150,7 @@ class SFDCanvas(Frame):
                     diff = math.pi*2 - diff
             else:
                 diff = rad_CB-rad_CA
-            print('劣弧')
+            print('liehu')
         print('final diff in degrees, ', math.degrees(diff))
         # generate new points
 
@@ -239,6 +245,7 @@ class SFDCanvas(Frame):
 
     def fileLoad(self):
         self.filename = filedialog.askopenfilename()
+
         if self.filename != '':
             self.lb.config(text = "File selected: " + self.filename)
             self.fileHandler(self.filename)
@@ -254,6 +261,9 @@ class SFDCanvas(Frame):
         self.variablesInModel = ["Variable"]
         self.comboxlist["values"] = self.variablesInModel
         self.comboxlist.current(0)
+        self.xmost = 300
+        self.ymost = 300
+        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
 
     def fileHandler(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
@@ -354,6 +364,11 @@ class SFDCanvas(Frame):
 
     def modelDrawer(self):
         # now starts the 'drawing' part
+        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
+
+        #self.canvas.config(width = wid, height = hei)
+        self.canvas.config(xscrollcommand = self.hbar.set, yscrollcommand = self.vbar.set)
+
 
         # set common parameters
         width1 = 46
@@ -395,19 +410,41 @@ class SFDCanvas(Frame):
         # draw stocks
         for s in self.stocks:
             self.create_stock(s.x, s.y, width1, height1, s.name)
+            if s.x> self.xmost:
+                self.xmost = s.x
+            if s.y> self.ymost:
+                self.ymost = s.y
 
         # draw flows
         for f in self.flows:
             self.create_flow(f.x, f.y, f.xA, f.yA, f.xB, f.yB, (pow((f.xB - f.xA), 2) + pow((f.yB - f.yA), 2)) ** 0.5,
                              radius1, f.name)
+            if f.x > self.xmost:
+                self.xmost = f.x
+            if f.y > self.ymost:
+                self.ymost = f.y
 
         # draw auxs
         for a in self.auxs:
             self.create_aux(a.x, a.y, radius1, a.name)
+            if a.x > self.xmost:
+                self.xmost = a.x
+            if a.y > self.ymost:
+                self.ymost = a.y
 
         # draw aliases
         for al in self.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
+            if al.x > self.xmost:
+                self.xmost = al.x
+            if al.y > self.ymost:
+                self.ymost = al.y
+
+        self.xmost += 150
+        self.ymost += 100
+        print('Xmost,',self.xmost,'Ymost,',self.ymost)
+        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
+        self.canvas.pack(side = LEFT, expand=1, fill=BOTH)
 
     # Here starts the simulation part
 
@@ -452,9 +489,11 @@ class GraphWindow():
 
 def main():
     root = Tk()
+    wid = 800
+    hei = 600
     Frame1 = SFDCanvas(root)
     root.wm_title("Stock and Flow Canvas")
-    root.geometry("900x800+100+100")
+    root.geometry(str(wid)+"x"+str(hei)+"+100+100")
     #app = SFDCanvas(master = root)
     root.mainloop()
 
