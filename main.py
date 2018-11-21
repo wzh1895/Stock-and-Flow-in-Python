@@ -22,6 +22,8 @@ class SFDCanvas(Frame):
         self.ymost = 300
 
         self.canvas = Canvas(self)
+        self.canvas.configure(background = 'white')
+        #self.canvas.pack(side = BOTTOM, fill = BOTH, expand = 1)
 
         self.hbar = Scrollbar(self,orient = HORIZONTAL)
         self.hbar.pack(side = BOTTOM, fill = X)
@@ -459,6 +461,7 @@ class SFDCanvas(Frame):
             os.remove(new_name)
             os.remove(new_name[:-6]+".py")
             self.results = self.model_run.run()
+            print("Simulation Finished.")
             self.variablesInModel = self.results.columns.values.tolist()
             self.variablesInModel.remove("TIME")
             self.comboxlist["values"] = self.variablesInModel
