@@ -45,11 +45,16 @@ class SFDCanvas(Frame):
         self.canvas.create_rectangle(x - w * 0.5, y - h * 0.5, x + w * 0.5, y + h * 0.5, fill="#fff")
         self.canvas.create_text(x, y + 30, anchor=CENTER, font=("Arial", 13), text=label)
 
-    def create_flow(self, x, y, xA, yA, xB, yB, l, r, label):
+    def create_flow(self, x, y, pts, r, label):
         '''
         Starting point x, y, ending point x, y, length, circle radius, label
         '''
-        self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
+        for i in range(len(pts)-1):
+            if i != len(pts)-2:
+                self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])
+            else:
+                self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1],arrow=LAST)
+        #self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13), text=label)
 
@@ -313,12 +318,11 @@ class SFDCanvas(Frame):
 
         self.flows = []
         for flowview in self.flowviews:
+            points = []
+            for point in flowview.getElementsByTagName("pt"):
+                points.append((point.getAttribute("x"),point.getAttribute("y")))
             self.flows.append(
-                Flow(flowview.getAttribute("name"), flowview.getAttribute("x"), flowview.getAttribute("y"),
-                     flowview.getElementsByTagName("pt")[0].getAttribute("x"),
-                     flowview.getElementsByTagName("pt")[0].getAttribute("y"),
-                     flowview.getElementsByTagName("pt")[1].getAttribute("x"),
-                     flowview.getElementsByTagName("pt")[1].getAttribute("y")))
+                Flow(flowview.getAttribute("name"), flowview.getAttribute("x"), flowview.getAttribute("y"),points))
 
         # fetch views for all auxiliaries
         self.auxviews = []
@@ -419,8 +423,7 @@ class SFDCanvas(Frame):
 
         # draw flows
         for f in self.flows:
-            self.create_flow(f.x, f.y, f.xA, f.yA, f.xB, f.yB, (pow((f.xB - f.xA), 2) + pow((f.yB - f.yA), 2)) ** 0.5,
-                             radius1, f.name)
+            self.create_flow(f.x, f.y, f.pts, radius1, f.name)
             if f.x > self.xmost:
                 self.xmost = f.x
             if f.y > self.ymost:
@@ -480,7 +483,6 @@ class SFDCanvas(Frame):
         a.set_ylabel(self.selectedVariable)
 
         figure1 = GraphWindow(self.selectedVariable, f)
-
 
 class GraphWindow():
     def __init__(self,title,figure):

@@ -8,15 +8,12 @@ class Stock():
         self.outflow = outflow
 
 class Flow():
-    def __init__(self, name, x, y, xA, yA, xB, yB, eqn = "none"):
+    def __init__(self, name, x, y, pts, eqn = "none"):
         self.name = name
         self.eqn = eqn
         self.x = float(x)
         self.y = float(y)
-        self.xA = float(xA)
-        self.yA = float(yA)
-        self.xB = float(xB)
-        self.yB = float(yB)
+        self.pts = pts
 
 class Aux():
     def __init__(self, name, x, y, eqn = "none"):
