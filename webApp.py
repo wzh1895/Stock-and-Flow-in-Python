@@ -6,5 +6,8 @@ class Example(flx.Widget):
 
 app = flx.App(Example)
 #app.export('example.html', link=0)  # Export to single file
-app.launch('browser')  # show it now in a browser
-flx.run()  # enter the mainloop
+#app.launch('browser')  # show it now in a browser
+#flx.run()  # enter the mainloop
+
+app.serve('')
+flx.start()
