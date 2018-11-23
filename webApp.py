@@ -9,5 +9,5 @@ app = flx.App(Example)
 #app.launch('browser')  # show it now in a browser
 #flx.run()  # enter the mainloop
 
-app.serve()
-app.start()
+app.serve('')
+flx.start()
