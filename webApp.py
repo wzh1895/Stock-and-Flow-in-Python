@@ -10,5 +10,5 @@ app = flx.App(Example)
 #flx.run()  # enter the mainloop
 
 app.serve('')
-flx.run()
+#flx.run()
 flx.start()
