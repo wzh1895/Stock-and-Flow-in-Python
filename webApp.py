@@ -2,7 +2,7 @@ from flexx import flx
 
 class Example(flx.Widget):
     def init(self):
-        flx.Label(text='hello world')
+        flx.Label(text='To be developed')
 
 app = flx.App(Example)
 
