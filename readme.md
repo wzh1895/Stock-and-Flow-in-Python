@@ -27,19 +27,19 @@ To simulate the the model and display the result, **PySD** and **matplotlib** ar
 The program could be run from terminal, powershell, or CMD by executing:
 
 ```
-python3 main.py
+python3 localMain.py
 ```
 
 Then you can load the model, simulate and view the outcome in the graphic interface.
 
-**Web-based**
+**Web-based (Still Trying)**
 
 To deploy the program as a web application, you need **FlexxUI** and **Tornado**.
 
 On linux or macOS, execute:
 
 ```
-python3 webApp.py --flexx-hostname=0.0.0.0 --flexx-port=8080
+python3 webMain.py --flexx-hostname=0.0.0.0 --flexx-port=8080
 ```
 
 The line above may be different from the FlexxUI document, but it was proven to be working well.
@@ -51,6 +51,10 @@ Many thanks given to the **PySD** project.
 The web application is made possible with **FlexxUI** project.
 
 ## Change Log
+
+**15 Dec 2018: v0.3.1**
+
+1.  Canvas in HTML5 is used to draw a first stock.
 
 **23 Nov 2018: v0.3.0**
 

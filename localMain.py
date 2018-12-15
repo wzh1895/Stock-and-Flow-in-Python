@@ -1,5 +1,4 @@
 import math
-import xml.dom.minidom
 from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
@@ -12,7 +11,10 @@ from matplotlib.figure import Figure
 
 import os, shutil
 
-from sdClasses import Stock, Flow, Aux, Connector, Alias
+import xml.dom.minidom
+
+from modelHandler import ModelHandler
+
 
 class SFDCanvas(Frame):
     def __init__(self, master):
@@ -205,15 +207,15 @@ class SFDCanvas(Frame):
     def locateVar(self, name):
         name = name.replace("_", " ")
         # print(name)
-        for s in self.stocks:
+        for s in self.modelHandler1.stocks:
             nameWithoutN = s.name.replace("\\n", " ")
             if nameWithoutN == name:
                 return [s.x, s.y]
-        for f in self.flows:
+        for f in self.modelHandler1.flows:
             nameWithoutN = f.name.replace("\\n", " ")
             if nameWithoutN == name:
                 return [f.x, f.y]
-        for a in self.auxs:
+        for a in self.modelHandler1.auxs:
             nameWithoutN = a.name.replace("\\n", " ")
             # print(nameWithoutN)
             if nameWithoutN == name:
@@ -221,7 +223,7 @@ class SFDCanvas(Frame):
 
     def locateAlias(self, uid):
         # print("locateAlias is called")
-        for al in self.aliases:
+        for al in self.modelHandler1.aliases:
             if al.uid == uid:
                 return [al.x, al.y]
 
@@ -255,8 +257,7 @@ class SFDCanvas(Frame):
 
         if self.filename != '':
             self.lb.config(text = "File selected: " + self.filename)
-            self.fileHandler(self.filename)
-            self.modelAnalyzer()
+            self.modelHandler1 = ModelHandler(self.filename)
             self.modelDrawer()
 
         else:
@@ -277,97 +278,6 @@ class SFDCanvas(Frame):
         #self.DOMTree = xml.dom.minidom.parse("./sampleModels/reindeerModel.stmx")
         self.model = DOMTree.documentElement
 
-    def modelAnalyzer(self):
-        '''
-        # fetch all variables in the file
-        # since there is only one "variables" in the file, the outcome
-        # is a list containing only one element of "variables"
-        allvariables = model.getElementsByTagName("variables")
-
-
-        # fetch all stocks/flows/aux/connectors in all variables (the only element in the list)
-        stock_defs = allvariables[0].getElementsByTagName("stock")
-        flow_defs = allvariables[0].getElementsByTagName("flow")
-        aux_defs = allvariables[0].getElementsByTagName("aux")
-
-        '''
-
-        # fetch all views in the file ---> down to the view
-        self.allviews = self.model.getElementsByTagName("views")
-        self.views = self.allviews[0].getElementsByTagName("view")
-
-        # fetch views for all stocks
-        self.stockviews = []
-        for stockview in self.views[0].getElementsByTagName("stock"):
-            if stockview.hasAttribute("name"):
-                self.stockviews.append(stockview)
-
-        # construct stock instances
-        self.stocks = []
-        for stockview in self.stockviews:
-            self.stocks.append(
-                Stock(stockview.getAttribute("name"), stockview.getAttribute("x"), stockview.getAttribute("y")))
-
-        # fetch views for all flows
-        self.flowviews = []
-        for flowview in self.views[0].getElementsByTagName("flow"):
-            if flowview.hasAttribute("name"):
-                self.flowviews.append(flowview)
-
-        # construct flow instances
-
-        self.flows = []
-        for flowview in self.flowviews:
-            points = []
-            for point in flowview.getElementsByTagName("pt"):
-                points.append((point.getAttribute("x"),point.getAttribute("y")))
-            self.flows.append(
-                Flow(flowview.getAttribute("name"), flowview.getAttribute("x"), flowview.getAttribute("y"),points))
-
-        # fetch views for all auxiliaries
-        self.auxviews = []
-        for auxview in self.views[0].getElementsByTagName("aux"):
-            if auxview.hasAttribute("name"):
-                self.auxviews.append(auxview)
-
-        # construct aux instances
-        self.auxs = []
-        for auxview in self.auxviews:
-            self.auxs.append(Aux(auxview.getAttribute("name"), auxview.getAttribute("x"), auxview.getAttribute("y")))
-            # print(auxview.getAttribute("name"))
-
-        # fetch views for all connectors
-        self.connectorviews = []
-        for connectorview in self.views[0].getElementsByTagName("connector"):
-            if connectorview.hasAttribute("uid"):
-                self.connectorviews.append(connectorview)
-
-                # construct connector instances
-        self.connectors = []
-        for connectorview in self.connectorviews:
-            # don't use ".data" for from or to tags, since they may be alias
-            self.connectors.append(Connector(connectorview.getAttribute("uid"), connectorview.getAttribute("angle"),
-                                             connectorview.getElementsByTagName("from")[0],
-                                             connectorview.getElementsByTagName("to")[0]))
-
-        # fetch views for all aliases
-        self.aliasviews = []
-        for aliasview in self.views[0].getElementsByTagName("alias"):
-            # distinguish definition of alias from refering to it
-            if aliasview.hasAttribute("color"):
-                self.aliasviews.append(aliasview)
-        print(self.aliasviews)
-
-        # construct alias instances
-        self.aliases = []
-        for aliasview in self.aliasviews:
-            # print("Constrcting Alias: ", aliasview.getElementsByTagName("of"), "of ", aliasview.getElementsByTagName("of")[0].childNodes[0].data)
-            self.aliases.append(
-                Alias(aliasview.getAttribute("uid"), aliasview.getAttribute("x"), aliasview.getAttribute("y"),
-                      aliasview.getElementsByTagName("of")[0].childNodes[0].data))
-
-        # print("toal alias", len(self.aliases))
-
     def modelDrawer(self):
         # now starts the 'drawing' part
         self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
@@ -383,7 +293,7 @@ class SFDCanvas(Frame):
         radius1 = 5
 
         # draw connectors
-        for c in self.connectors:
+        for c in self.modelHandler1.connectors:
             print("\n")
             print(c.uid)
             # from
@@ -414,7 +324,7 @@ class SFDCanvas(Frame):
                                   c.angle)  # minus 8: the arrow it self not consumed
 
         # draw stocks
-        for s in self.stocks:
+        for s in self.modelHandler1.stocks:
             self.create_stock(s.x, s.y, width1, height1, s.name)
             if s.x> self.xmost:
                 self.xmost = s.x
@@ -422,7 +332,7 @@ class SFDCanvas(Frame):
                 self.ymost = s.y
 
         # draw flows
-        for f in self.flows:
+        for f in self.modelHandler1.flows:
             self.create_flow(f.x, f.y, f.pts, radius1, f.name)
             if f.x > self.xmost:
                 self.xmost = f.x
@@ -430,7 +340,7 @@ class SFDCanvas(Frame):
                 self.ymost = f.y
 
         # draw auxs
-        for a in self.auxs:
+        for a in self.modelHandler1.auxs:
             self.create_aux(a.x, a.y, radius1, a.name)
             if a.x > self.xmost:
                 self.xmost = a.x
@@ -438,7 +348,7 @@ class SFDCanvas(Frame):
                 self.ymost = a.y
 
         # draw aliases
-        for al in self.aliases:
+        for al in self.modelHandler1.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
             if al.x > self.xmost:
                 self.xmost = al.x
