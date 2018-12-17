@@ -54,7 +54,7 @@ The web application is made possible with **FlexxUI** project.
 
 **15 Dec 2018: v0.3.1**
 
-1.  Canvas in HTML5 is used to draw a first stock.
+1.  Canvas in HTML5 is used to draw a first stock for web-based interface.
 
 **23 Nov 2018: v0.3.0**
 
