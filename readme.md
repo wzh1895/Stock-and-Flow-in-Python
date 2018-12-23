@@ -52,6 +52,10 @@ The web application is made possible with **FlexxUI** project.
 
 ## Change Log
 
+**23 Dec 2018: v0.4.0**
+
+1.  Added stmxGenerator, a set of functions to add components to blank .stmx file.
+
 **15 Dec 2018: v0.3.1**
 
 1.  Canvas in HTML5 is used to draw a first stock for web-based interface.
