@@ -1,5 +1,10 @@
 # Stock and Flow Canvas
 
+## Acknowledgement
+
+Simulation of system dynamics models is made possible using the **PySD** project.
+https://github.com/JamesPHoughton/pysd
+
 ## Introduction
 
 This is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
@@ -44,11 +49,25 @@ python3 webMain.py --flexx-hostname=0.0.0.0 --flexx-port=8080
 
 The line above may be different from the FlexxUI document, but it was proven to be working well.
 
-## Acknowledgement
+## Project Structure: PHAPI
 
-Many thanks given to the **PySD** project.
 
-The web application is made possible with **FlexxUI** project.
+**(Problem --> Hypothesis <--> Analysis --> Policy --> Implementation)** (*1)
+
+
+- **P**roblem
+    - Processing multiple types of data
+        - Mental data
+        - Written data
+        - Numerical data
+- **H**ypothesis
+    - Suggesting possible structures based on similarity between situations
+        - Similarity between dynamics patterns
+- **A**nalysis
+- **P**olicy
+    - Beyond scope at this moment.
+- **I**mplementation
+    - Beyond scope at this moment.
 
 ## Change Log
 
@@ -93,6 +112,9 @@ The web application is made possible with **FlexxUI** project.
 
 **10 Nov 2018: v0.1.0**
 1.  First Commit.
+
+## Remarks
+1. PHAPI is a modelling framework introduced by prof. Erling Moxnes at University of Bergen, commonly used in system dynamics-based projects.
 
 ## Reference
 1. Barlas, Y., & Kanar, K. (2000). Structure-oriented behavior tests in model validation. In 18th international conference of the system dynamics society, Bergen, Norway (pp. 33-34).
