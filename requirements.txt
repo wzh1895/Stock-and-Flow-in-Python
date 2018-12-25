@@ -1,2 +1,5 @@
 pysd
 matplotlib
+dtw
+numpy
+pandas
