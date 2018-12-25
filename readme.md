@@ -52,6 +52,10 @@ The web application is made possible with **FlexxUI** project.
 
 ## Change Log
 
+**25 Dec 2018: v0.4.1**
+
+1.  Added similarityCalc, a feature to compare similarity between a dynamic pattern and basic behavior patterns. Currently the algorithm uses DTW (Dynamic Time Warping), but for a better performance, Hidden Markov Model (HMM) will be introduced, as done in BATS (Barlas and Kanar, 2000).
+
 **23 Dec 2018: v0.4.0**
 
 1.  Added stmxGenerator, a set of functions to add components to blank .stmx file.
@@ -89,3 +93,6 @@ The web application is made possible with **FlexxUI** project.
 
 **10 Nov 2018: v0.1.0**
 1.  First Commit.
+
+## Reference
+1. Barlas, Y., & Kanar, K. (2000). Structure-oriented behavior tests in model validation. In 18th international conference of the system dynamics society, Bergen, Norway (pp. 33-34).
