@@ -73,7 +73,7 @@ The line above may be different from the FlexxUI document, but it was proven to 
 
 **31 Dec 2018: v0.4.2**
 
-1.  Added narrativeParsing, using NLTK(2) and StanfordCoreNLP to parse narratives in natural language.
+1.  Added narrativeParsing, using NLTK(*2) and StanfordCoreNLP to parse narratives in natural language.
 2.  Added narrativeCoding, a first attempt to 'code' narratives.
 3.  Added POS_tag_list.txt, an explanation of the acronyms of part of speeches.
 4.  Added main, still a blank board, going to be used as the main display and control panel in the future.
