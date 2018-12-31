@@ -71,6 +71,13 @@ The line above may be different from the FlexxUI document, but it was proven to 
 
 ## Change Log
 
+**31 Dec 2018: v0.4.2**
+
+1.  Added narrativeParsing, using NLTK(2) and StanfordCoreNLP to parse narratives in natural language.
+2.  Added narrativeCoding, a first attempt to 'code' narratives.
+3.  Added POS_tag_list.txt, an explanation of the acronyms of part of speeches.
+4.  Added main, still a blank board, going to be used as the main display and control panel in the future.
+
 **25 Dec 2018: v0.4.1**
 
 1.  Added similarityCalc, a feature to compare similarity between a dynamic pattern and basic behavior patterns. Currently the algorithm uses DTW (Dynamic Time Warping) (Keogh and Ratanamahatana, 2005), but for a better performance, Hidden Markov Model (HMM) will be introduced, as done in BATS (Barlas and Kanar, 2000).
@@ -115,7 +122,9 @@ The line above may be different from the FlexxUI document, but it was proven to 
 
 ## Remarks
 1. PHAPI is a modelling framework introduced by prof. Erling Moxnes at University of Bergen, commonly used in system dynamics-based projects.
+2. NLTK is a python-based natural language processing framework.
 
 ## Reference
 1. Barlas, Y., & Kanar, K. (2000). Structure-oriented behavior tests in model validation. In 18th international conference of the system dynamics society, Bergen, Norway (pp. 33-34).
 2. Keogh, E., & Ratanamahatana, C. A. (2005). Exact indexing of dynamic time warping. Knowledge and information systems, 7(3), 358-386.
+3. Manning, Christopher D., Mihai Surdeanu, John Bauer, Jenny Finkel, Steven J. Bethard, and David McClosky. 2014. The Stanford CoreNLP Natural Language Processing Toolkit In Proceedings of the 52nd Annual Meeting of the Association for Computational Linguistics: System Demonstrations, pp. 55-60.
