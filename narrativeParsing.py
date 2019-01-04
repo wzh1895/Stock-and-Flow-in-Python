@@ -16,15 +16,16 @@ from nltk.parse import CoreNLPParser
 from nltk.parse.corenlp import CoreNLPDependencyParser
 
 # Tokenizer
-parser = CoreNLPParser(url='http://localhost:9090')
+parser = CoreNLPParser(url='http://localhost:9091')
 # POS Tagger
-pos_tagger = CoreNLPParser(url='http://localhost:9090',tagtype='pos')
+pos_tagger = CoreNLPParser(url='http://localhost:9091',tagtype='pos')
 # NER Tagger
-ner_tagger = CoreNLPParser(url='http://localhost:9090',tagtype='ner')
+ner_tagger = CoreNLPParser(url='http://localhost:9091',tagtype='ner')
 # Neural Dependency Parser
-dep_parser = CoreNLPDependencyParser(url='http://localhost:9090')
+dep_parser = CoreNLPDependencyParser(url='http://localhost:9091')
 
-narratives = ["The tea-cup gets cold.", "The tea-cup gets cold slower and slower.", "The temperature of tea-cup ends up not higher than the room."]
+# Narratives are not simply description of the process - numerical data can do better. They are more for extraction of causations.
+narratives = ["Higher tea-cup temperature will accelerate the process.", "Lower room temperature will decelerate the process."]
 outputs = []
 
 print("starting...")

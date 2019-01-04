@@ -38,7 +38,7 @@ file = open("processed_narratives", "rb")
 processed_narratives = pickle.load(file)
 file.close()
 
-narrative1, narrative2, narrative3 = processed_narratives[0], processed_narratives[1], processed_narratives[2]
+narrative1, narrative2= processed_narratives[0], processed_narratives[1]
 
 #print('Sentences:\n',' Narrative 1:\n',narrative1[0],' Narrative 2:\n',narrative2[0],' Narrative 1:\n',narrative3[0])
 #print('Tokens:\n',' Narrative 1:\n',narrative1[1],'\n',' Narrative 2:\n', narrative2[1],'\n',' Narrative 3:\n',narrative3[1],'\n')
@@ -55,10 +55,9 @@ for processed_narrative in processed_narratives:
         if pos_word[1] == 'NN': # obtain all NN (Noun)s from the narratives.
             if pos_word[0] not in NNs:
                 NNs.append(pos_word[0])
-        if pos_word[1] == 'VBZ': # obtain all VBZs (3rd single verb)s from the narratives.
+        if pos_word[1] == 'VB': # obtain all VBZs (3rd single verb)s from the narratives.
             if pos_word[0] not in VBZs:
                 VBZs.append(pos_word[0])
 
 print("We found the following nouns:",NNs)
 print("We found the following verbs:",VBZs)
-
