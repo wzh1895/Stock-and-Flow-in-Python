@@ -71,11 +71,17 @@ The line above may be different from the FlexxUI document, but it was proven to 
 
 ## Change Log
 
+**4 Jan 2019: v0.4.3**
+
+1.  Updated sdClasses, now capturing not only layout info but also equation.
+2.  Each element (stock, flow, aux) is now an instance.
+3.  Updated main, adding a simulation feature capable of simulating the tea-cup model.
+
 **31 Dec 2018: v0.4.2**
 
-1.  Added narrativeParsing, using NLTK(*2) and StanfordCoreNLP to parse narratives in natural language.
-2.  Added narrativeCoding, a first attempt to 'code' narratives.
-3.  Added POS_tag_list.txt, an explanation of the acronyms of part of speeches.
+1.  Added NLP/narrativeParsing, using NLTK(*2) and StanfordCoreNLP to parse narratives in natural language.
+2.  Added NLP/narrativeCoding, a first attempt to 'code' narratives.
+3.  Added NLP/POS_tag_list.txt, an explanation of the acronyms of part of speeches.
 4.  Added main, still a blank board, going to be used as the main display and control panel in the future.
 
 **25 Dec 2018: v0.4.1**
