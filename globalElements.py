@@ -1,5 +1,9 @@
 # learned from https://www.cnblogs.com/suwings/p/6358061.html
+"""
 
+Make model elements available in a global way to all modules.
+
+"""
 
 def _init():
     global _global_dict

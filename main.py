@@ -1,15 +1,16 @@
 """
-Main function of Concepta
+Main function of the program
 """
+
 from dtw import dtw
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from similarityCalc import similarity_calc
-from sdClasses import Stock, Flow, Aux
-import globalElements
+from sdClasses import Stock, Flow, Aux, Time
+import globalElements as glbele
 
-globalElements._init()
+glbele._init()
 
 '''
 from tkinter import *
@@ -40,15 +41,17 @@ print(tea_cup_behavior)
 similarity_calc(tea_cup_behavior)
 '''
 
-globalElements.set_value('stock1', Stock(name='stock1', x=489, y=245, eqn=str(100), inflow='flow1'))
-globalElements.set_value('flow1', Flow(name='flow1', x=381.75, y=245, pts=[(285, 245), (466.5, 245)], eqn="(globalElements.get_value('goal1')()-globalElements.get_value('stock1')())/globalElements.get_value('at1')()"))
-globalElements.set_value('at1', Aux(name='at1', x=341.5, y=156.5, eqn=str(5)))
-globalElements.set_value('goal1', Aux(name='goal1', x=348, y=329, eqn=str(1)))
+glbele.set_value('stock1', Stock(name='stock1', x=489, y=245, eqn=str(100), inflow='flow1'))
+glbele.set_value('flow1', Flow(name='flow1', x=381.75, y=245, pts=[(285, 245), (466.5, 245)], eqn="(globalElements.get_value('goal1')()-globalElements.get_value('stock1')())/globalElements.get_value('at1')()"))
+glbele.set_value('at1', Aux(name='at1', x=341.5, y=156.5, eqn=str(5)))
+glbele.set_value('goal1', Aux(name='goal1', x=348, y=329, eqn=str(1)))
+
+glbele.set_value('time1', Time(end=25, start=1, dt=0.125))
 
 dependencies = []
 dependencies.append({'flow1': ['stock1', 'at1', 'goal1']})
 
-globalElements.get_value('flow1')()
+glbele.get_value('flow1')()
 '''
 for key in variables.keys():
     print("Element: ", key)
@@ -56,49 +59,42 @@ for key in variables.keys():
 '''
 
 
-# Generate a list of flows
+# Generate lists of flows and stocks
+
 flows = {}
 stocks = []
-stocksbehavior = {}
-for element in globalElements.get_keys():
-    if type(globalElements.get_value(element)) == Flow:
+for element in glbele.get_keys():
+    if type(glbele.get_value(element)) == Flow:
         flows[element] = 0
-    if type(globalElements.get_value(element)) == Stock:
+    if type(glbele.get_value(element)) == Stock:
         stocks.append(element)
-        stocksbehavior[element] = [globalElements.get_value(element)()]
 
 print(flows)
 print(stocks)
-print(stocksbehavior)
 
 # Run the model
 
-time = 25
-dt = 0.25
-steps = int(time/dt)
-
-for step in range(steps):
+for step in range(glbele.get_value('time1').steps):
     print('After step: ', step)
 
     # 1. Calculate all flows as recursion, which trace back to stocks or exogenous params.
     for flow in flows:
-        flows[flow] = globalElements.get_value(flow)()
+        flows[flow] = glbele.get_value(flow)()
         print(flow, flows[flow])
 
     # 2. Change stocks with flows
     for stock in stocks:
         try:
-            globalElements.get_value(stock).change_in_stock(flows[globalElements.get_value(stock).inflow]*dt)
+            glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).inflow]*glbele.get_value('time1').dt)
         except:
             pass
         try:
-            globalElements.get_value(stock).change_in_stock(flows[globalElements.get_value(stock).outflow]*dt*(-1))
+            glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).outflow]*glbele.get_value('time1').dt*(-1))
         except:
             pass
-        level = globalElements.get_value(stock).value
-        print(stock, level)
-        stocksbehavior[stock].append(level)
 
-plt.plot(stocksbehavior['stock1'])
+    glbele.get_value('time1').current_step += 1
+
+plt.plot(glbele.get_value('stock1').behavior)
 plt.show()
 
