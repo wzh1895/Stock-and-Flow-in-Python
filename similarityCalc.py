@@ -6,6 +6,7 @@ from dtw import dtw
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 # TESTS
 
@@ -39,12 +40,15 @@ def similarity_calc(x0):
     # stretch x0 to a length close to 100.
     # Temporarily only consider len(x0) < 100.
     factor_x = round(100/len(x0))
-    x1 = np.kron(x0,np.ones((factor_x,1)))
+    x1 = np.kron(x0, np.ones((factor_x, 1)))
 
     # stretch x0 to a height close to 100.
     # Temporarily only consider vertical range of x0 < 100.
-    factor_y = round(100/(x0.max()-x0.min()))
-    x = np.array([(i-x0.min())*factor_y for i in x1]).reshape(-1,1)
+    factor_y = 100.0/(x0.max()-x0.min())
+    x = np.array([(i-x0.min())*factor_y for i in x1]).reshape(-1, 1)
+
+    comparison_figure = Figure(figsize=(5,4), dpi=75)
+    comparison_plot = comparison_figure.add_subplot(111)
 
     distances = {} # distance :basic behavior
     for basic_behavior in basic_behaviors.keys():
@@ -52,13 +56,13 @@ def similarity_calc(x0):
         dist, cost, acc, path = dtw(x,y, dist=lambda x,y: np.linalg.norm(x-y, ord=1))
         distances[dist] = basic_behavior
         print(basic_behavior, dist)
-        plt.plot(y)
+        comparison_plot.plot(y)
 
     closest_behavior = distances[min(distances.keys())]
     print("Classified as: ", closest_behavior)
-    plt.plot(x)
-    plt.show()
-    return closest_behavior
+
+    comparison_plot.plot(x)
+    return closest_behavior, comparison_figure
 
 if __name__ == '__main__':
     similarity_calc(test1)
