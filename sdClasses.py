@@ -1,4 +1,4 @@
-import globalElements
+import globalModel
 
 
 class Element():

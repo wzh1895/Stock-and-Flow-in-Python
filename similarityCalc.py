@@ -53,9 +53,12 @@ def similarity_calc(x0):
         distances[dist] = basic_behavior
         print(basic_behavior, dist)
         plt.plot(y)
-    print("Classified as: ",distances[min(distances.keys())])
+
+    closest_behavior = distances[min(distances.keys())]
+    print("Classified as: ", closest_behavior)
     plt.plot(x)
     plt.show()
+    return closest_behavior
 
 if __name__ == '__main__':
     similarity_calc(test1)
