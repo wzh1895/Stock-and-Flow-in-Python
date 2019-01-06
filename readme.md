@@ -7,8 +7,9 @@ https://github.com/JamesPHoughton/pysd
 
 ## Introduction
 
-This is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
+The first part of this project is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
 The intention is to allow users to visually view the model.
+
 Here you can have a quick glance of it:
 
 **Model display:**
@@ -19,9 +20,19 @@ Here you can have a quick glance of it:
 
 ![ScreenShot](./screenShots/screenShot_04.png)
 
+
+The second part of this project is an attempt to reproduce human conceptualization process (The P'HAPI, especially the P'HA). The idea is to automate the model conceptualization, in a way not purely driven by data, which the state-of-art.
+
+Here you can have a quick glance of it:
+
+**Conceptualization Panel**
+
+![ScreenShot](./screenShots/screenShot_05.png)
+
+
 ## How to use
 
-**Local-based**
+**Local-based Display**
 
 Stock and flow diagrams created by Stella can be displayed using this software.
 
@@ -37,7 +48,7 @@ python3 localMain.py
 
 Then you can load the model, simulate and view the outcome in the graphic interface.
 
-**Web-based (Still Trying)**
+**Web-based Display** (Still Trying)
 
 To deploy the program as a web application, you need **FlexxUI** and **Tornado**.
 
@@ -49,10 +60,18 @@ python3 webMain.py --flexx-hostname=0.0.0.0 --flexx-port=8080
 
 The line above may be different from the FlexxUI document, but it was proven to be working well.
 
+**Conceptualization Panel**
+
+To try the demo of conceptualization panel, excute:
+
+```
+python3 main.py
+```
+
 ## Project Structure: PHAPI
 
 
-**(Problem --> Hypothesis <--> Analysis --> Policy --> Implementation)** (*1)
+(**Problem --> Hypothesis <--> Analysis** --> Policy --> Implementation) (*1)
 
 
 - **P**roblem
@@ -64,12 +83,20 @@ The line above may be different from the FlexxUI document, but it was proven to 
     - Suggesting possible structures based on similarity between situations
         - Similarity between dynamics patterns
 - **A**nalysis
+    - Structure Analysis
+    - Structure-oriented Behavior Analysis (Barlas and Kanar, 2000)
 - **P**olicy
     - Beyond scope at this moment.
 - **I**mplementation
     - Beyond scope at this moment.
 
 ## Change Log
+
+**6 Jan 2019: v0.5.0**
+
+1.  A first version of Conceptualization Panel has been finished, in a very naïve way reproducing the Problem-Hypothesis-Analysis process in human model conceptualization.
+2.  Starting an attempt to store all model information in a graph (from Graph Theory), which enables 'hot operation' on models.
+3.  Merged sdClasses with globalModel, putting classes and their instances together to avoid import problem.
 
 **4 Jan 2019: v0.4.3**
 

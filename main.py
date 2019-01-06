@@ -4,34 +4,42 @@ Main function of the program
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from tkinter import *
 
 from similarityCalc import similarity_calc
-from sdClasses import Stock, Flow, Aux, Time
+from globalModel import Stock, Flow, Aux, Time, Connector
 import globalModel as glbele
+from SFDDisplay import SFDCanvas
 
 glbele._init()
 
 
 def first_order_negative():
 
-    glbele.set_value('stock1', Stock(name='stock1', x=489, y=245, eqn=str(100), inflow='flow1'))
-    glbele.set_value('flow1', Flow(name='flow1', x=381.75, y=245, pts=[(285, 245), (466.5, 245)],
-                                   eqn="(globalModel.get_value('goal1')()-globalModel.get_value('stock1')())/globalModel.get_value('at1')()"))
-    glbele.set_value('at1', Aux(name='at1', x=341.5, y=156.5, eqn=str(5)))
-    glbele.set_value('goal1', Aux(name='goal1', x=348, y=329, eqn=str(1)))
+    glbele.set_value('stock1', Stock(name='stock1', x=289, y=145, eqn=str(100), inflow='flow1'))
+    glbele.set_value('flow1', Flow(name='flow1', x=181.75, y=145, pts=[(85, 145), (266.5, 145)],
+                                   eqn="(get_value('goal1')()-get_value('stock1')())/get_value('at1')()"))
+    glbele.set_value('at1', Aux(name='at1', x=141.5, y=56.5, eqn=str(5)))
+    glbele.set_value('goal1', Aux(name='goal1', x=148, y=229, eqn=str(1)))
 
     glbele.set_value('time1', Time(end=25, start=1, dt=0.125))
+
+    glbele.set_value('1', Connector(1, 150, 'stock1', 'flow1'))
+    glbele.set_value('2', Connector(2, 300, 'at1', 'flow1'))
+    glbele.set_value('3', Connector(3, 60, 'goal1', 'flow1'))
+
+# a dict mapping behavior name to the loading of corresponding archetype
 
 
 behavior_to_archetype = {'decline_c':first_order_negative()}
 
 
 class Panel(Frame):
-    def __init__(self,master):
+    def __init__(self, master):
         super().__init__(master)
         self.master = master
 
@@ -43,14 +51,12 @@ class Panel(Frame):
 
         self.fm_2 = LabelFrame(self.master, text='Hypothesis', width=400)
         self.fm_2.propagate(False)
-        self.lb2 = Label(self.fm_2, text='Comparison with known modes:', anchor='nw')
+        self.lb2 = Label(self.fm_2, text='Compare reference mode with known modes:', anchor='nw')
         self.lb2.pack(side=TOP)
         self.fm_2.pack(side=LEFT, fill=BOTH, expand=YES)
 
         self.fm_3 = LabelFrame(self.master, text='Analysis', width=400)
         self.fm_3.propagate(False)
-        self.canvas = Canvas(self)
-        self.canvas.pack(side=TOP)
         self.fm_3.pack(side=LEFT, fill=BOTH, expand=YES)
 
         self.pack(fill=BOTH, expand=1)
@@ -63,7 +69,7 @@ class Panel(Frame):
         self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
         self.reference_mode_figure = Figure(figsize=(5, 4), dpi=75)
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
-        self.reference_mode_plot.plot(self.tea_cup_temperature_time_series)
+        self.reference_mode_plot.plot(self.tea_cup_temperature_time_series, '*')
         self.reference_mode_plot.set_xlabel("Time")
         self.reference_mode_plot.set_ylabel("Tea-cup Temperature")
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_1)
@@ -73,20 +79,31 @@ class Panel(Frame):
         # Calculate similarity and suggest archetype
 
         self.suggested_archetype, self.comparison_figure = similarity_calc(self.tea_cup_temperature_time_series)
+        # print(dir(self.comparison_figure.get_axes()[0]))
+        # self.comparison_figure.get_axes()[0].axis('off')  # disable axes
+        self.comparison_figure.get_axes()[0].set_xticks([])  # disable ticks on X-axis
         self.comparison_graph = FigureCanvasTkAgg(self.comparison_figure, master=self.fm_2)
         self.comparison_graph.draw()
         self.comparison_graph._tkcanvas.pack(side=TOP)
-        self.lb3 = Label(self.fm_2, text='Reference mode is classified as:\n'+self.suggested_archetype)
+        self.lb3 = Label(self.fm_2, text='Reference mode is classified as:')
         self.lb3.pack(side=TOP)
+        self.lb4 = Label(self.fm_2, text=self.suggested_archetype+'\n', font='Helvetica 16 bold')
+        self.lb4.pack(side=TOP)
+        self.lb5 = Label(self.fm_2, text='Suggesting the following structure:')
+        self.lb5.pack(side=TOP)
 
-        '''
         # Load archetype(s) based on similarity
 
-        behavior_to_archetype[suggested_archetype]
+        behavior_to_archetype[self.suggested_archetype]
 
+        # Draw the suggested archetype on with SFDCanvas
+
+        self.sfd_canvas1 = SFDCanvas(self.fm_2, stocks=glbele.get_stocks(), flows=glbele.get_flows(), auxs=glbele.get_auxs(), connectors=glbele.get_connectors())
+
+        
         # Generate lists of flows and stocks
 
-        flows = {}
+        flows = {}  # use a dictionary to store both flow names and their values
         stocks = []
         for element in glbele.get_keys():
             if type(glbele.get_value(element)) == Flow:
@@ -94,15 +111,16 @@ class Panel(Frame):
             if type(glbele.get_value(element)) == Stock:
                 stocks.append(element)
 
+
         # Run the model
 
         for step in range(glbele.get_value('time1').steps):
-            print('After step: ', step)
+            # print('After step: ', step)
 
             # 1. Calculate all flows as recursion, which trace back to stocks or exogenous params.
             for flow in flows:
                 flows[flow] = glbele.get_value(flow)()
-                print(flow, flows[flow])
+                # print(flow, flows[flow])
 
             # 2. Change stocks with flows
             for stock in stocks:
@@ -117,9 +135,19 @@ class Panel(Frame):
 
             glbele.get_value('time1').current_step += 1
 
-        #plt.plot(glbele.get_value('stock1').behavior)
-        #plt.show()
-        '''
+        self.lb6 = Label(self.fm_3, text='The suggested structure simulates as follows:')
+        self.lb6.pack(side=TOP)
+
+        self.simulation_figure = Figure(figsize=(5, 4), dpi=75)
+        self.simulation_plot = self.simulation_figure.add_subplot(111)
+        self.simulation_plot.plot(glbele.get_value('stock1').behavior)
+        self.simulation_plot.set_xlabel("Time")
+        self.simulation_plot.set_ylabel("stock1")
+        self.simulation_graph = FigureCanvasTkAgg(self.simulation_figure, master=self.fm_3)
+        self.simulation_graph.draw()
+        self.simulation_graph._tkcanvas.pack(side=TOP)
+
+
 if __name__ == '__main__':
     root = Tk()
     wid = 1200

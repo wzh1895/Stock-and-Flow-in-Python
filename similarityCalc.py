@@ -55,7 +55,7 @@ def similarity_calc(x0):
         y = basic_behaviors[basic_behavior]
         dist, cost, acc, path = dtw(x,y, dist=lambda x,y: np.linalg.norm(x-y, ord=1))
         distances[dist] = basic_behavior
-        print(basic_behavior, dist)
+        # print(basic_behavior, dist)
         comparison_plot.plot(y)
 
     closest_behavior = distances[min(distances.keys())]

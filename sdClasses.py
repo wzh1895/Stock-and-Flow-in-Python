@@ -1,6 +1,3 @@
-import globalModel
-
-
 class Element():
     def __init__(self, name, x, y, eqn="none"):
         self.name = name
@@ -31,7 +28,7 @@ class Stock(Element):
 
 
 class Flow(Element):
-    def __init__(self, name, x, y, pts, eqn = "none"):
+    def __init__(self, name, x, y, pts, eqn="none"):
         super(Flow, self).__init__(name, x, y, eqn)
         self.pts = pts
 
@@ -45,7 +42,7 @@ class Flow(Element):
 
 
 class Aux(Element):
-    def __init__(self, name, x, y, eqn = "none"):
+    def __init__(self, name, x, y, eqn="none"):
         super(Aux, self).__init__(name, x, y, eqn)
 
     def __call__(self):
