@@ -1,19 +1,10 @@
 import math
 from tkinter import *
-from tkinter import filedialog
-from tkinter import ttk
 
 import matplotlib
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-
-import os, shutil
-
-import xml.dom.minidom
-
-from modelHandler import ModelHandler
 
 import globalModel as glbele
 
@@ -50,9 +41,16 @@ class SFDCanvas(Frame):
         self.modelDrawer()
 
     def create_stock(self, x, y, w, h, label):
-        '''
-        Center x, Center y, width, height, label
-        '''
+        """
+
+        :param x: Center x
+        :param y: Center y
+        :param w: width
+        :param h: height
+        :param label: label
+        :return:
+
+        """
         self.canvas.create_rectangle(x - w * 0.5, y - h * 0.5, x + w * 0.5, y + h * 0.5, fill="#fff")
         self.canvas.create_text(x, y + 30, anchor=CENTER, font=("Arial", 13), text=label)
 
@@ -65,7 +63,7 @@ class SFDCanvas(Frame):
                 self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])
             else:
                 self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1],arrow=LAST)
-        #self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
+        # self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13), text=label)
 
@@ -236,61 +234,6 @@ class SFDCanvas(Frame):
                 return [al.x, al.y]
 
     # Here starts Widgets and Commands
-    '''
-    def createWidgets(self):
-        fm_1 = Frame(self.master)
-        self.lb = Label(fm_1,text='Load and display a Stella SD Model')
-        self.lb.pack()
-        fm_1.pack(side = TOP)
-
-        fm_2 = Frame(fm_1)
-        self.btn1 = Button(fm_2, text="Select model", command = self.fileLoad)
-        self.btn1.pack(side = LEFT)
-        self.btn2 = Button(fm_2, text="Run", command = self.simulationHandler)
-        self.btn2.pack(side = LEFT)
-        self.comboxlist = ttk.Combobox(fm_2)
-        self.variablesInModel = ["Variable"]
-        self.comboxlist["values"] = self.variablesInModel
-        self.comboxlist.current(0)
-        self.comboxlist.bind("<<ComboboxSelected>>",self.selectVariable)
-        self.comboxlist.pack(side = LEFT)
-        self.btn3 = Button(fm_2, text="Show Figure", command = self.showFigure)
-        self.btn3.pack(side = LEFT)
-        self.btn4 = Button(fm_2, text="Reset canvas", command = self.resetCanvas)
-        self.btn4.pack(side = LEFT)
-        fm_2.pack(side = TOP)
-    '''
-    '''
-    def fileLoad(self):
-        self.filename = filedialog.askopenfilename()
-
-        if self.filename != '':
-            self.lb.config(text = "File selected: " + self.filename)
-            #  self.modelHandler1 = ModelHandler(self.filename)
-            self.modelDrawer()
-
-        else:
-            self.lb.config(text = "No file is selected.")
-    '''
-    '''
-    def resetCanvas(self):
-        self.canvas.delete('all')
-        self.lb.config(text = 'Load and display a Stella SD Model')
-        self.variablesInModel = ["Variable"]
-        self.comboxlist["values"] = self.variablesInModel
-        self.comboxlist.current(0)
-        self.xmost = 300
-        self.ymost = 300
-        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
-
-    '''
-
-    '''
-    def fileHandler(self, filename):
-        DOMTree = xml.dom.minidom.parse(filename)
-        #self.DOMTree = xml.dom.minidom.parse("./sampleModels/reindeerModel.stmx")
-        self.model = DOMTree.documentElement
-    '''
 
     def modelDrawer(self):
         # now starts the 'drawing' part

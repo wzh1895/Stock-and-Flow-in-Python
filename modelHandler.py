@@ -4,7 +4,6 @@ from sdClasses import Stock, Flow, Aux, Connector, Alias
 class ModelHandler():
     def __init__(self,filename):
         DOMTree = xml.dom.minidom.parse(filename)
-        # self.DOMTree = xml.dom.minidom.parse("./sampleModels/reindeerModel.stmx")
         self.model = DOMTree.documentElement
         self.modelAnalyzer()
 

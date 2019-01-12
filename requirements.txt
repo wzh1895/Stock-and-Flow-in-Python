@@ -3,3 +3,4 @@ matplotlib
 dtw
 numpy
 pandas
+networkx

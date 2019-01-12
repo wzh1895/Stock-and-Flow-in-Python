@@ -1,7 +1,7 @@
-# learned from https://www.cnblogs.com/suwings/p/6358061.html
+# A way to globalize, learned from https://www.cnblogs.com/suwings/p/6358061.html
 
 import networkx as nx
-from causalLoopDiagram import CausalLoopDiagram as CLD
+import matplotlib.pyplot as plt
 
 """
 
@@ -83,18 +83,101 @@ def get_connectors():
 
 # TODO Wrap instances in a Class of Model
 
+
+class Model(object):
+    """
+    The class for System Dynamics Models, Including SFD and CLD.
+    """
+    def __init__(self, name='default'):
+        self.__structure = nx.MultiDiGraph()
+        self.name = name
+        self.uid = 1
+
+        self.stocks = []
+        self.flows = {}
+        self.auxs = []
+        self.connectors = []
+
+        #self.timers = {}
+        self.timer = Time()
+
+    def add_stock(self, name, x, y, eqn, inflow='none', outflow='none'):
+        self.__structure.add_node(name, uid=self.uid, type='stock',
+                                var=Stock(name=name, x=x, y=y, eqn=eqn,inflow=inflow, outflow=outflow)
+                                )
+        print('Stock added\tname:', name, '\tuid:', self.uid)
+        self.stocks.append(name)
+        self.uid += 1
+
+    def add_flow(self, name, x, y, pts, eqn):
+        self.__structure.add_node(name, uid=self.uid, type='flow',
+                                  var=Flow(name=name, x=x, y=y, pts=pts, eqn=eqn)
+                                )
+        print('Flow added\tname:', name, '\tuid:', self.uid)
+        self.flows[name] = 0
+        self.uid += 1
+
+    def add_aux(self, name, x, y, eqn):
+        self.__structure.add_node(name, uid=self.uid, type='aux',
+                                var=Aux(name=name, x=x, y=y, eqn=eqn)
+                                )
+        print('Aux added\tname:', name, '\tuid:', self.uid)
+        self.auxs.append(name)
+        self.uid += 1
+
+    def add_connector(self, angle, from_var, to_var):
+        #self.structure.add_edge(u_of_edge=from_var, v_of_edge=to_var, angle=float(angle))
+        self.__structure.add_edge(u_for_edge=from_var, v_for_edge=to_var, angle=float(angle))
+        print('Connector added\tfrom', from_var, '\tto', to_var)
+
+    def set_timer(self, start, end, dt, name='time1'):
+        # self.timers[name] = Time(start=start, end=end, dt=dt)
+        self.timer = Time(start=start, end=end, dt=dt)
+        print('Time set\tstart:', start, '\tend:', end, '\tdt:', dt)
+
+    def print_all_variables(self):
+        print(self.__structure.nodes(data=True))
+
+    def print_all_connectors(self):
+        print(self.__structure.edges)
+
+    def get_var_by_name(self, name):
+        return self.__structure.nodes[name]
+
+    def get_value_by_name(self, name):
+        return self.__structure.nodes[name]['eqn']
+
+    def set_value_by_name(self, name, value):
+        self.__structure.nodes[name]['value'] = value
+
+    def draw_cld(self):
+        nx.draw_circular(self.__structure, with_labels=True)
+        plt.show()
 '''
-def _init():
-    global _global_model
-    _global_model = CLD()
+    def run(self):
+        for flow in self.flows:
+            #self.flows[flow] = self.__structure.nodes[flow]['var']()
+            try:
+                self.set_value_by_name(flow, float(self.get_value_by_name(flow)))
+            except ValueError:
+                self.set_value_by_name(flow, exec("(self.get_value_by_name('goal1')-self.get_value_by_name('stock1'))/self.get_value_by_name('at1')"))
 
-def add_variable():
-    pass
+        for stock in self.stocks:
+            try:
+                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].inflow]*self.timer.dt)
+            except:
+                pass
+            try:
+                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].outflow]*self.timer.dt)
+            except:
+                pass
 
-def
+        self.timer.current_step += 1
 '''
 
-class Element():
+# TODO Wrap instances in a Class of Model -- The end
+
+class Element(object):
     def __init__(self, name, x, y, eqn="none"):
         self.name = name
         self.eqn = eqn
@@ -105,7 +188,7 @@ class Element():
 
 
 class Stock(Element):
-    def __init__(self, name, x, y, eqn = "none", inflow = "none", outflow = "none"):
+    def __init__(self, name, x, y, eqn="none", inflow="none", outflow="none"):
         super(Stock, self).__init__(name, x, y, eqn)
         self.inflow = inflow
         self.outflow = outflow
@@ -150,7 +233,7 @@ class Aux(Element):
             return self.value
 
 
-class Connector():
+class Connector(object):
     def __init__(self, uid, angle, from_var, to_var):
         self.uid = uid
         self.angle = float(angle)
@@ -158,7 +241,7 @@ class Connector():
         self.to_var = to_var
 
 
-class Alias():
+class Alias(object):
     def __init__(self, uid, x, y, of):
         self.uid = uid
         self.x = float(x)
@@ -166,8 +249,8 @@ class Alias():
         self.of = of
 
 
-class Time():
-    def __init__(self, end, start=1, dt=0.125):
+class Time(object):
+    def __init__(self, end=25, start=1, dt=0.125):
         self.start = start
         self.end = end
         self.dt = dt

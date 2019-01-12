@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 from tkinter import *
 
 from similarityCalc import similarity_calc
-from globalModel import Stock, Flow, Aux, Time, Connector
+from globalModel import Stock, Flow, Aux, Time, Connector, Model
 import globalModel as glbele
 from SFDDisplay import SFDCanvas
 
@@ -35,7 +35,7 @@ def first_order_negative():
 # a dict mapping behavior name to the loading of corresponding archetype
 
 
-behavior_to_archetype = {'decline_c':first_order_negative()}
+behavior_to_archetype = {'decline_c': first_order_negative()}
 
 
 class Panel(Frame):
@@ -94,13 +94,29 @@ class Panel(Frame):
 
         # Load archetype(s) based on similarity
 
+        '''
+        self.md = Model('first_order_negative')
+        self.md.add_stock(name='stock1', x=289, y=145, eqn=str(100), inflow='flow1')
+        self.md.add_flow(name='flow1', x=181.75, y=145, pts=[(85, 145), (266.5, 145)],
+                         eqn="(get_value('goal1')()-get_value('stock1')())/get_value('at1')()")
+        self.md.add_aux(name='at1', x=141.5, y=56.5, eqn=str(5))
+        self.md.add_aux(name='goal1', x=148, y=229, eqn=str(1))
+
+        self.md.set_timer(name='time1', start=1, end=25, dt=0.125)
+
+        self.md.add_connector(150, from_var='stock1', to_var='flow1')
+        self.md.add_connector(200, from_var='at1', to_var='flow1')
+        self.md.add_connector(60, from_var='goal1', to_var='flow1')
+        self.md.add_connector(1, from_var='flow1', to_var='stock1')
+        '''
+
         behavior_to_archetype[self.suggested_archetype]
 
         # Draw the suggested archetype on with SFDCanvas
 
         self.sfd_canvas1 = SFDCanvas(self.fm_2, stocks=glbele.get_stocks(), flows=glbele.get_flows(), auxs=glbele.get_auxs(), connectors=glbele.get_connectors())
+        # self.sfd_canvas1 = SFDCanvas(self.fm_2, stocks=self.md.stocks, flows=self.md.flows, auxs=self.md.auxs, connectors=self.md.connectors)
 
-        
         # Generate lists of flows and stocks
 
         flows = {}  # use a dictionary to store both flow names and their values
@@ -110,7 +126,6 @@ class Panel(Frame):
                 flows[element] = 0
             if type(glbele.get_value(element)) == Stock:
                 stocks.append(element)
-
 
         # Run the model
 
@@ -124,11 +139,11 @@ class Panel(Frame):
 
             # 2. Change stocks with flows
             for stock in stocks:
-                try:
+                try:  # inflow
                     glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).inflow]*glbele.get_value('time1').dt)
                 except:
                     pass
-                try:
+                try:  # outflow
                     glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).outflow]*glbele.get_value('time1').dt*(-1))
                 except:
                     pass
