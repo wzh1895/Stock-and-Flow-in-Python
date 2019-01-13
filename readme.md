@@ -1,68 +1,25 @@
-# Stock and Flow Canvas
+# Stock and Flow in Python
 
-## Acknowledgement
+This project contains a few inter-related modules that are all dealing with System Dynamics in Python.
 
-Simulation of system dynamics models is made possible using the **PySD** project.
-https://github.com/JamesPHoughton/pysd
+- Conceptualization Panel: this file.
+- [Similarity Calculation](./similarity_calculation/readme.md): compare behaviors and quantify the similarity.
+- [Stock and Flow Canvas](./SFD_canvas/readme.md): display system dynamic Stella models (.stmx file) and simulate with PySD.
+- [Stmx Generator](./stmx_generator/readme.md): store a model in a .stmx file, which can be used by Stella.
 
-## Introduction
+---
 
-The first part of this project is a python realization of Stock and Flow Diagram display, based on **Tkinter**.
-The intention is to allow users to visually view the model.
-
-Here you can have a quick glance of it:
-
-**Model display:**
-
-![ScreenShot](./screenShots/screenShot_02.png)
-
-**Simulation result display:**
-
-![ScreenShot](./screenShots/screenShot_04.png)
-
-
-The second part of this project is an attempt to reproduce human conceptualization process (The P'HAPI, especially the P'HA). The idea is to automate the model conceptualization, in a way not purely driven by data, which the state-of-art.
+This file is about the Conceptualization Panel. It is an attempt to reproduce human conceptualization process (The P'HAPI, especially the P'HA part). The idea is to automate the model conceptualization, in a way not purely driven by data, which the state-of-art.
 
 Here you can have a quick glance of it:
 
 **Conceptualization Panel**
 
-![ScreenShot](./screenShots/screenShot_05.png)
-
-
-## How to use
-
-**Local-based Display**
-
-Stock and flow diagrams created by Stella can be displayed using this software.
-
-To display the diagram itself, no additional package other than **Python3** is needed.
-
-To simulate the the model and display the result, **PySD** and **matplotlib** are also needed.
-
-The program could be run from terminal, powershell, or CMD by executing:
-
-```
-python3 localMain.py
-```
-
-Then you can load the model, simulate and view the outcome in the graphic interface.
-
-**Web-based Display** (Still Trying)
-
-To deploy the program as a web application, you need **FlexxUI** and **Tornado**.
-
-On linux or macOS, execute:
-
-```
-python3 webMain.py --flexx-hostname=0.0.0.0 --flexx-port=8080
-```
-
-The line above may be different from the FlexxUI document, but it was proven to be working well.
+![ScreenShot](screenshots/screenShot_05.png)
 
 **Conceptualization Panel**
 
-To try the demo of conceptualization panel, excute:
+To try the demo of conceptualization panel demo, execute:
 
 ```
 python3 main.py
@@ -70,9 +27,7 @@ python3 main.py
 
 ## Project Structure: PHAPI
 
-
 (**Problem --> Hypothesis <--> Analysis** --> Policy --> Implementation) (*1)
-
 
 - **P**roblem
     - Processing multiple types of data
@@ -81,7 +36,8 @@ python3 main.py
         - Numerical data
 - **H**ypothesis
     - Suggesting possible structures based on similarity between situations
-        - Similarity between dynamics patterns
+        - Similarity calculation between dynamics patterns
+    - Display the suggested structure
 - **A**nalysis
     - Structure Analysis
     - Structure-oriented Behavior Analysis (Barlas and Kanar, 2000)

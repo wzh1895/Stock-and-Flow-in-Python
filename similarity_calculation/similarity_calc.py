@@ -23,7 +23,7 @@ test6 = np.linspace(50, 0, 101)
 
 
 def similarity_calc(x0):
-    filename = 'basic_behaviors.csv'
+    filename = './similarity_calculation/basic_behaviors.csv'
     data = pd.read_csv(filename)
 
     basic_behaviors = {}
