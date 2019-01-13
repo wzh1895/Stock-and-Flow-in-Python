@@ -1,8 +1,9 @@
-from flexx import flx, event
+import sys
+sys.path.append("..")
+from flexx import flx
+from SFD_canvas.model_handler import ModelHandler
 
-from modelHandler import ModelHandler
-
-filename = "reindeerModel.stmx"
+filename = "../sample_models/reindeerModel.stmx"
 modelHandler1 = ModelHandler(filename)
 
 class DisplayArea(flx.CanvasWidget):
@@ -12,7 +13,7 @@ class DisplayArea(flx.CanvasWidget):
         .flx-DisplayArea {background: #fff; border: 5px solid #888;}
         """
 
-    def init(self):
+    def __init__(self):
         self.ctx = self.node.getContext('2d')
         self.connectors = []
         self.stocks = []

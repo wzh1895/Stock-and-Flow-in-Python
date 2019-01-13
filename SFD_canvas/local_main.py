@@ -1,56 +1,51 @@
 import math
+import sys
+sys.path.append("..")
 from tkinter import *
+from tkinter import filedialog
+from tkinter import ttk
 
 import matplotlib
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
-import globalModel as glbele
+import os, shutil
+
+import xml.dom.minidom
+
+from model_handler import ModelHandler
 
 
 class SFDCanvas(Frame):
-    def __init__(self, master, stocks, flows, auxs, connectors):
+    def __init__(self, master):
         super().__init__(master)
         self.master = master
-        self.xmost = 400
-        self.ymost = 400
+        self.xmost = 300
+        self.ymost = 300
 
-        self.canvas = Canvas(master=self.master)
+        self.canvas = Canvas(self)
         self.canvas.configure(background='white')
-        #self.canvas.pack(side=BOTTOM, fill=BOTH, expand=1)
+        #self.canvas.pack(side = BOTTOM, fill = BOTH, expand = 1)
 
-        self.hbar = Scrollbar(master=self.master, orient=HORIZONTAL)
+        self.hbar = Scrollbar(self, orient=HORIZONTAL)
         self.hbar.pack(side=BOTTOM, fill=X)
         self.hbar.config(command=self.canvas.xview)
 
-        self.vbar = Scrollbar(master=self.master, orient=VERTICAL)
+        self.vbar = Scrollbar(self, orient=VERTICAL)
         self.vbar.pack(side=RIGHT, fill=Y)
         self.vbar.config(command=self.canvas.yview)
 
-        # self.createWidgets()
+        self.createWidgets()
 
         self.pack(fill=BOTH, expand=1)
-        # self.filename = ''
-
-        self.stocks = stocks
-        self.flows = flows
-        self.auxs = auxs
-        self.connectors = connectors
-
-        self.modelDrawer()
+        self.filename = ''
 
     def create_stock(self, x, y, w, h, label):
-        """
-
-        :param x: Center x
-        :param y: Center y
-        :param w: width
-        :param h: height
-        :param label: label
-        :return:
-
-        """
+        '''
+        Center x, Center y, width, height, label
+        '''
         self.canvas.create_rectangle(x - w * 0.5, y - h * 0.5, x + w * 0.5, y + h * 0.5, fill="#fff")
         self.canvas.create_text(x, y + 30, anchor=CENTER, font=("Arial", 13), text=label)
 
@@ -63,7 +58,7 @@ class SFDCanvas(Frame):
                 self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])
             else:
                 self.canvas.create_line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1],arrow=LAST)
-        # self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
+        #self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 13), text=label)
 
@@ -120,6 +115,7 @@ class SFDCanvas(Frame):
         rad_CB = math.atan2((yC - yB), (xB - xC))
 
         print('rad_CA, ', rad_CA, 'rad_CB, ', rad_CB)
+
 
         # calculate radius
 
@@ -235,12 +231,62 @@ class SFDCanvas(Frame):
 
     # Here starts Widgets and Commands
 
+    def createWidgets(self):
+        fm_1 = Frame(self.master)
+        self.lb = Label(fm_1,text='Load and display a Stella SD Model')
+        self.lb.pack()
+        fm_1.pack(side = TOP)
+
+        fm_2 = Frame(fm_1)
+        self.btn1 = Button(fm_2, text="Select model", command = self.fileLoad)
+        self.btn1.pack(side = LEFT)
+        self.btn2 = Button(fm_2, text="Run", command = self.simulationHandler)
+        self.btn2.pack(side = LEFT)
+        self.comboxlist = ttk.Combobox(fm_2)
+        self.variablesInModel = ["Variable"]
+        self.comboxlist["values"] = self.variablesInModel
+        self.comboxlist.current(0)
+        self.comboxlist.bind("<<ComboboxSelected>>",self.selectVariable)
+        self.comboxlist.pack(side = LEFT)
+        self.btn3 = Button(fm_2, text="Show Figure", command = self.showFigure)
+        self.btn3.pack(side = LEFT)
+        self.btn4 = Button(fm_2, text="Reset canvas", command = self.resetCanvas)
+        self.btn4.pack(side = LEFT)
+        fm_2.pack(side = TOP)
+
+    def fileLoad(self):
+        self.filename = filedialog.askopenfilename()
+
+        if self.filename != '':
+            self.lb.config(text = "File selected: " + self.filename)
+            self.modelHandler1 = ModelHandler(self.filename)
+            self.modelDrawer()
+
+        else:
+            self.lb.config(text = "No file is selected.")
+
+    def resetCanvas(self):
+        self.canvas.delete('all')
+        self.lb.config(text = 'Load and display a Stella SD Model')
+        self.variablesInModel = ["Variable"]
+        self.comboxlist["values"] = self.variablesInModel
+        self.comboxlist.current(0)
+        self.xmost = 300
+        self.ymost = 300
+        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
+
+    def fileHandler(self, filename):
+        DOMTree = xml.dom.minidom.parse(filename)
+        #self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
+        self.model = DOMTree.documentElement
+
     def modelDrawer(self):
         # now starts the 'drawing' part
         self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
 
         #self.canvas.config(width = wid, height = hei)
         self.canvas.config(xscrollcommand = self.hbar.set, yscrollcommand = self.vbar.set)
+
 
         # set common parameters
         width1 = 46
@@ -249,11 +295,9 @@ class SFDCanvas(Frame):
         radius1 = 5
 
         # draw connectors
-        for c in self.connectors:
+        for c in self.modelHandler1.connectors:
             print("\n")
             print(c.uid)
-
-            '''
             # from
             print("c.from_var:", c.from_var, "childNodes:", c.from_var.childNodes)
 
@@ -275,19 +319,14 @@ class SFDCanvas(Frame):
                 print("it has childNodes, so normal variable")
                 print("c.to_var.childNodes[0].data: ", c.to_var.childNodes[0].data)
                 to_cord = self.locateVar(c.to_var.childNodes[0].data)
-            
-            print("to_cord: ", to_cord)
-            '''
-            from_cord = [glbele.get_value(c.from_var).x, glbele.get_value(c.from_var).y]
-            to_cord = [glbele.get_value(c.to_var).x, glbele.get_value(c.to_var).y]
 
+            print("to_cord: ", to_cord)
             from_to_cord = from_cord + to_cord
             self.create_connector(from_to_cord[0], from_to_cord[1], from_to_cord[2], from_to_cord[3] - 8,
                                   c.angle)  # minus 8: the arrow it self not consumed
 
         # draw stocks
-        # for s in self.modelHandler1.stocks:
-        for s in self.stocks:
+        for s in self.modelHandler1.stocks:
             self.create_stock(s.x, s.y, width1, height1, s.name)
             if s.x> self.xmost:
                 self.xmost = s.x
@@ -295,7 +334,7 @@ class SFDCanvas(Frame):
                 self.ymost = s.y
 
         # draw flows
-        for f in self.flows:
+        for f in self.modelHandler1.flows:
             self.create_flow(f.x, f.y, f.pts, radius1, f.name)
             if f.x > self.xmost:
                 self.xmost = f.x
@@ -303,13 +342,13 @@ class SFDCanvas(Frame):
                 self.ymost = f.y
 
         # draw auxs
-        for a in self.auxs:
+        for a in self.modelHandler1.auxs:
             self.create_aux(a.x, a.y, radius1, a.name)
             if a.x > self.xmost:
                 self.xmost = a.x
             if a.y > self.ymost:
                 self.ymost = a.y
-        '''
+
         # draw aliases
         for al in self.modelHandler1.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
@@ -317,15 +356,15 @@ class SFDCanvas(Frame):
                 self.xmost = al.x
             if al.y > self.ymost:
                 self.ymost = al.y
-        '''
 
+        self.xmost += 150
+        self.ymost += 100
         print('Xmost,',self.xmost,'Ymost,',self.ymost)
         self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
         self.canvas.pack(side = LEFT, expand=1, fill=BOTH)
 
     # Here starts the simulation part
 
-    '''
     def simulationHandler(self):
 
         import pysd
@@ -335,7 +374,7 @@ class SFDCanvas(Frame):
             shutil.copy(self.filename,new_name)
             self.model_run = pysd.read_xmile(new_name)
             os.remove(new_name)
-            os.remove(new_name[:-6]+".py")
+            # os.remove(new_name[:-6]+".py")
             self.results = self.model_run.run()
             print("Simulation Finished.")
             self.variablesInModel = self.results.columns.values.tolist()
@@ -356,8 +395,6 @@ class SFDCanvas(Frame):
         a.set_ylabel(self.selectedVariable)
 
         figure1 = GraphWindow(self.selectedVariable, f)
-    
-    '''
 
 class GraphWindow():
     def __init__(self,title,figure):
@@ -366,3 +403,16 @@ class GraphWindow():
         graph = FigureCanvasTkAgg(figure, master=top)
         graph.draw()
         graph._tkcanvas.pack()
+
+def main():
+    root = Tk()
+    wid = 800
+    hei = 600
+    Frame1 = SFDCanvas(root)
+    root.wm_title("Stock and Flow Canvas")
+    root.geometry(str(wid)+"x"+str(hei)+"+100+100")
+    #app = SFDCanvas(master = root)
+    root.mainloop()
+
+if __name__ == '__main__':
+    main()

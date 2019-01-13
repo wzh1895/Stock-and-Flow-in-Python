@@ -10,10 +10,10 @@ matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from tkinter import *
 
-from similarityCalc import similarity_calc
-from globalModel import Stock, Flow, Aux, Time, Connector, Model
-import globalModel as glbele
-from SFDDisplay import SFDCanvas
+from similarity_calculation.similarity_calc import similarity_calc
+from classes.global_model import Stock, Flow, Aux, Time, Connector
+from classes import global_model as glbele
+from SFD_canvas.SFD_display import SFDCanvas
 
 glbele._init()
 

@@ -1,6 +1,3 @@
-import networkx as nx
-import globalModel as glbele
-
 """
 Archetypes used as basic elements to suggest candidate structures
 2 types of archetypes are considered, but not necessarily to be different in nature

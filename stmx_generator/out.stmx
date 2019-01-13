@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><xmile version="1.0" xmlns="http://docs.oasis-open.org/xmile/ns/XMILE/v1.0" xmlns:isee="http://iseesystems.com/XMILE">
+	<header>
+		<smile namespace="std, isee" version="1.0"/>
+		<name>blankStmx</name>
+		<uuid>19ad5c38-fe2c-4225-bb63-3f524bf1834b</uuid>
+		<vendor>isee systems, inc.</vendor>
+		<product isee:build_number="1653" isee:saved_by_v1="true" lang="en" version="1.8.1">Stella Architect</product>
+	</header>
+	<sim_specs isee:instantaneous_flows="false" isee:restore_on_start="false" isee:simulation_delay="0.1" method="Euler" time_units="Months">
+		<start>1</start>
+		<stop>13</stop>
+		<dt reciprocal="true">4</dt>
+	</sim_specs>
+	<isee:prefs interface_max_page_height="10000" interface_max_page_width="10000" interface_min_page_height="0" interface_min_page_width="0" interface_scale_ui="true" keep="false" layer="map" live_update_on_drag="true" rifp="true" saved_runs="5" show_module_prefix="true" show_restore_buttons="false"/>
+	<isee:multiplayer_settings advance_time_increment="1" allow_observers="false" enabled="false" include_chat="true" observer_start_page="home_page"/>
+	<isee:time_formats default_format="Builtin">
+		<isee:time_format name="Builtin" type="adaptive"/>
+	</isee:time_formats>
+	<default_format/>
+	<model_units><unit name="Months"><eqn/><alias>mo</alias><alias>month</alias></unit></model_units>
+	<model>
+		<variables>
+			<isee:dependencies><var name="Change_in_Temperature"><in>Temperature</in><in>Adjustment_Time</in><in>Goal</in></var></isee:dependencies>
+		<stock name="Temperature"><eqn>100</eqn><inflow>Change_in_Temperature</inflow><units>C</units></stock><flow name="Change in Temperature"><eqn>(Goal-Temperature)/Adjustment_Time</eqn><units>C/Months</units></flow><aux name="Adjustment Time"><eqn>5</eqn><units>Months</units></aux><aux name="Goal"><eqn>20</eqn><units>C</units></aux></variables>
+		<views>
+			<style background="white" border_color="black" border_style="none" border_width="thin" color="black" font_color="black" font_family="Arial" font_size="10pt" font_style="normal" font_weight="normal" padding="2" text_align="center" text_decoration="none" vertical_text_align="center">
+				<text_box background="white" color="black" font_size="12pt" text_align="left" vertical_text_align="top"/>
+				<isee:loop_indicator background="white" color="black" font_size="12pt" text_align="left" vertical_text_align="top"/>
+				<numeric_display background="white" color="blue" font_size="9pt" isee:transparent="false"/>
+				<graph axis_color="#666666" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_align="center" axis_label_text_border_color="black" axis_label_text_border_style="none" axis_label_text_border_width="thin" axis_label_text_decoration="none" axis_label_text_padding="2" axis_label_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_align="center" axis_title_text_border_color="black" axis_title_text_border_style="none" axis_title_text_border_width="thin" axis_title_text_decoration="none" axis_title_text_padding="2" axis_title_vertical_text_align="center" background="white" color="black" font_size="12pt" grid_color="#C8C8C8" isee:graph_area_color="white" isee:hide_border="false" isee:transparent="false" legend_position="bottom">
+					<isee:series_styles>
+						<isee:series_style color="blue" thickness="1"/>
+						<isee:series_style color="red" pen_style="dot_dashed" thickness="1"/>
+						<isee:series_style color="fuchsia" pen_style="dotted" thickness="1"/>
+						<isee:series_style color="#008F44" pen_style="dashed" thickness="1"/>
+						<isee:series_style color="#FF7F00" thickness="1"/>
+						<isee:series_style color="#7F00FF" pen_style="dot_dashed" thickness="1"/>
+						<isee:series_style color="#0CA0FF" pen_style="dotted" thickness="1"/>
+						<isee:series_style color="lime" pen_style="dashed" thickness="1"/>
+						<isee:series_style color="#FF007F" thickness="1"/>
+						<isee:series_style color="aqua" pen_style="dot_dashed" thickness="1"/>
+						<isee:series_style color="#F586FF" pen_style="dotted" thickness="1"/>
+						<isee:series_style color="black" pen_style="dashed" thickness="1"/>
+						<isee:series_style color="#C8C8C8" thickness="1"/>
+					</isee:series_styles>
+				</graph>
+				<table background="#E0E0E0" blank_column_width="80" color="black" column_width="160" font_size="12pt" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_font_style="normal" header_font_weight="normal" header_text_align="center" header_text_border_color="black" header_text_border_style="none" header_text_border_width="thin" header_text_decoration="none" header_text_padding="2" header_vertical_text_align="center" interval="1" isee:auto_fit="true" isee:unlimited_table_length="false" isee:use_alternate_row_colors="false" orientation="vertical" report_balances="beginning" report_flows="instantaneous" text_align="right" wrap_text="false"/>
+				<button background="#E0E0E0" color="black" corner_radius="0" font_size="12pt" icon_side="top" isee:flat="false" isee:highlight_color="#959595" isee:highlight_on_hover="false" transparent="false"/>
+				<isee:annotation background="#E0E0E0" color="black" corner_radius="0" font_size="12pt" icon_side="top" isee:flat="false" isee:highlight_color="#959595" isee:highlight_on_hover="false" popup_background_color="#FFFECF" transparent="false"/>
+				<slider background="#E0E0E0" color="black" font_size="12pt" input_expands="true" input_width="100" isee:show_hover_tip="when_deciding" label_side="top" num_ticks="3" vertical="false" wrap_title="true"/>
+				<isee:sim_speed_slider background="white" color="black"/>
+				<isee:time_slider background="silver" color="#E95F74"/>
+				<isee:pie_input background="white" color="black" font_size="12pt" isee:transparent="false" legend_position="bottom"/>
+				<knob background="#E0E0E0" color="#66CC66" font_size="12pt" label_side="bottom" wrap_title="true"/>
+				<numeric_input background="#E0E0E0" color="black" font_size="12pt" input_expands="false" input_width="100" label_side="left" wrap_title="true"/>
+				<switch background="#E0E0E0" color="black" font_size="12pt" isee:appearance="switch" isee:on_color="green" label_side="top" wrap_title="true"/>
+				<options appearance="radio-buttons" arrangement="vertical" background="white" color="black"/>
+				<graphical_input background="#E0E0E0" color="black" font_size="12pt" isee:show_hover_tip="true"/>
+				<group_input background="#E0E0E0" color="black" font_size="12pt"/>
+				<lamp background="white" color="black" font_size="9pt"/>
+				<gauge appearance="radial" background="white" bar_color="#EEEEEE" bar_progress_color="black" color="black" font_size="9pt" needle_color="#F09F72" num_major_ticks="11" num_minor_ticks="11" show_numeric_value="true"/>
+				<isee:spatial_map background="white" color="black" font_size="12pt"/>
+				<isee:animation_object background="white" color="black" font_size="12pt"/>
+				<isee:navigation_widget appearance="tabs" background="white" color="black" corner_radius="4" item_background="#DDDDDD" item_spacing="6" selected_item_background="white" selected_item_color="black"/>
+				<isee:shape background="white" border_style="solid" border_width="thin" color="black" font_size="12pt" opacity="1" text_align="left" transparent_background="true" vertical_text_align="top"/>
+			</style>
+			<view isee:name_only_modules="true" isee:popup_graphs_are_comparative="true" isee:show_pages="false" page_height="571" page_width="818" type="stock_flow">
+				<style background="white" border_color="black" border_style="none" border_width="thin" color="black" font_color="black" font_family="Arial" font_size="10pt" font_style="normal" font_weight="normal" padding="2" text_align="center" text_decoration="none" vertical_text_align="center">
+					<stock background="white" color="blue" font_color="blue" font_size="13pt" label_side="top">
+						<shape height="35" type="rectangle" width="45"/>
+					</stock>
+					<flow background="white" color="blue" font_color="blue" font_size="13pt" label_side="bottom"/>
+					<module background="white" color="blue" font_color="blue" font_size="13pt" label_side="top">
+						<shape type="name_only"/>
+					</module>
+					<aux background="white" color="blue" font_color="blue" font_size="13pt" label_side="bottom">
+						<shape radius="18" type="circle"/>
+					</aux>
+					<group background="white" color="red" font_color="red" font_size="9pt"/>
+					<connector background="white" color="#FF007F" font_color="#FF007F" font_size="9pt" isee:thickness="1"/>
+					<text_box background="white" color="black" font_size="12pt" text_align="left" vertical_text_align="top"/>
+					<isee:loop_indicator background="white" color="black" font_size="12pt" text_align="left" vertical_text_align="top"/>
+					<numeric_display background="white" color="blue" font_size="9pt" isee:transparent="false"/>
+					<graph axis_color="#666666" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_align="center" axis_label_text_border_color="black" axis_label_text_border_style="none" axis_label_text_border_width="thin" axis_label_text_decoration="none" axis_label_text_padding="2" axis_label_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_align="center" axis_title_text_border_color="black" axis_title_text_border_style="none" axis_title_text_border_width="thin" axis_title_text_decoration="none" axis_title_text_padding="2" axis_title_vertical_text_align="center" background="white" color="black" font_size="12pt" grid_color="#C8C8C8" isee:graph_area_color="white" isee:hide_border="false" isee:transparent="false" legend_position="bottom">
+						<isee:series_styles>
+							<isee:series_style color="blue" thickness="1"/>
+							<isee:series_style color="red" pen_style="dot_dashed" thickness="1"/>
+							<isee:series_style color="fuchsia" pen_style="dotted" thickness="1"/>
+							<isee:series_style color="#008F44" pen_style="dashed" thickness="1"/>
+							<isee:series_style color="#FF7F00" thickness="1"/>
+							<isee:series_style color="#7F00FF" pen_style="dot_dashed" thickness="1"/>
+							<isee:series_style color="#0CA0FF" pen_style="dotted" thickness="1"/>
+							<isee:series_style color="lime" pen_style="dashed" thickness="1"/>
+							<isee:series_style color="#FF007F" thickness="1"/>
+							<isee:series_style color="aqua" pen_style="dot_dashed" thickness="1"/>
+							<isee:series_style color="#F586FF" pen_style="dotted" thickness="1"/>
+							<isee:series_style color="black" pen_style="dashed" thickness="1"/>
+							<isee:series_style color="#C8C8C8" thickness="1"/>
+						</isee:series_styles>
+					</graph>
+					<table background="#E0E0E0" blank_column_width="80" color="black" column_width="160" font_size="12pt" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_font_style="normal" header_font_weight="normal" header_text_align="center" header_text_border_color="black" header_text_border_style="none" header_text_border_width="thin" header_text_decoration="none" header_text_padding="2" header_vertical_text_align="center" interval="1" isee:auto_fit="true" isee:unlimited_table_length="false" isee:use_alternate_row_colors="false" orientation="vertical" report_balances="beginning" report_flows="instantaneous" text_align="right" wrap_text="false"/>
+				</style>
+			<stock name="Temperature" x="379" y="260"/><flow name="Change in Temperature" x="271.75" y="260"><pts><pt x="175" y="260"/><pt x="356.5" y="260"/></pts></flow><aux name="Adjustment Time" x="227" y="149"/><aux name="Goal" x="238" y="344"/><connector angle="116.565" uid="1"><from>Temperature</from><to>Change_in_Temperature</to></connector><connector angle="306.87" uid="2"><from>Adjustment_Time</from><to>Change_in_Temperature</to></connector><connector angle="60.9454" uid="3"><from>Goal</from><to>Change_in_Temperature</to></connector></view>
+		</views>
+	</model>
+</xmile>

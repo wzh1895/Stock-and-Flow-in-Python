@@ -4,7 +4,7 @@ import xml.dom.minidom
 def read_stmx(filename):
     file = xml.dom.minidom.parse(filename)
     # root = stmx_file.documentElement
-    return  file
+    return file
 
 def add_unit(where,name,alias1,alias2):
     # First create a standalone unit node, build its inner structure
@@ -136,7 +136,7 @@ def write_stmx(tree,filename):
     file_handle.close()
 
 
-stmx_file = read_stmx('blankStmx.stmx')
+stmx_file = read_stmx('blank_stmx.stmx')
 
 add_unit(stmx_file,name="Months",alias1="mo",alias2="month")
 add_stock(stmx_file,name="Temperature",eqn="100",inflow="Change_in_Temperature",units="C")

@@ -1,4 +1,4 @@
-from globalModel import Model
+from classes.global_model import Model
 
 md = Model()
 
