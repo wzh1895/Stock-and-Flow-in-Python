@@ -2,8 +2,8 @@ import xml.dom.minidom
 from classes.sd_classes import Stock, Flow, Aux, Connector, Alias
 
 
-class ModelHandler():
-    def __init__(self,filename):
+class ModelHandler(object):
+    def __init__(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
         self.model = DOMTree.documentElement
         self.modelAnalyzer()

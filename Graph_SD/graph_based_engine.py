@@ -2,34 +2,32 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-# define functions
-def linear(x, a=1, b=0):
-    return a * float(x) + b
-
-
-LINEAR = linear
-
-
-def subtract(x, y):
-    return float(x) - float(y)
-
-
-SUBTRACT = subtract
-
-
-def division(x, y):
-    return float(x) / float(y)
-
-
-DIVISION = division
-
-
 # define constants
 STOCK = 'stock'
 FLOW = 'flow'
 VARIABLE = 'variable'
 PARAMETER = 'parameter'
 CONNECTOR = 'connector'
+
+
+# Define functions
+class Functions(object):
+    def __init__(self):
+        pass
+
+    def linear(x, a=1, b=0):
+        return a * float(x) + b
+
+    def subtract(x, y):
+        return float(x) - float(y)
+
+    def division(x, y):
+        return float(x) / float(y)
+
+
+LINEAR = Functions.linear
+SUBTRACT = Functions.subtract
+DIVISION = Functions.division
 
 
 class Structure(object):
