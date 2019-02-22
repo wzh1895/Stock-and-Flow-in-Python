@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/Stock-and-Flow-in-Python.iml" filepath="$PROJECT_DIR$/.idea/Stock-and-Flow-in-Python.iml" />
       <module fileurl="file://$PROJECT_DIR$/../Stock_and_Flow_in_Python/.idea/Stock_and_Flow_in_Python.iml" filepath="$PROJECT_DIR$/../Stock_and_Flow_in_Python/.idea/Stock_and_Flow_in_Python.iml" />
     </modules>
   </component>
