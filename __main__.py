@@ -1,10 +1,8 @@
 # SD-simulator.py
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from SFD_canvas.model_handler import ModelHandler
-from Graph_SD.graph_based_engine import Functions, Structure, Session
+from SFD_canvas.model_handler_1 import ModelHandler
 from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR
-from Graph_SD.graph_based_engine import LINEAR, SUBTRACT, DIVISION
 import xml.dom.minidom
 import math
 import os
@@ -82,37 +80,37 @@ class SFDCanvas(Frame):
         if math.pi < alpha < math.pi * 2:
             alpha -= math.pi * 2
         beta = math.atan2((yA - yB), (xB - xA))  # angle between A->B and x-positive
-        print('alpha in degrees, ', math.degrees(alpha), 'beta in degrees, ', math.degrees(beta))
+        #print('alpha in degrees, ', math.degrees(alpha), 'beta in degrees, ', math.degrees(beta))
 
         # calculate the center of circle
 
         rad_radiusA = alpha - math.pi * 0.5  # radiant of radius of the circle going out from A
-        print('rad_radiusA (degrees), ', math.degrees(rad_radiusA), 'radians, ', rad_radiusA)
+        #print('rad_radiusA (degrees), ', math.degrees(rad_radiusA), 'radians, ', rad_radiusA)
         gA = math.tan(rad_radiusA)
-        print('gradiantA, ', gA)
+        #print('gradiantA, ', gA)
         if xB != xA:
             gAB = (yA - yB) / (xB - xA)  # y axis inversed, could be 'zero division'
         else:
             gAB = 99.99
-        print('gradiantAB, ', gAB)
+        #print('gradiantAB, ', gAB)
 
         gM = (-1) / gAB
-        print('gradiantM, ', gM)
+        #print('gradiantM, ', gM)
         xM = (xA + xB) / 2
         yM = (yA + yB) / 2
-        print("M's coordinate", xM, yM)
+        #print("M's coordinate", xM, yM)
 
         xC = (yA + gA * xA - gM * xM - yM) / (gA - gM)
         yC = yA - gA * (xC - xA)
-        print("A's coordinate: ", xA, yA)
-        print("C's coordinate: ", xC, yC)
+        #print("A's coordinate: ", xA, yA)
+        #print("C's coordinate: ", xC, yC)
 
         #self.create_dot(xC, yC, 2, color, str(angle))  # draw center of the circle
         # TODO: when C and A are calculated to be the same point (and in fact not)
         rad_CA = math.atan2((yC - yA), (xA - xC))
         rad_CB = math.atan2((yC - yB), (xB - xC))
 
-        print('rad_CA, ', rad_CA, 'rad_CB, ', rad_CB)
+        #print('rad_CA, ', rad_CA, 'rad_CB, ', rad_CB)
 
 
         # calculate radius
@@ -121,25 +119,25 @@ class SFDCanvas(Frame):
         baseArc = math.atan2(yC - yA, xA - xC)
 
 
-        print('baseArc in degrees, ', math.degrees(baseArc))
+        #print('baseArc in degrees, ', math.degrees(baseArc))
 
-        print("checking youhu or liehu")
+        #print("checking youhu or liehu")
         # vectors, this part seems to be correct
 
         vecStarting = [math.cos(alpha), math.sin(alpha)]
         vecAtoB = [xB - xA, yA - yB]
-        print('vecStarting, ', vecStarting, 'vecAtoB, ', vecAtoB)
+        #print('vecStarting, ', vecStarting, 'vecAtoB, ', vecAtoB)
         angleCos = self.cosFormula(vecStarting, vecAtoB)
-        print('Cosine of the angle in Between, ', angleCos)
+        #print('Cosine of the angle in Between, ', angleCos)
 
         # checking youhu or liehu the direction
 
         inverse = 1
 
         if angleCos < 0:  # you hu
-            print('deg_CA, ', math.degrees(rad_CA),'deg_CB',math.degrees(rad_CB))
+            #print('deg_CA, ', math.degrees(rad_CA),'deg_CB',math.degrees(rad_CB))
             diff = rad_CB-rad_CA
-            print('youhu')
+            #print('youhu')
         else: # lie hu
             if rad_CA*rad_CB<0 and rad_CA <= rad_CB: # yi hao
                 diff = rad_CB-rad_CA
@@ -159,8 +157,8 @@ class SFDCanvas(Frame):
                     diff = math.pi*2 - diff
             else:
                 diff = rad_CB-rad_CA
-            print('liehu')
-        print('final diff in degrees, ', math.degrees(diff))
+            #print('liehu')
+        #print('final diff in degrees, ', math.degrees(diff))
         # generate new points
 
         x = [xA]
@@ -206,7 +204,15 @@ class SFDCanvas(Frame):
 
     def locateVar(self, name):
         name = name.replace("_", " ")
-        # print(name)
+        print("locating...")
+        print(name)
+        print(self.modelHandler1.sess1.structures['default'].sfd.nodes)
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            if element == name.replace("\\n", " "):
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                return [float(x), float(y)]
+        '''
         for s in self.modelHandler1.stocks:
             nameWithoutN = s.name.replace("\\n", " ")
             if nameWithoutN == name:
@@ -220,6 +226,7 @@ class SFDCanvas(Frame):
             # print(nameWithoutN)
             if nameWithoutN == name:
                 return [a.x, a.y]
+        '''
 
     def locateAlias(self, uid):
         # print("locateAlias is called")
@@ -314,39 +321,81 @@ class SFDCanvas(Frame):
                 print("it has more than 1 childNodes, so alias")
                 to_cord = self.locateAlias(c.to_var.childNodes[1].getAttribute("uid"))
             else:
-                print("it has childNodes, so normal variable")
-                print("c.to_var.childNodes[0].data: ", c.to_var.childNodes[0].data)
+                #print("it has childNodes, so normal variable")
+                #print("c.to_var.childNodes[0].data: ", c.to_var.childNodes[0].data)
                 to_cord = self.locateVar(c.to_var.childNodes[0].data)
 
             print("to_cord: ", to_cord)
+
             from_to_cord = from_cord + to_cord
             self.create_connector(from_to_cord[0], from_to_cord[1], from_to_cord[2], from_to_cord[3] - 8,
                                   c.angle)  # minus 8: the arrow it self not consumed
 
         # draw stocks
+        '''
         for s in self.modelHandler1.stocks:
             self.create_stock(s.x, s.y, width1, height1, s.name)
             if s.x> self.xmost:
                 self.xmost = s.x
             if s.y> self.ymost:
                 self.ymost = s.y
+        '''
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            #print(element)
+            #print(self.modelHandler1.sess1.structures['default'].sfd.nodes.data())
+            #print(self.modelHandler1.sess1.structures['default'].sfd.nodes[element])
+            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                #print(x,y)
+                self.create_stock(x, y, width1, height1, element)
+                if x > self.xmost:
+                    self.xmost = x
+                if y > self.ymost:
+                    self.ymost = y
 
         # draw flows
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == FLOW:
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                points = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['points']
+                self.create_flow(x, y, points, radius1, element)
+                if x > self.xmost:
+                    self.xmost = x
+                if y > self.ymost:
+                    self.ymost = y
+
+        '''
         for f in self.modelHandler1.flows:
             self.create_flow(f.x, f.y, f.pts, radius1, f.name)
             if f.x > self.xmost:
                 self.xmost = f.x
             if f.y > self.ymost:
                 self.ymost = f.y
+        '''
 
         # draw auxs
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                self.create_aux(x, y, radius1, element)
+                if x > self.xmost:
+                    self.xmost = x
+                if y > self.ymost:
+                    self.ymost = y
+
+
+        '''
         for a in self.modelHandler1.auxs:
             self.create_aux(a.x, a.y, radius1, a.name)
             if a.x > self.xmost:
                 self.xmost = a.x
             if a.y > self.ymost:
                 self.ymost = a.y
-
+        '''
+        '''
         # draw aliases
         for al in self.modelHandler1.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
@@ -354,6 +403,7 @@ class SFDCanvas(Frame):
                 self.xmost = al.x
             if al.y > self.ymost:
                 self.ymost = al.y
+        '''
 
         self.xmost += 150
         self.ymost += 100
@@ -396,7 +446,7 @@ class SFDCanvas(Frame):
 
 
 class GraphWindow():
-    def __init__(self,title,figure):
+    def __init__(self, title, figure):
         top = Toplevel()
         top.title = title
         graph = FigureCanvasTkAgg(figure, master=top)
