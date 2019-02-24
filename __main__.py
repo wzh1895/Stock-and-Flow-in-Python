@@ -11,7 +11,7 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 
 class SFDCanvas(Frame):
