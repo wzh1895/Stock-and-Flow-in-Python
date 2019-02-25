@@ -5,7 +5,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 from classes import global_model as glbele
 
 
