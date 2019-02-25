@@ -2,18 +2,22 @@
 <xmile version="1.0" xmlns="http://docs.oasis-open.org/xmile/ns/XMILE/v1.0" xmlns:isee="http://iseesystems.com/XMILE">
 	<header>
 		<smile version="1.0" namespace="std, isee"/>
-		<name>14Nov</name>
+		<name>businessStrategy</name>
 		<uuid>b7f8137e-e463-445e-8a1b-c690db57153c</uuid>
 		<vendor>isee systems, inc.</vendor>
-		<product version="1.4.3" isee:build_number="1229" isee:saved_by_v1="true" lang="en">Stella Architect</product>
+		<product version="1.8.2" isee:build_number="1708" isee:saved_by_v1="true" lang="en">Stella Architect</product>
 	</header>
-	<sim_specs isee:simulation_delay="0.0254902" method="Euler" time_units="Months" isee:pause_after_rates="false" isee:instantaneous_flows="false">
+	<sim_specs isee:simulation_delay="0.0254902" isee:restore_on_start="false" method="Euler" time_units="Months" isee:instantaneous_flows="false">
 		<start>0</start>
 		<stop>50</stop>
 		<dt reciprocal="true">4</dt>
 	</sim_specs>
-	<isee:prefs show_module_prefix="true" live_update_on_drag="true" show_restore_buttons="false" layer="model" saved_runs="5" keep="false" rifp="true"/>
+	<isee:prefs show_module_prefix="true" live_update_on_drag="true" show_restore_buttons="false" layer="model" interface_scale_ui="true" interface_max_page_width="10000" interface_max_page_height="10000" interface_min_page_width="0" interface_min_page_height="0" saved_runs="5" keep="false" rifp="true"/>
 	<isee:multiplayer_settings include_chat="true" allow_observers="false" advance_time_increment="1" observer_start_page="home_page" enabled="false"/>
+	<isee:time_formats default_format="Builtin">
+		<isee:time_format name="Builtin" type="adaptive"/>
+	</isee:time_formats>
+	<default_format/>
 	<model_units>
 		<unit name="People">
 			<eqn/>
@@ -24,6 +28,7 @@
 			<eqn>1</eqn>
 			<alias>dmnl</alias>
 			<alias>unitless</alias>
+			<alias>fraction</alias>
 		</unit>
 		<unit name="Months">
 			<eqn/>
@@ -142,7 +147,7 @@
 				</gf>
 				<units>unitless</units>
 			</aux>
-			<aux name="Normal fraction\ncorrect and complete">
+			<aux name="Normal fraction correct and complete">
 				<eqn>0.85</eqn>
 				<units>unitless</units>
 			</aux>
@@ -272,140 +277,13 @@
 				<eqn>Normal_productivity*Effectiveness_of_staff</eqn>
 				<units>tasks/persons/months</units>
 			</aux>
-			<isee:dependencies>
-				<var name="work_to_do">
-					<in>Initial_work_to_do</in>
-				</var>
-				<var name="completion_rate">
-					<in>Fraction_correct_and_complete</in>
-					<in>potential_completion_rate</in>
-				</var>
-				<var name="progress_error_rate">
-					<in>potential_completion_rate</in>
-					<in>Fraction_correct_and_complete</in>
-				</var>
-				<var name="Fraction_correct_and_complete">
-					<in>Effect_of_average_work_quality_on_fraction_correct</in>
-					<in>Normal_fraction_correct_and_complete</in>
-					<in>Effectiveness_of_staff</in>
-				</var>
-				<var name="potential_completion_rate">
-					<in>maximum_completion_rate</in>
-					<in>Total_Staff</in>
-					<in>Productivity</in>
-				</var>
-				<var name="maximum_completion_rate">
-					<in>minimun_time_to_perform_a_task</in>
-					<in>work_to_do</in>
-				</var>
-				<var name="time_to_discover_errors">
-					<in>Normal_time_to_discover_errors</in>
-					<in>Effect_of_work_progress_on_time_to_discover_rework</in>
-				</var>
-				<var name="work_finished_rate">
-					<in>completion_rate</in>
-					<in>progress_error_rate</in>
-				</var>
-				<var name="rework_discovery_rate">
-					<in>time_to_discover_errors</in>
-					<in>undiscovered_rework</in>
-				</var>
-				<var name="Fraction_believed_to_be_completed">
-					<in>Initial_work_to_do</in>
-					<in>Work_believed_to_be_done</in>
-				</var>
-				<var name="Work_believed_to_be_done">
-					<in>work_done</in>
-					<in>undiscovered_rework</in>
-				</var>
-				<var name="Effect_of_work_progress_on_time_to_discover_rework">
-					<in>Fraction_believed_to_be_completed</in>
-				</var>
-				<var name="Average_work_quality">
-					<in>Work_believed_to_be_done</in>
-					<in>work_done</in>
-				</var>
-				<var name="Effect_of_average_work_quality_on_fraction_correct">
-					<in>Average_work_quality</in>
-				</var>
-				<var name="effort_spended">
-					<in>Time_worked_per_staff_per_month</in>
-					<in>Total_Staff</in>
-				</var>
-				<var name="Hiring_rate">
-					<in>Time_to_hire_new_staff</in>
-					<in>Extra_staff_needed</in>
-				</var>
-				<var name="Staff_gaining_experience">
-					<in>New_staff</in>
-					<in>Time_to_be_experienced</in>
-				</var>
-				<var name="Experienced_staff_leaving">
-					<in>Required_leaving_rate</in>
-					<in>New_staff_leaving_rate</in>
-				</var>
-				<var name="Extra_staff_needed">
-					<in>Required_staff</in>
-					<in>Total_Staff</in>
-				</var>
-				<var name="Total_Staff">
-					<in>New_staff</in>
-					<in>Experienced_staff</in>
-				</var>
-				<var name="Required_staff">
-					<in>Perceived_productivity</in>
-					<in>Perceived_work_remaining</in>
-					<in>Time_remaining</in>
-				</var>
-				<var name="Perceived_work_remaining">
-					<in>Initial_work_to_do</in>
-					<in>Work_believed_to_be_done</in>
-				</var>
-				<var name="Perceived_productivity">
-					<in>Cumulative_work_done</in>
-					<in>Cumulative_person_months</in>
-				</var>
-				<var name="New_staff_leaving_rate">
-					<in>Required_leaving_rate</in>
-					<in>maximum_leaving_rate_new_staff</in>
-				</var>
-				<var name="Excess_Staff">
-					<in>Required_staff</in>
-					<in>Total_Staff</in>
-				</var>
-				<var name="Time_remaining">
-					<in>Time_Elapsed</in>
-					<in>Project_completion_deadline</in>
-				</var>
-				<var name="Required_leaving_rate">
-					<in>Leaving_time</in>
-					<in>Excess_Staff</in>
-				</var>
-				<var name="maximum_leaving_rate_new_staff">
-					<in>Leaving_time</in>
-					<in>New_staff</in>
-				</var>
-				<var name="Rookie_fraction">
-					<in>New_staff</in>
-					<in>Experienced_staff</in>
-				</var>
-				<var name="Effectiveness_of_staff">
-					<in>Effectiveness_new_staff</in>
-					<in>Effectiveness_experienced_staff</in>
-					<in>Rookie_fraction</in>
-				</var>
-				<var name="Productivity">
-					<in>Normal_productivity</in>
-					<in>Effectiveness_of_staff</in>
-				</var>
-			</isee:dependencies>
 		</variables>
 		<views>
 			<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
 				<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
 				<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
 				<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
-				<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false">
+				<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
 					<isee:series_styles>
 						<isee:series_style color="blue" thickness="1"/>
 						<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
@@ -422,28 +300,34 @@
 						<isee:series_style color="#C8C8C8" thickness="1"/>
 					</isee:series_styles>
 				</graph>
-				<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" isee:report_month_names="false" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_family="Arial"/>
-				<button color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top"/>
-				<isee:annotation color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" popup_background_color="#FFFECF"/>
-				<slider color="black" background="#E0E0E0" font_size="12pt" num_ticks="3" label_side="top" wrap_title="true" isee:always_show_hover_tip="false" input_expands="true" input_width="100"/>
+				<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
+				<button color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595"/>
+				<isee:annotation color="black" background="#E0E0E0" font_size="12pt" transparent="false" corner_radius="0" isee:flat="false" icon_side="top" isee:highlight_on_hover="false" isee:highlight_color="#959595" popup_background_color="#FFFECF"/>
+				<slider color="black" background="#E0E0E0" font_size="12pt" num_ticks="3" label_side="top" wrap_title="true" vertical="false" isee:show_hover_tip="when_deciding" input_expands="true" input_width="100"/>
+				<isee:sim_speed_slider color="black" background="white"/>
+				<isee:time_slider color="black" background="white"/>
 				<isee:pie_input color="black" background="white" font_size="12pt" legend_position="bottom" isee:transparent="false"/>
 				<knob color="#66CC66" background="#E0E0E0" font_size="12pt" label_side="bottom" wrap_title="true"/>
 				<numeric_input color="black" background="#E0E0E0" font_size="12pt" label_side="left" wrap_title="true" input_expands="false" input_width="100"/>
-				<switch color="black" background="#E0E0E0" font_size="12pt" label_side="top" wrap_title="true" isee:appearance="switch"/>
+				<switch color="black" background="#E0E0E0" font_size="12pt" label_side="top" wrap_title="true" isee:appearance="switch" isee:on_color="green"/>
 				<options color="black" background="white" appearance="radio-buttons" arrangement="vertical"/>
-				<graphical_input color="black" background="#E0E0E0" font_size="12pt"/>
-				<group_input color="black" background="#E0E0E0" font_size="12pt" header_font_family="Arial"/>
+				<graphical_input color="black" background="#E0E0E0" font_size="12pt" isee:show_hover_tip="true"/>
+				<group_input color="black" background="#E0E0E0" font_size="12pt"/>
 				<lamp color="black" background="white" font_size="9pt"/>
 				<gauge color="black" background="white" font_size="9pt" needle_color="#F09F72" bar_color="#EEEEEE" bar_progress_color="black" appearance="radial" num_major_ticks="11" num_minor_ticks="11" show_numeric_value="true"/>
 				<isee:spatial_map color="black" background="white" font_size="12pt"/>
 				<isee:animation_object color="black" background="white" font_size="12pt"/>
+				<isee:navigation_widget color="black" background="white" item_spacing="6" appearance="tabs" corner_radius="4" selected_item_color="black" selected_item_background="white" item_background="#DDDDDD"/>
+				<isee:shape color="black" background="white" opacity="1" transparent_background="true"/>
+				<isee:selector color="black" background="white"/>
 			</style>
-			<view isee:show_pages="false" page_width="822" page_height="571" isee:page_cols="3" isee:page_rows="2" isee:scroll_y="59" isee:popup_graphs_are_comparative="true" type="stock_flow">
+			<view isee:show_pages="false" page_width="818" page_height="571" isee:page_cols="3" isee:page_rows="2" isee:scroll_x="55.4545" isee:scroll_y="257.273" zoom="220" isee:popup_graphs_are_comparative="true" type="stock_flow">
 				<style color="black" background="white" font_style="normal" font_weight="normal" text_decoration="none" text_align="center" vertical_text_align="center" font_color="black" font_family="Arial" font_size="10pt" padding="2" border_color="black" border_width="thin" border_style="none">
 					<stock color="blue" background="white" font_color="blue" font_size="9pt" label_side="top">
 						<shape type="rectangle" width="45" height="35"/>
 					</stock>
 					<flow color="blue" background="white" font_color="blue" font_size="9pt" label_side="bottom"/>
+					<isee:placeholder color="#228B22" background="white" font_color="#228B22" label_side="bottom"/>
 					<module color="blue" background="white" font_color="blue" font_size="9pt" label_side="top">
 						<shape type="rectangle" width="55" height="45"/>
 					</module>
@@ -455,7 +339,7 @@
 					<text_box color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
 					<isee:loop_indicator color="black" background="white" text_align="left" vertical_text_align="top" font_size="12pt"/>
 					<numeric_display color="blue" background="white" font_size="9pt" isee:transparent="false"/>
-					<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false">
+					<graph color="black" background="white" font_size="12pt" axis_color="#666666" grid_color="#C8C8C8" isee:graph_area_color="white" legend_position="bottom" isee:transparent="false" isee:hide_border="false" axis_title_font_style="normal" axis_title_font_weight="normal" axis_title_text_decoration="none" axis_title_text_align="center" axis_title_vertical_text_align="center" axis_title_font_color="black" axis_title_font_family="Arial" axis_title_font_size="12pt" axis_title_text_padding="2" axis_title_text_border_color="black" axis_title_text_border_width="thin" axis_title_text_border_style="none" axis_label_font_style="normal" axis_label_font_weight="normal" axis_label_text_decoration="none" axis_label_text_align="center" axis_label_vertical_text_align="center" axis_label_font_color="black" axis_label_font_family="Arial" axis_label_font_size="9pt" axis_label_text_padding="2" axis_label_text_border_color="black" axis_label_text_border_width="thin" axis_label_text_border_style="none">
 						<isee:series_styles>
 							<isee:series_style color="blue" thickness="1"/>
 							<isee:series_style color="red" thickness="1" pen_style="dot_dashed"/>
@@ -472,7 +356,7 @@
 							<isee:series_style color="#C8C8C8" thickness="1"/>
 						</isee:series_styles>
 					</graph>
-					<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" isee:report_month_names="false" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_family=""/>
+					<table color="black" background="#E0E0E0" text_align="right" font_size="12pt" orientation="vertical" wrap_text="false" isee:auto_fit="true" isee:use_alternate_row_colors="false" isee:unlimited_table_length="false" blank_column_width="80" column_width="160" interval="1" report_balances="beginning" report_flows="instantaneous" header_font_style="normal" header_font_weight="normal" header_text_decoration="none" header_text_align="center" header_vertical_text_align="center" header_font_color="black" header_font_family="Arial" header_font_size="12pt" header_text_padding="2" header_text_border_color="black" header_text_border_width="thin" header_text_border_style="none"/>
 				</style>
 				<stock x="168.742" y="606.464" name="work to do"/>
 				<stock x="430.554" y="605.286" name="undiscovered rework"/>
@@ -606,7 +490,7 @@
 					<from>Average_work_quality</from>
 					<to>Effect_of_average_work_quality_on_fraction_correct</to>
 				</connector>
-				<aux background="#FFCC66" x="317.157" y="341.667" name="Normal fraction\ncorrect and complete"/>
+				<aux background="#FFCC66" x="317.157" y="341.667" name="Normal fraction correct and complete"/>
 				<connector uid="23" angle="301.062">
 					<from>Normal_fraction_correct_and_complete</from>
 					<to>Fraction_correct_and_complete</to>
@@ -830,7 +714,7 @@ if required leaving rate &gt; new staff leaving rate,
 					<to>Fraction_correct_and_complete</to>
 				</connector>
 				<stacked_container uid="65" x="1099.25" y="870">
-					<graph x="924.25" y="745" width="350" height="250" type="time_series" show_grid="true" include_units_in_legend="false" plot_numbers="false" isee:label_pie_slices="false" num_x_grid_lines="6" num_y_grid_lines="5" num_x_labels="6" num_y_labels="5" title="Graph" isee:stacked_area_alpha="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
+					<graph x="924.25" y="745" width="350" height="250" type="time_series" isee:points_only="false" show_grid="true" include_units_in_legend="false" plot_numbers="false" isee:label_pie_slices="false" num_x_grid_lines="6" num_y_grid_lines="5" num_x_labels="6" num_y_labels="5" isee:fill_intensity="0.1" left_axis_multi_scale="false" left_axis_auto_scale="true" right_axis_multi_scale="false" right_axis_auto_scale="true">
 						<plot color="blue" pen_width="1" index="0" show_y_axis="true">
 							<entity name="work_done"/>
 						</plot>

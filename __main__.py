@@ -2,7 +2,7 @@
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from SFD_canvas.model_handler_1 import ModelHandler
-from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR
+from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS
 import xml.dom.minidom
 import math
 import os
@@ -12,6 +12,9 @@ from tkinter import filedialog
 from tkinter import ttk
 import matplotlib
 #matplotlib.use('TkAgg')
+
+def name_handler(name):
+    return name.replace(' ', '_').replace('\n', '_')
 
 
 class SFDCanvas(Frame):
@@ -118,7 +121,6 @@ class SFDCanvas(Frame):
         radius = (pow((xB - xC), 2) + pow((yC - yB), 2)) ** 0.5
         baseArc = math.atan2(yC - yA, xA - xC)
 
-
         #print('baseArc in degrees, ', math.degrees(baseArc))
 
         #print("checking youhu or liehu")
@@ -187,12 +189,7 @@ class SFDCanvas(Frame):
         self.canvas.create_text(x, y - 10, text=label)
 
     def cosFormula(self, a, b):
-        '''
-        calculate the cosine value of a angle between 2 vectors.
-        :param a:
-        :param b:
-        :return:
-        '''
+
         l = 0
         m = 0
         n = 0
@@ -203,36 +200,23 @@ class SFDCanvas(Frame):
         return l / ((m * n) ** 0.5)
 
     def locateVar(self, name):
-        name = name.replace("_", " ")
+        name = name_handler(name)
         print("locating...")
         print(name)
         print(self.modelHandler1.sess1.structures['default'].sfd.nodes)
         for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
-            if element == name.replace("\\n", " "):
+            if element == name:
                 x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
                 y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
                 return [float(x), float(y)]
-        '''
-        for s in self.modelHandler1.stocks:
-            nameWithoutN = s.name.replace("\\n", " ")
-            if nameWithoutN == name:
-                return [s.x, s.y]
-        for f in self.modelHandler1.flows:
-            nameWithoutN = f.name.replace("\\n", " ")
-            if nameWithoutN == name:
-                return [f.x, f.y]
-        for a in self.modelHandler1.auxs:
-            nameWithoutN = a.name.replace("\\n", " ")
-            # print(nameWithoutN)
-            if nameWithoutN == name:
-                return [a.x, a.y]
-        '''
 
     def locateAlias(self, uid):
-        # print("locateAlias is called")
-        for al in self.modelHandler1.aliases:
-            if al.uid == uid:
-                return [al.x, al.y]
+        print("locateAlias is called, locating...")
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            if element == uid:
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                return [float(x), float(y)]
 
     # Here starts Widgets and Commands
 
@@ -287,49 +271,28 @@ class SFDCanvas(Frame):
 
     def modelDrawer(self):
         # now starts the 'drawing' part
-        self.canvas.config(width = self.xmost, height = self.ymost, scrollregion = (0,0,self.xmost,self.ymost))
+        self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0,0,self.xmost,self.ymost))
 
         #self.canvas.config(width = wid, height = hei)
-        self.canvas.config(xscrollcommand = self.hbar.set, yscrollcommand = self.vbar.set)
-
+        self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
 
         # set common parameters
         width1 = 46
         height1 = 35
         length1 = 115
-        radius1 = 5
+        radius1 = 8
 
-        # draw connectors
-        for c in self.modelHandler1.connectors:
-            print("\n")
-            print(c.uid)
-            # from
-            print("c.from_var:", c.from_var, "childNodes:", c.from_var.childNodes)
-
-            if len(c.from_var.childNodes) > 1:  # if this end is on an alias
-                print("it has more than 1 childNodes, so alias")
-                from_cord = self.locateAlias(c.from_var.childNodes[1].getAttribute("uid"))
-            else:
-                print("it has childNodes, so normal variable")
-                print("c.from_var.childNodes[0].data: ", c.from_var.childNodes[0].data)
-                from_cord = self.locateVar(c.from_var.childNodes[0].data)
-
-            print("from_cord: ", from_cord)
-            # to
-            print("c.to_var", c.to_var, "childNodes:", c.to_var.childNodes)
-            if len(c.to_var.childNodes) > 1:  # if this end is no an alias
-                print("it has more than 1 childNodes, so alias")
-                to_cord = self.locateAlias(c.to_var.childNodes[1].getAttribute("uid"))
-            else:
-                #print("it has childNodes, so normal variable")
-                #print("c.to_var.childNodes[0].data: ", c.to_var.childNodes[0].data)
-                to_cord = self.locateVar(c.to_var.childNodes[0].data)
-
-            print("to_cord: ", to_cord)
-
-            from_to_cord = from_cord + to_cord
-            self.create_connector(from_to_cord[0], from_to_cord[1], from_to_cord[2], from_to_cord[3] - 8,
-                                  c.angle)  # minus 8: the arrow it self not consumed
+        for connector in self.modelHandler1.sess1.structures['default'].sfd.edges():
+            print(connector)
+            from_element = connector[0]
+            to_element = connector[1]
+            from_cord = self.locateVar(from_element)
+            print(from_cord)
+            to_cord = self.locateVar(to_element)
+            print(to_cord)
+            angle = self.modelHandler1.sess1.structures['default'].sfd[from_element][to_element][0]['angle']
+            print('angle:', angle)
+            self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
         '''
@@ -344,6 +307,8 @@ class SFDCanvas(Frame):
             #print(element)
             #print(self.modelHandler1.sess1.structures['default'].sfd.nodes.data())
             #print(self.modelHandler1.sess1.structures['default'].sfd.nodes[element])
+            print("This element: ", element)
+            #print("These elements:", self.modelHandler1.sess1.structures['default'].sfd.nodes)
             if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
                 x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
                 y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
@@ -366,15 +331,6 @@ class SFDCanvas(Frame):
                 if y > self.ymost:
                     self.ymost = y
 
-        '''
-        for f in self.modelHandler1.flows:
-            self.create_flow(f.x, f.y, f.pts, radius1, f.name)
-            if f.x > self.xmost:
-                self.xmost = f.x
-            if f.y > self.ymost:
-                self.ymost = f.y
-        '''
-
         # draw auxs
         for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
             if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
@@ -386,24 +342,16 @@ class SFDCanvas(Frame):
                 if y > self.ymost:
                     self.ymost = y
 
-
-        '''
-        for a in self.modelHandler1.auxs:
-            self.create_aux(a.x, a.y, radius1, a.name)
-            if a.x > self.xmost:
-                self.xmost = a.x
-            if a.y > self.ymost:
-                self.ymost = a.y
-        '''
-        '''
-        # draw aliases
-        for al in self.modelHandler1.aliases:
-            self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
-            if al.x > self.xmost:
-                self.xmost = al.x
-            if al.y > self.ymost:
-                self.ymost = al.y
-        '''
+        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == ALIAS:
+                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
+                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['y']
+                of_element = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['function']
+                self.create_alias(x, y, radius1, of_element)
+                if x > self.xmost:
+                    self.xmost = x
+                if y > self.ymost:
+                    self.ymost = y
 
         self.xmost += 150
         self.ymost += 100

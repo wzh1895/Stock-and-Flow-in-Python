@@ -8,6 +8,7 @@ FLOW = 'flow'
 VARIABLE = 'variable'
 PARAMETER = 'parameter'
 CONNECTOR = 'connector'
+ALIAS = 'alias'
 
 
 # Define functions
@@ -15,13 +16,13 @@ class Functions(object):
     def __init__(self):
         pass
 
-    def linear(x, a=1, b=0):
+    def linear(self, x, a=1, b=0):
         return a * float(x) + b
 
-    def subtract(x, y):
+    def subtract(self, x, y):
         return float(x) - float(y)
 
-    def division(x, y):
+    def division(self, x, y):
         return float(x) / float(y)
 
 
@@ -39,8 +40,8 @@ class Structure(object):
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, element_type=element_type, x=x, y=y, function=function, value=value, points=points)
 
-    def add_causality(self, from_element, to_element):
-        self.sfd.add_edge(from_element, to_element)
+    def add_causality(self, from_element, to_element, uid=0, angle=0):
+        self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
 
     def display_elements(self):
         print('All elements in this SFD:')
@@ -153,11 +154,7 @@ class Session(object):
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
-        self.structures[structure_name].add_element(name,
-                                                    STOCK,
-                                                    x=x,
-                                                    y=y,
-                                                    value=equation)
+        self.structures[structure_name].add_element(name, element_type=STOCK, x=x, y=y, value=equation)
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None,structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
@@ -168,7 +165,7 @@ class Session(object):
         else:
             function = equation
             value = list()
-        self.structures[structure_name].add_element(name, FLOW, x=x, y=y, function=function, value=value, points=points)
+        self.structures[structure_name].add_element(name, element_type=FLOW, x=x, y=y, function=function, value=value, points=points)
 
         # If the flow influences a stock, create the causal link
         if flow_to is not None:
@@ -184,32 +181,19 @@ class Session(object):
         if type(equation[0]) == int or type(equation[0]) == float:
             # if equation starts with a number
             # It's a parameter
-            self.structures[structure_name].add_element(name,
-                                                        PARAMETER,
-                                                        x=x,
-                                                        y=y,
-                                                        function=None,
-                                                        value=equation)
+            self.structures[structure_name].add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable
-            self.structures[structure_name].add_element(name,
-                                                        VARIABLE,
-                                                        x=x,
-                                                        y=y,
-                                                        function=equation,
-                                                        value=list())
+            self.structures[structure_name].add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
 
     def add_connector(self, uid, from_element, to_element, angle=0, structure_name='default'):
-        self.structures[structure_name].add_causality(from_element, to_element)
+        self.structures[structure_name].add_causality(from_element, to_element, uid=uid, angle=angle)
 
     def add_alias(self, uid, of_element, x=0, y=0, structure_name='default'):
-        pass
+        self.structures[structure_name].add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
 
     # Simulate a structure based on a certain set of parameters
-    def simulate(self,
-                 structure_name='default',
-                 simulation_time=13,
-                 dt=0.25):
+    def simulate(self, structure_name='default', simulation_time=13, dt=0.25):
         self.simulation_time = simulation_time
         self.dt = dt
         if simulation_time == 0:
