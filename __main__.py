@@ -1,7 +1,7 @@
 # SD-simulator.py
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from SFD_canvas.model_handler_1 import ModelHandler
+from SFD_canvas.model_handler import ModelHandler
 from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS
 import xml.dom.minidom
 import math
@@ -10,8 +10,7 @@ import shutil
 from tkinter import *
 from tkinter import filedialog
 from tkinter import ttk
-import matplotlib
-#matplotlib.use('TkAgg')
+
 
 def name_handler(name):
     return name.replace(' ', '_').replace('\n', '_')
