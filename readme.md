@@ -1,4 +1,4 @@
-# Stock and Flow in Python
+# Part 1: Stock and Flow in Python
 
 This project contains a few inter-related modules that are all dealing with System Dynamics in Python.
 
@@ -22,7 +22,7 @@ Here you can have a quick glance of it:
 To try the demo of conceptualization panel demo, execute:
 
 ```
-python3 main.py
+python3 conceptualization.py
 ```
 
 ## Project Structure: PHAPI
@@ -45,6 +45,42 @@ python3 main.py
     - Beyond scope at this moment.
 - **I**mplementation
     - Beyond scope at this moment.
+    
+# Part 2: Stock and Flow Renderer
+
+## Introduction
+
+This is a python realization of Stock and Flow Diagram display and simulation, based on **Tkinter** and **PySD** (https://github.com/JamesPHoughton/pysd).
+The intention is to allow users to visually view the model. It later became a part of the above project, providing functionalities to display models.
+
+Here you can have a quick glance of it:
+
+**Model display:**
+
+![ScreenShot](./screenshots/screenShot_02.png)
+
+**Simulation result display:**
+
+![ScreenShot](./screenshots/screenShot_07.png)
+
+## How to use
+
+**Local-based Display**
+
+Stock and flow diagrams created by Stella can be displayed using this software.
+
+To display the diagram itself, no additional package other than **Python3** is needed.
+
+To simulate the the model and display the result, **PySD** and **matplotlib** are also needed.
+
+The program could be run from terminal, PowerShell, or CMD by executing:
+
+```
+python3 renderer.py
+```
+
+Then you can load the model, simulate and view the outcome in the graphic interface.
+
 
 ## Change Log
 
