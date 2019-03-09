@@ -15,7 +15,7 @@ Here you can have a quick glance of it:
 
 **Conceptualization Panel**
 
-![ScreenShot](screenshots/screenShot_05.png)
+![ScreenShot](screenshots/screenShot_06.png)
 
 **Conceptualization Panel**
 
@@ -47,6 +47,13 @@ python3 main.py
     - Beyond scope at this moment.
 
 ## Change Log
+
+**10 Mar 2019: v0.6.0**
+
+1. Added package Graph-SD, a Graph theory-based SD representation. This is a 'in-memory' data structure, able to store both equation and layout. It comes with an engine for simulation based on recursion.
+2. SFD Canvas renamed to renderer. Simulation engine so far is still PySD, since the part for parsing equations hasn't been done. However, in the display part, the graph engine is now used to store the model.
+3. Conceptualization Panel now uses graph engine to store, display, and simulate archetypes (generic structures).
+4. Project is restructured.
 
 **6 Jan 2019: v0.5.0**
 
