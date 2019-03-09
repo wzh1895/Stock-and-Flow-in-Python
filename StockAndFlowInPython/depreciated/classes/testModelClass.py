@@ -1,4 +1,4 @@
-from depreciated.classes import Model
+from StockAndFlowInPython.depreciated.classes import Model
 
 md = Model()
 

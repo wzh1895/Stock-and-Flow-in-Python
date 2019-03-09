@@ -14,11 +14,11 @@ Here you can have a quick glance of it:
 
 **Model display:**
 
-![ScreenShot](../screenshots/screenShot_02.png)
+![ScreenShot](../../screenshots/screenShot_02.png)
 
 **Simulation result display:**
 
-![ScreenShot](../screenshots/screenShot_04.png)
+![ScreenShot](../../screenshots/screenShot_04.png)
 
 ## How to use
 

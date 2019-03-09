@@ -4,7 +4,7 @@ from tkinter import *
 # matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from depreciated.classes import global_model as glbele
+from StockAndFlowInPython.depreciated.classes import global_model as glbele
 
 
 class SFDCanvas(Frame):

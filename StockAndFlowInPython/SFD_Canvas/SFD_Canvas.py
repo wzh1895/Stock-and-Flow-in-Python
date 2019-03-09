@@ -3,8 +3,8 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from SFD_Canvas.model_handler import ModelHandler
-from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS
+from StockAndFlowInPython.SFD_Canvas import ModelHandler
+from StockAndFlowInPython.Graph_SD import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
 import shutil

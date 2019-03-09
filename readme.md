@@ -3,9 +3,9 @@
 This project contains a few inter-related modules that are all dealing with System Dynamics in Python.
 
 - Conceptualization Panel: this file.
-- [Similarity Calculation](./similarity_calculation/readme.md): compare behaviors and quantify the similarity.
-- [Stock and Flow Canvas](SFD_Canvas/readme.md): display system dynamic Stella models (.stmx file) and simulate with PySD.
-- [Stmx Generator](./stmx_generator/readme.md): store a model in a .stmx file, which can be used by Stella.
+- [Similarity Calculation](StockAndFlowInPython/similarity_calculation/readme.md): compare behaviors and quantify the similarity.
+- [Stock and Flow Canvas](StockAndFlowInPython/SFD_Canvas/readme.md): display system dynamic Stella models (.stmx file) and simulate with PySD.
+- [Stmx Generator](StockAndFlowInPython/stmx_generator/readme.md): store a model in a .stmx file, which can be used by Stella.
 
 ---
 
