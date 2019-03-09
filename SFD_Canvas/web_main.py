@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
 from flexx import flx
-from depreciated.model_handler import ModelHandler
+from depreciated.classes import ModelHandler
 
 filename = "../sample_models/reindeerModel.stmx"
 modelHandler1 = ModelHandler(filename)

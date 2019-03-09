@@ -1,4 +1,4 @@
-from classes.global_model import Model
+from depreciated.classes import Model
 
 md = Model()
 

@@ -2,40 +2,13 @@
 Main function of the program
 """
 
-import numpy as np
-import pandas as pd
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from tkinter import *
-
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from similarity_calculation.similarity_calc import similarity_calc
-from classes.global_model import Stock, Flow, Aux, Time, Connector
-from classes import global_model as glbele
-from SFD_canvas.SFD_display import SFDCanvas
-
-glbele._init()
-
-
-def first_order_negative():
-
-    glbele.set_value('stock1', Stock(name='stock1', x=289, y=145, eqn=str(100), inflow='flow1'))
-    glbele.set_value('flow1', Flow(name='flow1', x=181.75, y=145, pts=[(85, 145), (266.5, 145)],
-                                   eqn="(get_value('goal1')()-get_value('stock1')())/get_value('at1')()"))
-    glbele.set_value('at1', Aux(name='at1', x=141.5, y=56.5, eqn=str(5)))
-    glbele.set_value('goal1', Aux(name='goal1', x=148, y=229, eqn=str(1)))
-
-    glbele.set_value('time1', Time(end=25, start=1, dt=0.125))
-
-    glbele.set_value('1', Connector(1, 150, 'stock1', 'flow1'))
-    glbele.set_value('2', Connector(2, 300, 'at1', 'flow1'))
-    glbele.set_value('3', Connector(3, 60, 'goal1', 'flow1'))
-
-# a dict mapping behavior name to the loading of corresponding archetype
-
-
-behavior_to_archetype = {'decline_c': first_order_negative()}
+from SFD_Canvas.SFD_Canvas import SFDCanvas
+import numpy as np
+import pandas as pd
 
 
 class Panel(Frame):
@@ -55,7 +28,7 @@ class Panel(Frame):
         self.lb2.pack(side=TOP)
         self.fm_2.pack(side=LEFT, fill=BOTH, expand=YES)
 
-        self.fm_3 = LabelFrame(self.master, text='Analysis', width=400)
+        self.fm_3 = LabelFrame(self.master, text='Analysis', width=500)
         self.fm_3.propagate(False)
         self.fm_3.pack(side=LEFT, fill=BOTH, expand=YES)
 
@@ -92,80 +65,25 @@ class Panel(Frame):
         self.lb5 = Label(self.fm_2, text='Suggesting the following structure:')
         self.lb5.pack(side=TOP)
 
-        # Load archetype(s) based on similarity
-
-        '''
-        self.md = Model('first_order_negative')
-        self.md.add_stock(name='stock1', x=289, y=145, eqn=str(100), inflow='flow1')
-        self.md.add_flow(name='flow1', x=181.75, y=145, pts=[(85, 145), (266.5, 145)],
-                         eqn="(get_value('goal1')()-get_value('stock1')())/get_value('at1')()")
-        self.md.add_aux(name='at1', x=141.5, y=56.5, eqn=str(5))
-        self.md.add_aux(name='goal1', x=148, y=229, eqn=str(1))
-
-        self.md.set_timer(name='time1', start=1, end=25, dt=0.125)
-
-        self.md.add_connector(150, from_var='stock1', to_var='flow1')
-        self.md.add_connector(200, from_var='at1', to_var='flow1')
-        self.md.add_connector(60, from_var='goal1', to_var='flow1')
-        self.md.add_connector(1, from_var='flow1', to_var='stock1')
-        '''
-
-        behavior_to_archetype[self.suggested_archetype]
-
-        # Draw the suggested archetype on with SFDCanvas
-
-        self.sfd_canvas1 = SFDCanvas(self.fm_2, stocks=glbele.get_stocks(), flows=glbele.get_flows(), auxs=glbele.get_auxs(), connectors=glbele.get_connectors())
-        # self.sfd_canvas1 = SFDCanvas(self.fm_2, stocks=self.md.stocks, flows=self.md.flows, auxs=self.md.auxs, connectors=self.md.connectors)
-
-        # Generate lists of flows and stocks
-
-        flows = {}  # use a dictionary to store both flow names and their values
-        stocks = []
-        for element in glbele.get_keys():
-            if type(glbele.get_value(element)) == Flow:
-                flows[element] = 0
-            if type(glbele.get_value(element)) == Stock:
-                stocks.append(element)
+        # Load archetype(s) based on similarity and draw the suggested archetype with SFDCanvas
+        self.sfd_canvas1 = SFDCanvas(self.fm_2)
+        if self.suggested_archetype == 'decline_c':
+            self.sfd_canvas1.modelHandler1.sess1.first_order_negative()
+            self.sfd_canvas1.modelDrawer()
 
         # Run the model
-
-        for step in range(glbele.get_value('time1').steps):
-            # print('After step: ', step)
-
-            # 1. Calculate all flows as recursion, which trace back to stocks or exogenous params.
-            for flow in flows:
-                flows[flow] = glbele.get_value(flow)()
-                # print(flow, flows[flow])
-
-            # 2. Change stocks with flows
-            for stock in stocks:
-                try:  # inflow
-                    glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).inflow]*glbele.get_value('time1').dt)
-                except:
-                    pass
-                try:  # outflow
-                    glbele.get_value(stock).change_in_stock(flows[glbele.get_value(stock).outflow]*glbele.get_value('time1').dt*(-1))
-                except:
-                    pass
-
-            glbele.get_value('time1').current_step += 1
-
+        self.sfd_canvas1.modelHandler1.sess1.simulate(simulation_time=80)
         self.lb6 = Label(self.fm_3, text='The suggested structure simulates as follows:')
         self.lb6.pack(side=TOP)
-
-        self.simulation_figure = Figure(figsize=(5, 4), dpi=75)
-        self.simulation_plot = self.simulation_figure.add_subplot(111)
-        self.simulation_plot.plot(glbele.get_value('stock1').behavior)
-        self.simulation_plot.set_xlabel("Time")
-        self.simulation_plot.set_ylabel("stock1")
-        self.simulation_graph = FigureCanvasTkAgg(self.simulation_figure, master=self.fm_3)
-        self.simulation_graph.draw()
-        self.simulation_graph._tkcanvas.pack(side=TOP)
+        self.simulation_graph = self.sfd_canvas1.modelHandler1.sess1.draw_graphs(names=['stock0', 'flow0'], rtn=True)
+        self.simulation_figure = FigureCanvasTkAgg(self.simulation_graph, master=self.fm_3)
+        self.simulation_figure.draw()
+        self.simulation_figure._tkcanvas.pack(side=TOP)
 
 
 if __name__ == '__main__':
     root = Tk()
-    wid = 1200
+    wid = 1300
     hei = 800
     root.wm_title("Conceptualization Panel")
     root.geometry(str(wid)+"x"+str(hei)+"+100+100")

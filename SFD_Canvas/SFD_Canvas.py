@@ -1,15 +1,14 @@
-# SD-simulator.py
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-from SFD_canvas.model_handler import ModelHandler
-from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS
-import xml.dom.minidom
-import math
-import os
-import shutil
 from tkinter import *
-from tkinter import filedialog
 from tkinter import ttk
+from tkinter import filedialog
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from SFD_Canvas.model_handler import ModelHandler
+from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS
+import math
+import xml.dom.minidom
+import shutil
+import os
 
 
 def name_handler(name):
@@ -39,6 +38,9 @@ class SFDCanvas(Frame):
 
         self.pack(fill=BOTH, expand=1)
         self.filename = ''
+
+        # Initialize model handler
+        self.modelHandler1 = ModelHandler()
 
     def create_stock(self, x, y, w, h, label):
         '''
@@ -221,33 +223,34 @@ class SFDCanvas(Frame):
 
     def createWidgets(self):
         fm_1 = Frame(self.master)
-        self.lb = Label(fm_1,text='Load and display a Stella SD Model')
+        self.lb = Label(fm_1, text='Display System Dynamics Model')
         self.lb.pack()
-        fm_1.pack(side = TOP)
+        fm_1.pack(side=TOP)
 
         fm_2 = Frame(fm_1)
-        self.btn1 = Button(fm_2, text="Select model", command = self.fileLoad)
-        self.btn1.pack(side = LEFT)
-        self.btn2 = Button(fm_2, text="Run", command = self.simulationHandler)
-        self.btn2.pack(side = LEFT)
+        self.btn1 = Button(fm_2, text="Select model", command=self.fileLoad)
+        self.btn1.pack(side=LEFT)
+        self.btn_run = Button(fm_2, text="Run_pysd", command=self.simulationHandler)
+        self.btn_run.pack(side=LEFT)
+        # self.btn_run1 = Button(fm_2, text="Run_graph", command=None)
+        # self.btn_run1.pack(side=LEFT)
         self.comboxlist = ttk.Combobox(fm_2)
         self.variablesInModel = ["Variable"]
         self.comboxlist["values"] = self.variablesInModel
         self.comboxlist.current(0)
-        self.comboxlist.bind("<<ComboboxSelected>>",self.selectVariable)
-        self.comboxlist.pack(side = LEFT)
-        self.btn3 = Button(fm_2, text="Show Figure", command = self.showFigure)
-        self.btn3.pack(side = LEFT)
-        self.btn4 = Button(fm_2, text="Reset canvas", command = self.resetCanvas)
-        self.btn4.pack(side = LEFT)
-        fm_2.pack(side = TOP)
+        self.comboxlist.bind("<<ComboboxSelected>>", self.selectVariable)
+        self.comboxlist.pack(side=LEFT)
+        self.btn3 = Button(fm_2, text="Show Figure", command=self.showFigure)
+        self.btn3.pack(side=LEFT)
+        self.btn4 = Button(fm_2, text="Reset canvas", command=self.resetCanvas)
+        self.btn4.pack(side=LEFT)
+        fm_2.pack(side=TOP)
 
     def fileLoad(self):
         self.filename = filedialog.askopenfilename()
-
         if self.filename != '':
-            self.lb.config(text = "File selected: " + self.filename)
-            self.modelHandler1 = ModelHandler(self.filename)
+            self.lb.config(text="File selected: " + self.filename)
+            self.modelHandler1.read_xmile_model(self.filename)
             self.modelDrawer()
 
         else:
@@ -294,19 +297,11 @@ class SFDCanvas(Frame):
             self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
-        '''
-        for s in self.modelHandler1.stocks:
-            self.create_stock(s.x, s.y, width1, height1, s.name)
-            if s.x> self.xmost:
-                self.xmost = s.x
-            if s.y> self.ymost:
-                self.ymost = s.y
-        '''
         for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
             #print(element)
             #print(self.modelHandler1.sess1.structures['default'].sfd.nodes.data())
             #print(self.modelHandler1.sess1.structures['default'].sfd.nodes[element])
-            print("This element: ", element)
+            #print("This element: ", element)
             #print("These elements:", self.modelHandler1.sess1.structures['default'].sfd.nodes)
             if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
                 x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['x']
@@ -399,17 +394,3 @@ class GraphWindow():
         graph = FigureCanvasTkAgg(figure, master=top)
         graph.draw()
         graph._tkcanvas.pack()
-
-
-def main():
-    root = Tk()
-    wid = 800
-    hei = 600
-    Frame1 = SFDCanvas(root)
-    root.wm_title("Stock and Flow Canvas")
-    root.geometry(str(wid)+"x"+str(hei)+"+100+100")
-    root.mainloop()
-
-
-if __name__ == '__main__':
-    main()

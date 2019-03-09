@@ -37,15 +37,3 @@ python3 localMain.py
 ```
 
 Then you can load the model, simulate and view the outcome in the graphic interface.
-
-**Web-based Display** (Still Trying)
-
-To deploy the program as a web application, you need **FlexxUI** and **Tornado**.
-
-On linux or macOS, execute:
-
-```
-python3 webMain.py --flexx-hostname=0.0.0.0 --flexx-port=8080
-```
-
-The line above may be different from the FlexxUI document, but it was proven to be working well.

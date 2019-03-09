@@ -16,13 +16,13 @@ class Functions(object):
     def __init__(self):
         pass
 
-    def linear(self, x, a=1, b=0):
+    def linear(x, a=1, b=0):
         return a * float(x) + b
 
-    def subtract(self, x, y):
+    def subtract(x, y):
         return float(x) - float(y)
 
-    def division(self, x, y):
+    def division(x, y):
         return float(x) / float(y)
 
 
@@ -123,12 +123,12 @@ class Session(object):
     def first_order_negative(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # type,     name,       value/equation/angle            from,       to,         x,      y,      pts,
-            [STOCK,     'stock0',   [100],                          None,       None,       489,    245,    None],
-            [FLOW,      'flow0',    [DIVISION, 'gap0', 'at0'],      None,       'stock0',   381,    245,    None],
-            [PARAMETER, 'goal0',    [20],                           None,       None,       363,    351,    None],
-            [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],  None,       None,       413,    312,    None],
-            [PARAMETER, 'at0',      [5],                            None,       None,       323,    177,    None],
+            # 0type,    1name,      2value/equation/angle           3from,      4to,        5x,     6y,     7pts,
+            [STOCK,     'stock0',   [100],                          None,       None,       289,    145,    None],
+            [FLOW,      'flow0',    [DIVISION, 'gap0', 'at0'],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
+            [PARAMETER, 'goal0',    [20],                           None,       None,       163,    251,    None],
+            [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],  None,       None,       213,    212,    None],
+            [PARAMETER, 'at0',      [5],                            None,       None,       123,    77,    None],
             [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
             [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
             [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
@@ -141,16 +141,27 @@ class Session(object):
         for element in elements:
             if element[0] == STOCK:
                 self.add_stock(name=element[1],
-                               equation=element[2])
+                               equation=element[2],
+                               x=element[5],
+                               y=element[6],)
             elif element[0] == FLOW:
                 self.add_flow(name=element[1],
                               equation=element[2],
                               flow_from=element[3],
-                              flow_to=element[4])
+                              flow_to=element[4],
+                              x=element[5],
+                              y=element[6],
+                              points=element[7])
             elif element[0] == PARAMETER or element[0] == VARIABLE:
-                self.add_aux(element[1], element[2])
+                self.add_aux(name=element[1],
+                             equation=element[2],
+                             x=element[5],
+                             y=element[6])
             elif element[0] == CONNECTOR:
-                self.add_connector(element[1], element[3], element[4], angle=element[2])
+                self.add_connector(uid=element[1],
+                                   angle=element[2],
+                                   from_element=element[3],
+                                   to_element=element[4])
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
@@ -209,12 +220,12 @@ class Session(object):
             self.structures[structure_name].step(dt)
 
     # Draw graphs
-    def draw_graphs(self, structure_name='default', names=None):
+    def draw_graphs(self, structure_name='default', names=None, rtn=False):
         if names is None:
             names = list(self.structures[structure_name].sfd.nodes)
 
-        plt.figure(figsize=(10, 5))
-        plt.subplot(121)
+        Figure1 = plt.figure(figsize=(5, 10))
+        plt.subplot(211)
         plt.xlabel('Time')
         plt.ylabel('Behavior')
         y_axis_minimum = 0
@@ -239,12 +250,15 @@ class Session(object):
             plt.axis([0, self.simulation_time, y_axis_minimum, y_axis_maximum])
             plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
         plt.legend()
-
-        plt.subplot(122)
+        plt.subplot(212)
         # labels = nx.get_node_attributes(structure0.sfd, 'value')
         # nx.draw(structure0.sfd, labels=labels)
         nx.draw(self.structures[structure_name].sfd, with_labels=True)
-        plt.show()
+
+        if rtn:  # if called from external, return the figure without show it.
+            return Figure1
+        else:  # otherwise, show the figure.
+            plt.show()
 
 
 def main():

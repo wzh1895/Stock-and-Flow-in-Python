@@ -1,5 +1,5 @@
 import xml.dom.minidom
-from classes.sd_classes import Stock, Flow, Aux, Connector, Alias
+from depreciated.classes import Stock, Flow, Aux, Connector, Alias
 
 
 class ModelHandler(object):

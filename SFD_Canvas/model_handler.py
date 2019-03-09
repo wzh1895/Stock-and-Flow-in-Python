@@ -7,10 +7,11 @@ def name_handler(name):
 
 
 class ModelHandler(object):
-    def __init__(self, filename):
-        DOMTree = xml.dom.minidom.parse(filename)
+    def __init__(self):
         self.sess1 = Session()
 
+    def read_xmile_model(self, filename):
+        DOMTree = xml.dom.minidom.parse(filename)
         self.model = DOMTree.documentElement
 
         # fetch all variables in the file
