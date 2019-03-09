@@ -1,5 +1,5 @@
 import xml.dom.minidom
-from StockAndFlowInPython.Graph_SD import Session
+from Graph_SD.graph_based_engine import Session
 
 
 def name_handler(name):
