@@ -16,19 +16,19 @@ class Panel(Frame):
         super().__init__(master)
         self.master = master
 
-        self.fm_1 = LabelFrame(self.master, text='Problem', width=400)
+        self.fm_1 = LabelFrame(self.master, text='Problem', width=500, background='#fff')
         self.fm_1.propagate(False)  # Prevent the labelframe from shrinking when a label is placed in it.
-        self.lb1 = Label(self.fm_1, text='Reference Mode:', anchor='nw')
+        self.lb1 = Label(self.fm_1, text='Reference Mode:', anchor='nw', background='#fff')
         self.lb1.pack(side=TOP)
         self.fm_1.pack(side=LEFT, fill=BOTH, expand=YES)
 
-        self.fm_2 = LabelFrame(self.master, text='Hypothesis', width=400)
+        self.fm_2 = LabelFrame(self.master, text='Hypothesis', width=500, background='#fff')
         self.fm_2.propagate(False)
-        self.lb2 = Label(self.fm_2, text='Compare reference mode with known modes:', anchor='nw')
+        self.lb2 = Label(self.fm_2, text='Compare reference mode with known modes:', anchor='nw', background='#fff')
         self.lb2.pack(side=TOP)
         self.fm_2.pack(side=LEFT, fill=BOTH, expand=YES)
 
-        self.fm_3 = LabelFrame(self.master, text='Analysis', width=500)
+        self.fm_3 = LabelFrame(self.master, text='Analysis', width=500, background='#fff')
         self.fm_3.propagate(False)
         self.fm_3.pack(side=LEFT, fill=BOTH, expand=YES)
 
@@ -58,11 +58,11 @@ class Panel(Frame):
         self.comparison_graph = FigureCanvasTkAgg(self.comparison_figure, master=self.fm_2)
         self.comparison_graph.draw()
         self.comparison_graph._tkcanvas.pack(side=TOP)
-        self.lb3 = Label(self.fm_2, text='Reference mode is classified as:')
+        self.lb3 = Label(self.fm_2, text='Reference mode is classified as:', background='#fff')
         self.lb3.pack(side=TOP)
-        self.lb4 = Label(self.fm_2, text=self.suggested_archetype+'\n', font='Helvetica 16 bold')
+        self.lb4 = Label(self.fm_2, text=self.suggested_archetype+'\n', font='Helvetica 16 bold', background='#fff')
         self.lb4.pack(side=TOP)
-        self.lb5 = Label(self.fm_2, text='Suggesting the following structure:')
+        self.lb5 = Label(self.fm_2, text='Suggesting the following structure:', background='#fff')
         self.lb5.pack(side=TOP)
 
         # Load archetype(s) based on similarity and draw the suggested archetype with SFDCanvas
@@ -73,7 +73,7 @@ class Panel(Frame):
 
         # Run the model
         self.sfd_canvas1.modelHandler1.sess1.simulate(simulation_time=80)
-        self.lb6 = Label(self.fm_3, text='The suggested structure simulates as follows:')
+        self.lb6 = Label(self.fm_3, text='The suggested structure simulates as follows:', background='#fff')
         self.lb6.pack(side=TOP)
         self.simulation_graph = self.sfd_canvas1.modelHandler1.sess1.draw_graphs(names=['stock0', 'flow0'], rtn=True)
         self.simulation_figure = FigureCanvasTkAgg(self.simulation_graph, master=self.fm_3)
@@ -83,7 +83,7 @@ class Panel(Frame):
 
 if __name__ == '__main__':
     root = Tk()
-    wid = 1300
+    wid = 1500
     hei = 800
     root.wm_title("Conceptualization Panel")
     root.geometry(str(wid) + "x" + str(hei) + "+100+100")

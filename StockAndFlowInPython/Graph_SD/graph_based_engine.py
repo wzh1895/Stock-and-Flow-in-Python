@@ -38,7 +38,7 @@ class Structure(object):
     def add_element(self, element_name, element_type, x=0, y=0, function=None, value=None, points=None):
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
-        self.sfd.add_node(element_name, element_type=element_type, x=x, y=y, function=function, value=value, points=points)
+        self.sfd.add_node(element_name, element_type=element_type, pos=(x, y), function=function, value=value, points=points)
 
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
@@ -88,7 +88,7 @@ class Structure(object):
         # calculate flows
         for flow in flows_dt.keys():
             flows_dt[flow] = dt * self.calculate(flow)
-        print('All flows dt:', flows_dt)
+        # print('All flows dt:', flows_dt)
 
         # calculating changes in stocks
         # have a dictionary of affected stocks and their changes, for one flow could affect 2 stocks.
@@ -216,7 +216,7 @@ class Session(object):
         # main iteration
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            print('\nExecuting Step {} :\n'.format(i))
+            # print('\nExecuting Step {} :\n'.format(i))
             self.structures[structure_name].step(dt)
 
     # Draw graphs
@@ -225,7 +225,8 @@ class Session(object):
             names = list(self.structures[structure_name].sfd.nodes)
 
         Figure1 = plt.figure(figsize=(5, 10))
-        plt.subplot(211)
+
+        plt.subplot(211)  # operate subplot 1
         plt.xlabel('Time')
         plt.ylabel('Behavior')
         y_axis_minimum = 0
@@ -250,10 +251,11 @@ class Session(object):
             plt.axis([0, self.simulation_time, y_axis_minimum, y_axis_maximum])
             plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
         plt.legend()
-        plt.subplot(212)
-        # labels = nx.get_node_attributes(structure0.sfd, 'value')
-        # nx.draw(structure0.sfd, labels=labels)
-        nx.draw(self.structures[structure_name].sfd, with_labels=True)
+
+        plt.subplot(212)  # operate subplot 2
+        plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
+        pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
+        nx.draw(self.structures[structure_name].sfd, with_labels=True, pos=pos)
 
         if rtn:  # if called from external, return the figure without show it.
             return Figure1
