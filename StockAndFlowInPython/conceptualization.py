@@ -75,6 +75,7 @@ class Panel(Frame):
         self.sfd_canvas1.modelHandler1.sess1.simulate(simulation_time=80)
         self.lb6 = Label(self.fm_3, text='The suggested structure simulates as follows:', background='#fff')
         self.lb6.pack(side=TOP)
+        # Use rtn=True to ask the engine to return the graph, instead of drawing it by itself.
         self.simulation_graph = self.sfd_canvas1.modelHandler1.sess1.draw_graphs(names=['stock0', 'flow0'], rtn=True)
         self.simulation_figure = FigureCanvasTkAgg(self.simulation_graph, master=self.fm_3)
         self.simulation_figure.draw()
