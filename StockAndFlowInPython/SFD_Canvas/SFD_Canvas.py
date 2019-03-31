@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from SFD_Canvas.model_handler import ModelHandler
+from SFD_Canvas.session_handler import SessionHandler
 from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
@@ -40,7 +40,7 @@ class SFDCanvas(Frame):
         self.filename = ''
 
         # Initialize model handler
-        self.modelHandler1 = ModelHandler()
+        self.session_handler1 = SessionHandler()
 
     def create_stock(self, x, y, w, h, label):
         """
@@ -203,19 +203,19 @@ class SFDCanvas(Frame):
         name = name_handler(name)
         # print("locating...")
         # print(name)
-        # print(self.modelHandler1.sess1.structures['default'].sfd.nodes)
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+        # print(self.session_handler1.sess1.structures['default'].sfd.nodes)
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
             if element == name:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
 
     def locate_alias(self, uid):
         # print("locate_alias is called, locating...")
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
             if element == uid:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
 
     # Here starts Widgets and Commands
@@ -251,7 +251,7 @@ class SFDCanvas(Frame):
         self.filename = filedialog.askopenfilename()
         if self.filename != '':
             self.lb.config(text="File selected: " + self.filename)
-            self.modelHandler1.read_xmile_model(self.filename)
+            self.session_handler1.read_xmile_model(self.filename)
             self.model_drawer()
 
         else:
@@ -285,7 +285,7 @@ class SFDCanvas(Frame):
         length1 = 115
         radius1 = 8
 
-        for connector in self.modelHandler1.sess1.structures['default'].sfd.edges():
+        for connector in self.session_handler1.sess1.structures['default'].sfd.edges():
             # print(connector)
             from_element = connector[0]
             to_element = connector[1]
@@ -293,20 +293,20 @@ class SFDCanvas(Frame):
             # print(from_cord)
             to_cord = self.locate_var(to_element)
             # print(to_cord)
-            angle = self.modelHandler1.sess1.structures['default'].sfd[from_element][to_element][0]['angle']
+            angle = self.session_handler1.sess1.structures['default'].sfd[from_element][to_element][0]['angle']
             # print('angle:', angle)
             self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
             # print(element)
-            # print(self.modelHandler1.sess1.structures['default'].sfd.nodes.data())
-            # print(self.modelHandler1.sess1.structures['default'].sfd.nodes[element])
+            # print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
+            # print(self.session_handler1.sess1.structures['default'].sfd.nodes[element])
             # print("This element: ", element)
-            # print("These elements:", self.modelHandler1.sess1.structures['default'].sfd.nodes)
-            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+            # print("These elements:", self.session_handler1.sess1.structures['default'].sfd.nodes)
+            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
                 # print(x,y)
                 self.create_stock(x, y, width1, height1, element)
                 if x > self.xmost:
@@ -315,11 +315,11 @@ class SFDCanvas(Frame):
                     self.ymost = y
 
         # draw flows
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
-            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == FLOW:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
-                points = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['points']
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
+            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == FLOW:
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+                points = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['points']
                 self.create_flow(x, y, points, radius1, element)
                 if x > self.xmost:
                     self.xmost = x
@@ -327,21 +327,21 @@ class SFDCanvas(Frame):
                     self.ymost = y
 
         # draw auxs
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
-            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
+            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
                 self.create_aux(x, y, radius1, element)
                 if x > self.xmost:
                     self.xmost = x
                 if y > self.ymost:
                     self.ymost = y
 
-        for element in self.modelHandler1.sess1.structures['default'].sfd.nodes:
-            if self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == ALIAS:
-                x = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
-                of_element = self.modelHandler1.sess1.structures['default'].sfd.nodes[element]['function']
+        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
+            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == ALIAS:
+                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
+                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+                of_element = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['function']
                 self.create_alias(x, y, radius1, of_element)
                 if x > self.xmost:
                     self.xmost = x

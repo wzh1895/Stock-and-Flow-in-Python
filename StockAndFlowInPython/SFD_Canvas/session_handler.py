@@ -6,7 +6,7 @@ def name_handler(name):
     return name.replace(' ', '_').replace('\n', '_')
 
 
-class ModelHandler(object):
+class SessionHandler(object):
     def __init__(self):
         self.sess1 = Session()
 

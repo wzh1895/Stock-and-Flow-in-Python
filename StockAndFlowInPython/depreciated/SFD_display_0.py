@@ -284,7 +284,7 @@ class SFDCanvas(Frame):
                                   c.angle)  # minus 8: the arrow it self not consumed
 
         # draw stocks
-        # for s in self.modelHandler1.stocks:
+        # for s in self.session_handler1.stocks:
         for s in self.stocks:
             self.create_stock(s.x, s.y, width1, height1, s.name)
             if s.x> self.xmost:
@@ -309,7 +309,7 @@ class SFDCanvas(Frame):
                 self.ymost = a.y
         '''
         # draw aliases
-        for al in self.modelHandler1.aliases:
+        for al in self.session_handler1.aliases:
             self.create_alias(al.x, al.y, radius1, al.of.replace('_', ' '))
             if al.x > self.xmost:
                 self.xmost = al.x
