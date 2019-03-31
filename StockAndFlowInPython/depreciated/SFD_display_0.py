@@ -26,7 +26,7 @@ class SFDCanvas(Frame):
         self.vbar.pack(side=RIGHT, fill=Y)
         self.vbar.config(command=self.canvas.yview)
 
-        # self.createWidgets()
+        # self.create_widgets()
 
         self.pack(fill=BOTH, expand=1)
         # self.filename = ''
@@ -226,7 +226,7 @@ class SFDCanvas(Frame):
                 return [a.x, a.y]
 
     def locateAlias(self, uid):
-        # print("locateAlias is called")
+        # print("locate_alias is called")
         for al in self.modelHandler1.aliases:
             if al.uid == uid:
                 return [al.x, al.y]
@@ -257,22 +257,22 @@ class SFDCanvas(Frame):
 
             if len(c.from_var.childNodes) > 1:  # if this end is on an alias
                 print("it has more than 1 childNodes, so alias")
-                from_cord = self.locateAlias(c.from_var.childNodes[1].getAttribute("uid"))
+                from_cord = self.locate_alias(c.from_var.childNodes[1].getAttribute("uid"))
             else:
                 print("it has childNodes, so normal variable")
                 print("c.from_var.childNodes[0].data: ", c.from_var.childNodes[0].data)
-                from_cord = self.locateVar(c.from_var.childNodes[0].data)
+                from_cord = self.locate_var(c.from_var.childNodes[0].data)
 
             print("from_cord: ", from_cord)
             # to
             print("c.to_var", c.to_var, "childNodes:", c.to_var.childNodes)
             if len(c.to_var.childNodes) > 1:  # if this end is no an alias
                 print("it has more than 1 childNodes, so alias")
-                to_cord = self.locateAlias(c.to_var.childNodes[1].getAttribute("uid"))
+                to_cord = self.locate_alias(c.to_var.childNodes[1].getAttribute("uid"))
             else:
                 print("it has childNodes, so normal variable")
                 print("c.to_var.childNodes[0].data: ", c.to_var.childNodes[0].data)
-                to_cord = self.locateVar(c.to_var.childNodes[0].data)
+                to_cord = self.locate_var(c.to_var.childNodes[0].data)
             
             print("to_cord: ", to_cord)
             '''
@@ -324,7 +324,7 @@ class SFDCanvas(Frame):
     # Here starts the simulation part
 
     '''
-    def simulationHandler(self):
+    def simulation_handler(self):
 
         import pysd
 
@@ -336,24 +336,24 @@ class SFDCanvas(Frame):
             os.remove(new_name[:-6]+".py")
             self.results = self.model_run.run()
             print("Simulation Finished.")
-            self.variablesInModel = self.results.columns.values.tolist()
-            self.variablesInModel.remove("TIME")
-            self.comboxlist["values"] = self.variablesInModel
+            self.variables_in_model = self.results.columns.values.tolist()
+            self.variables_in_model.remove("TIME")
+            self.comboxlist["values"] = self.variables_in_model
 
-    def selectVariable(self,*args):
-        self.selectedVariable = self.comboxlist.get()
+    def select_variable(self,*args):
+        self.selected_variable = self.comboxlist.get()
 
-    def showFigure(self):
+    def show_figure(self):
         f = Figure(figsize=(5, 4), dpi=100)
         a = f.add_subplot(111)
         x = self.results['TIME'].tolist()
-        y = self.results[self.selectedVariable].tolist()
+        y = self.results[self.selected_variable].tolist()
         a.plot(x,y)
-        a.set_title(self.selectedVariable)
+        a.set_title(self.selected_variable)
         a.set_xlabel('Time')
-        a.set_ylabel(self.selectedVariable)
+        a.set_ylabel(self.selected_variable)
 
-        figure1 = GraphWindow(self.selectedVariable, f)
+        figure1 = GraphWindow(self.selected_variable, f)
     
     '''
 

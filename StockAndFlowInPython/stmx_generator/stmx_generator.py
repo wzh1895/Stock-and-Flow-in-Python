@@ -136,7 +136,7 @@ def write_stmx(tree,filename):
     file_handle.close()
 
 
-stmx_file = read_stmx('blank_stmx.stmx')
+stmx_file = read_stmx('blank_stmx.stmx')  # read a blank .stmx file as template
 
 add_unit(stmx_file,name="Months",alias1="mo",alias2="month")
 add_stock(stmx_file,name="Temperature",eqn="100",inflow="Change_in_Temperature",units="C")

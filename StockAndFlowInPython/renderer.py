@@ -8,7 +8,8 @@ def main():
     hei = 600
     Frame1 = SFDCanvas(root)
     root.wm_title("Stock and Flow Canvas")
-    root.geometry(str(wid)+"x"+str(hei)+"+300+200")
+    root.geometry("%dx%d+100+100" % (wid, hei))
+    root.configure(background='#fff')
     root.mainloop()
 
 

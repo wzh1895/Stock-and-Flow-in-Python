@@ -40,7 +40,7 @@ class ModelHandler(object):
         for stockview in self.stockviews:
             name = stockview.getAttribute("name")
             name = name_handler(name)
-            print("Adding this stock:", name)
+            # print("Adding this stock:", name)
             for stock_definition in self.stock_definitions:  # Loop to find a particular stock
                 if name_handler(stock_definition.getAttribute("name")) == name:
                     eqn = stock_definition.getElementsByTagName("eqn")[0].firstChild.data
@@ -57,7 +57,7 @@ class ModelHandler(object):
         for flowview in self.flowviews:
             name = flowview.getAttribute("name")
             name = name_handler(name)
-            print("Adding this flow:", name)
+            # print("Adding this flow:", name)
             for flow_definition in self.flow_definitions:  # loop to find a particular flow
                 if name_handler(flow_definition.getAttribute("name")) == name:
                     eqn = flow_definition.getElementsByTagName("eqn")[0].firstChild.data
@@ -78,7 +78,7 @@ class ModelHandler(object):
         for auxview in self.auxviews:
             name = auxview.getAttribute("name")
             name = name_handler(name)
-            print("Adding this aux:", name)
+            # print("Adding this aux:", name)
             for aux_definition in self.aux_definitions:  # Loop to find a particular aux
                 if name_handler(aux_definition.getAttribute("name")) == name:
                     eqn = aux_definition.getElementsByTagName("eqn")[0].firstChild.data
@@ -107,7 +107,7 @@ class ModelHandler(object):
                 to_element = connectorview.getElementsByTagName("to")[0].childNodes[0].data
                 to_element = name_handler(to_element)
 
-            print("From and to", from_element, to_element)
+            # print("From and to", from_element, to_element)
             self.sess1.add_connector(uid=uid, angle=angle, from_element=from_element, to_element=to_element)
 
         # fetch views for all aliases and draw
@@ -123,6 +123,6 @@ class ModelHandler(object):
             x = float(aliasview.getAttribute("x"))
             y = float(aliasview.getAttribute("y"))
             of = aliasview.getElementsByTagName("of")[0].firstChild.data
-            print('\n', uid, 'of', of, 'bbbbbbbb\n')
+            # print('\n', uid, 'of', of, 'bbbbbbbb\n')
             of = name_handler(of)
             self.sess1.add_alias(uid=uid, of_element=of, x=x, y=y)

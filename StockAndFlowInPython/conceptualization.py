@@ -69,7 +69,7 @@ class Panel(Frame):
         self.sfd_canvas1 = SFDCanvas(self.fm_2)
         if self.suggested_archetype == 'decline_c':
             self.sfd_canvas1.modelHandler1.sess1.first_order_negative()
-            self.sfd_canvas1.modelDrawer()
+            self.sfd_canvas1.model_drawer()
 
         # Run the model
         self.sfd_canvas1.modelHandler1.sess1.simulate(simulation_time=80)
@@ -87,6 +87,7 @@ if __name__ == '__main__':
     wid = 1500
     hei = 800
     root.wm_title("Conceptualization Panel")
-    root.geometry(str(wid) + "x" + str(hei) + "+100+100")
+    root.geometry("%dx%d+100+100" % (wid, hei))
+    root.configure(background='white')
     Panel = Panel(root)
     root.mainloop()

@@ -224,7 +224,7 @@ class SFDCanvas(Frame):
                 return [a.x, a.y]
 
     def locateAlias(self, uid):
-        # print("locateAlias is called")
+        # print("locate_alias is called")
         for al in self.modelHandler1.aliases:
             if al.uid == uid:
                 return [al.x, al.y]
