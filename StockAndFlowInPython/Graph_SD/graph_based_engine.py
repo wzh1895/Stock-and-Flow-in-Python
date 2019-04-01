@@ -47,26 +47,27 @@ class Structure(object):
 
         # automatically add dependencies, if a function is used for this variable
         print(element_name, function, value)
-        if function is not None:
+        if function is not None and type(function) is not str:  # TODO: parse equation text to above functions, so that models from XMILE can use this as well
             for from_variable in function[1:]:
-                self.add_causality(from_element=from_variable, to_element=element_name, uid=self.uid_getter())
+                print('from_var:', from_variable)
+                self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(), angle=from_variable[1])
 
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
 
-    def display_elements(self):
+    def print_elements(self):
         print('All elements in this SFD:')
         print(self.sfd.nodes.data())
 
-    def display_element(self, name):
+    def print_element(self, name):
         print('Attributes of element {}:'.format(name))
         print(self.sfd.nodes[name])
 
-    def display_causalities(self):
+    def print_causalities(self):
         print('All causalities in this SFD:')
         print(self.sfd.edges)
 
-    def display_causality(self, from_element, to_element):
+    def print_causality(self, from_element, to_element):
         print('Causality from {} to {}:'.format(from_element, to_element))
         print(self.sfd[from_element][to_element])
 
@@ -81,7 +82,8 @@ class Structure(object):
             self.sfd.nodes[name]['value'].append(self.sfd.nodes[name]['value'][-1])
             return self.sfd.nodes[name]['value'][-1]  # use its latest value
         else:  # it's not a constant value but a function  #
-            params = self.sfd.nodes[name]['function'][1:]  # extract all parameters needed by this function
+            # params = self.sfd.nodes[name]['function'][1:]  # extract all parameters needed by this function
+            params = [param[0] for param in self.sfd.nodes[name]['function'][1:]]  # take the name but not the angle
             for j in range(len(params)):  # use recursion to find the values of params, then -
                 params[j] = self.calculate(params[j])  # replace the param's name with its value.
             new_value = self.sfd.nodes[name]['function'][0](*params)  # calculate the new value for this step
@@ -125,7 +127,7 @@ class Session(object):
         self.simulation_time = 13
         self.dt = 0.25
         self.structures = dict()
-        self.add_structure()
+        self.add_structure()  # Automatically add a default structure
 
     def add_structure(self, structure_name='default'):
         self.structures[structure_name] = Structure()
@@ -136,9 +138,9 @@ class Session(object):
         self.add_elements_batch([
             # 0type,    1name/uid,  2value/equation/angle           3from,      4to,        5x,     6y,     7pts,
             [STOCK,     'stock0',   [100],                          None,       None,       289,    145,    None],
-            [FLOW,      'flow0',    [DIVISION, 'gap0', 'at0'],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
+            [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
             [PARAMETER, 'goal0',    [20],                           None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],  None,       None,       213,    212,    None],
+            [VARIABLE,  'gap0',     [SUBTRACT, ['goal0', 353], ['stock0', 246]],  None,       None,       213,    212,    None],
             [PARAMETER, 'at0',      [5],                            None,       None,       123,    77,    None],
             # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
             # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
@@ -183,9 +185,9 @@ class Session(object):
         if type(equation[0]) == int or type(equation[0]) == float:
             # if equation starts with a number
             function = None
-            value = equation
+            value = equation  # it's a constant
         else:
-            function = equation
+            function = equation  # it's a function
             value = list()
         self.structures[structure_name].add_element(name, element_type=FLOW, x=x, y=y, function=function, value=value, points=points)
 
@@ -237,7 +239,7 @@ class Session(object):
 
         Figure1 = plt.figure(figsize=(5, 10))
 
-        plt.subplot(211)  # operate subplot 1
+        plt.subplot(212)  # operate subplot 2
         plt.xlabel('Time')
         plt.ylabel('Behavior')
         y_axis_minimum = 0
@@ -263,7 +265,7 @@ class Session(object):
             plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
         plt.legend()
 
-        plt.subplot(212)  # operate subplot 2
+        plt.subplot(211)  # operate subplot 1
         plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
         pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
         nx.draw(self.structures[structure_name].sfd, with_labels=True, pos=pos)
