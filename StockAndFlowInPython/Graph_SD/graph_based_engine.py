@@ -34,11 +34,22 @@ DIVISION = Functions.division
 class Structure(object):
     def __init__(self):
         self.sfd = nx.MultiDiGraph()
+        self.uid = 0
+
+    def uid_getter(self):
+        self.uid += 1
+        return self.uid
 
     def add_element(self, element_name, element_type, x=0, y=0, function=None, value=None, points=None):
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, element_type=element_type, pos=(x, y), function=function, value=value, points=points)
+
+        # automatically add dependencies, if a function is used for this variable
+        print(element_name, function, value)
+        if function is not None:
+            for from_variable in function[1:]:
+                self.add_causality(from_element=from_variable, to_element=element_name, uid=self.uid_getter())
 
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
@@ -123,16 +134,16 @@ class Session(object):
     def first_order_negative(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # 0type,    1name,      2value/equation/angle           3from,      4to,        5x,     6y,     7pts,
+            # 0type,    1name/uid,  2value/equation/angle           3from,      4to,        5x,     6y,     7pts,
             [STOCK,     'stock0',   [100],                          None,       None,       289,    145,    None],
             [FLOW,      'flow0',    [DIVISION, 'gap0', 'at0'],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
             [PARAMETER, 'goal0',    [20],                           None,       None,       163,    251,    None],
             [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],  None,       None,       213,    212,    None],
             [PARAMETER, 'at0',      [5],                            None,       None,       123,    77,    None],
-            [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
-            [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
-            [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
-            [CONNECTOR, '3',        311,                           'at0',      'flow0',     0,      0,      None]
+            # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
+            # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
+            # [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
+            # [CONNECTOR, '3',        311,                           'at0',      'flow0',     0,      0,      None]
             ])
 
     # Add elements to a structure in a batch (something like a script)
@@ -167,7 +178,7 @@ class Session(object):
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
         self.structures[structure_name].add_element(name, element_type=STOCK, x=x, y=y, value=equation)
 
-    def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None,structure_name='default'):
+    def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
         if type(equation[0]) == int or type(equation[0]) == float:
             # if equation starts with a number
