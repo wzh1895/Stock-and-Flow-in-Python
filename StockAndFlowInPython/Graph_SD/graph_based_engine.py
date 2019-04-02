@@ -64,7 +64,7 @@ class Structure(object):
 
         # automatically add dependencies, if a flow influences stock(s)
 
-        if element_type is FLOW and
+        # if element_type is FLOW and
 
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
