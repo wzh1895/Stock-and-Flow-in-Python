@@ -1,7 +1,7 @@
 """
 main utility for model expansion
 """
-from SFD_Canvas.SFD_Canvas import SFDCanvas
+from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
 
@@ -24,7 +24,7 @@ class ExpansionPanel(Frame):
 
 def main():
     root = Tk()
-    wid = 500
+    wid = 400
     hei = 1500
     Panel1 = ExpansionPanel(root)
     root.wm_title("Model Expansion")

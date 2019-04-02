@@ -19,16 +19,26 @@ class Functions(object):
     def linear(x, a=1, b=0):
         return a * float(x) + b
 
+    def addition(x, y):
+        return float(x) + float(y)
+
     def subtract(x, y):
         return float(x) - float(y)
 
     def division(x, y):
         return float(x) / float(y)
 
+    def multiplication(x, y):
+        return float(x) * float(y)
+
 
 LINEAR = Functions.linear
 SUBTRACT = Functions.subtract
 DIVISION = Functions.division
+ADDITION = Functions.addition
+MULTIPLICATION = Functions.multiplication
+
+function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
 
 
 class Structure(object):
@@ -44,16 +54,23 @@ class Structure(object):
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, element_type=element_type, pos=(x, y), function=function, value=value, points=points)
-
+        print('adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
-        print(element_name, function, value)
+
         if function is not None and type(function) is not str:  # TODO: parse equation text to above functions, so that models from XMILE can use this as well
             for from_variable in function[1:]:
-                print('from_var:', from_variable)
+                print('adding causality, from_var:', from_variable)
                 self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(), angle=from_variable[1])
+
+        # automatically add dependencies, if a flow influences stock(s)
+
+        if element_type is FLOW and
 
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
+
+    #def add_angle(self, from_element, to_element, uid=0, angle=0):
+
 
     def print_elements(self):
         print('All elements in this SFD:')
@@ -179,6 +196,7 @@ class Session(object):
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
         self.structures[structure_name].add_element(name, element_type=STOCK, x=x, y=y, value=equation)
+        print('added stock:', name, '\n')
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
@@ -196,12 +214,14 @@ class Session(object):
             self.structures[structure_name].add_causality(name, flow_to)
         if flow_from is not None:
             self.structures[structure_name].add_causality(name, flow_from)
-            # TODO: outflow shoud have a -1 somewhere
+        # TODO: outflow shoud have a -1 somewhere
         # TODO flow may be used for calculating other variables,
         #  so could have other outgoing causal links
+        print('added flow:', name, '\n')
 
     def add_aux(self, name, equation, x=0, y=0, structure_name='default'):
         # Decide if this aux is a parameter or variable
+        # print('here!', equation)
         if type(equation[0]) == int or type(equation[0]) == float:
             # if equation starts with a number
             # It's a parameter
@@ -209,12 +229,14 @@ class Session(object):
         else:
             # It's a variable
             self.structures[structure_name].add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
+        print('added aux', name, '\n')
 
     def add_connector(self, uid, from_element, to_element, angle=0, structure_name='default'):
         self.structures[structure_name].add_causality(from_element, to_element, uid=uid, angle=angle)
 
     def add_alias(self, uid, of_element, x=0, y=0, structure_name='default'):
         self.structures[structure_name].add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
+        print('added alias of', of_element, '\n')
 
     # Simulate a structure based on a certain set of parameters
     def simulate(self, structure_name='default', simulation_time=13, dt=0.25):

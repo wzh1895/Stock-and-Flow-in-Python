@@ -3,10 +3,11 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from SFD_Canvas.session_handler import SessionHandler
-from Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
+from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
+from StockAndFlowInPython.Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
+import networkx as nx
 import shutil
 import os
 
@@ -231,7 +232,7 @@ class SFDCanvas(Frame):
         fm_2.configure(background="#fff")
         self.btn1 = Button(fm_2, text="Select model", command=self.file_load)
         self.btn1.pack(side=LEFT)
-        self.btn_run = Button(fm_2, text="Run_pysd", command=self.simulation_handler)
+        self.btn_run = Button(fm_2, text="Run", command=self.simulation_handler)
         self.btn_run.pack(side=LEFT)
         # self.btn_run1 = Button(fm_2, text="Run_graph", command=None)
         # self.btn_run1.pack(side=LEFT)
@@ -286,9 +287,10 @@ class SFDCanvas(Frame):
         radius1 = 8
 
         for connector in self.session_handler1.sess1.structures['default'].sfd.edges():
-            # print(connector)
+            print('\n', connector)
             from_element = connector[0]
             to_element = connector[1]
+            print('drawing connector from', from_element, 'to', to_element)
             from_cord = self.locate_var(from_element)
             # print(from_cord)
             to_cord = self.locate_var(to_element)
@@ -356,6 +358,8 @@ class SFDCanvas(Frame):
 
     # Here starts the simulation part
 
+    # Depreciated for the graph-based engine
+    """
     def simulation_handler(self):
 
         import pysd
@@ -369,8 +373,19 @@ class SFDCanvas(Frame):
             self.results = self.model_run.run()
             print("Simulation Finished.")
             self.variables_in_model = self.results.columns.values.tolist()
+            print(self.variables_in_model)
             self.variables_in_model.remove("TIME")
             self.comboxlist["values"] = self.variables_in_model
+    """
+    def simulation_handler(self):
+        if self.filename != '':
+            self.session_handler1.sess1.simulate()
+            #self.variables_in_model = self.session_handler1.sess1.structures['default'].sfd.nodes.data()
+            self.variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
+            print(self.variables_in_model)
+            self.comboxlist["values"] = self.variables_in_model
+            print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
+
 
     def select_variable(self, *args):
         self.selected_variable = self.comboxlist.get()
@@ -378,9 +393,12 @@ class SFDCanvas(Frame):
     def show_figure(self):
         f = Figure(figsize=(5, 4), dpi=100)
         a = f.add_subplot(111)
-        x = self.results['TIME'].tolist()
-        y = self.results[self.selected_variable].tolist()
-        a.plot(x, y)
+        # x = self.results['TIME'].tolist()  # for pysd, depreciated
+        # y = self.results[self.selected_variable].tolist()  # for pysd, depreciated
+        # a.plot(x, y)
+        behavior = self.session_handler1.sess1.structures['default'].sfd.nodes[self.selected_variable]['value']
+        print(behavior)
+        a.plot(behavior, label=self.selected_variable)
         a.set_title(self.selected_variable)
         a.set_xlabel('Time')
         a.set_ylabel(self.selected_variable)
