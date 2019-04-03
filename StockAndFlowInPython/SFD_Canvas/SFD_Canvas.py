@@ -228,25 +228,31 @@ class SFDCanvas(Frame):
         fm_1.pack(side=TOP)
 
         fm_2 = Frame(fm_1)
-        fm_2.configure(background="#fff")
-        self.btn1 = Button(fm_2, text="Select model", command=self.file_load)
+        fm_2.configure(background="#fff")  # Buttons
+        fm_3 = Frame(fm_2)  # first row of buttons
+        self.btn1 = Button(fm_3, text="Select model", command=self.file_load)
         self.btn1.pack(side=LEFT)
-        self.btn_run = Button(fm_2, text="Run", command=self.simulation_handler)
+        self.btn_run = Button(fm_3, text="Run", command=self.simulation_handler)
         self.btn_run.pack(side=LEFT)
         # self.btn_run1 = Button(fm_2, text="Run_graph", command=None)
         # self.btn_run1.pack(side=LEFT)
-        self.comboxlist = ttk.Combobox(fm_2)
+        self.comboxlist = ttk.Combobox(fm_3)
         self.variables_in_model = ["Variable"]
         self.comboxlist["values"] = self.variables_in_model
         self.comboxlist.current(0)
         self.comboxlist.bind("<<ComboboxSelected>>", self.select_variable)
         self.comboxlist.pack(side=LEFT)
-        self.btn3 = Button(fm_2, text="Show Figure", command=self.show_figure)
+        fm_3.pack(side=TOP)
+
+        fm_4 = Frame(fm_2)
+        self.btn3 = Button(fm_4, text="Show Figure", command=self.show_figure)
         self.btn3.pack(side=LEFT)
-        self.btn4 = Button(fm_2, text="Reset canvas", command=self.reset_canvas)
+        self.btn4 = Button(fm_4, text="Reset canvas", command=self.reset_canvas)
         self.btn4.pack(side=LEFT)
-        self.btn5 = Button(fm_2, text="Clear a run", command=self.clear_a_run)
+        self.btn5 = Button(fm_4, text="Clear a run", command=self.clear_a_run)
         self.btn5.pack(side=LEFT)
+        fm_4.pack(side=TOP)
+
         fm_2.pack(side=TOP)
 
     def file_load(self):
