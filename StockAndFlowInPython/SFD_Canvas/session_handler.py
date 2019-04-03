@@ -1,6 +1,11 @@
 import xml.dom.minidom
-from StockAndFlowInPython.Graph_SD.graph_based_engine import Session, function_names
+import math
+from tkinter import filedialog
+from tkinter import *
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from StockAndFlowInPython.Graph_SD.graph_based_engine import Session, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
 from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
+from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
 
 
 def name_handler(name):
@@ -9,7 +14,35 @@ def name_handler(name):
 
 class SessionHandler(object):
     def __init__(self):
+        # backends
         self.sess1 = Session()
+        self.filename = ''
+        self.model = None
+        self.variables_in_model = None
+        self.selected_variable = None
+        self.simulation_time = 13
+
+        # front ends
+        self.sfd_window1 = SFDWindow()
+        self.graph_network_window1 = GraphNetworkWindow()
+        self.simulation_result1 = SimulationResult()
+
+
+    def file_load(self):
+        self.filename = filedialog.askopenfilename()
+        if self.filename != '':
+            self.read_xmile_model(self.filename)
+            # draw sfd
+            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+            # draw graph network
+            self.draw_graph_network()
+            self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+            print(self.filename)
+            return (self.filename, self.variables_in_model)
+
+    def simulation_handler(self, simulation_time):
+        self.sess1.clear_a_run()
+        self.sess1.simulate(simulation_time=simulation_time)
 
     def add_angle_to_eqn(self, name, eqn):
         if eqn[0] in function_names:
@@ -184,3 +217,64 @@ class SessionHandler(object):
 
         print('\nnodes: ', self.sess1.structures['default'].sfd.nodes)
         print('edges: ', self.sess1.structures['default'].sfd.edges)
+
+    # Clear a simulation result but keep the structure
+    def clear_a_run(self):
+        self.sess1.clear_a_run()
+
+    def file_handler(self, filename):
+        DOMTree = xml.dom.minidom.parse(filename)
+        # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
+        self.model = DOMTree.documentElement
+
+    def draw_graph_network(self):
+        try:
+            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+        except:
+            pass
+        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.sess1.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
+        self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
+
+    def show_result(self):
+        try:
+            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        except:
+            pass
+        self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
+        self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
+        self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
+
+    def reset(self):
+        self.sfd_window1.sfd_canvas1.reset_canvas()
+        try:
+            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+        except:
+            pass
+        try:
+            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        except:
+            pass
+        self.sess1.clear_a_run()
+        self.sess1.reset_a_structure()
+
+
+class SFDWindow(object):
+    def __init__(self):
+        self.top = Toplevel()
+        self.top.title("Stock and Flow Diagram")
+        self.top.geometry("%dx%d+700+100" % (800, 500))
+        self.sfd_canvas1 = SFDCanvas(self.top)
+
+
+class GraphNetworkWindow(object):
+    def __init__(self):
+        self.top = Toplevel()
+        self.top.title("Graph Network Structure")
+        self.top.geometry("%dx%d+100+300" % (500, 500))
+
+
+class SimulationResult(object):
+    def __init__(self):
+        self.top = Toplevel()
+        self.top.title("Simulation Result")
+        self.top.geometry("%dx%d+400+200" % (500, 500))

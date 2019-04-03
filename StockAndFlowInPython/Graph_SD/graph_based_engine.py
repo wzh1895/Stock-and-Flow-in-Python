@@ -1,5 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch, Circle
+import numpy as np
 
 
 # define constants
@@ -158,7 +160,7 @@ class Structure(object):
 
 class Session(object):
     def __init__(self):
-        self.simulation_time = 13
+        self.simulation_time = None
         self.dt = 0.25
         self.structures = dict()
         self.add_structure()  # Automatically add a default structure
@@ -264,7 +266,7 @@ class Session(object):
         self.structures[structure_name].sfd.clear()
 
     # Simulate a structure based on a certain set of parameters
-    def simulate(self, structure_name='default', simulation_time=13, dt=0.25):
+    def simulate(self, simulation_time, structure_name='default', dt=0.25):
         self.simulation_time = simulation_time
         self.dt = dt
         if simulation_time == 0:
@@ -279,14 +281,14 @@ class Session(object):
             # print('\nExecuting Step {} :\n'.format(i))
             self.structures[structure_name].step(dt)
 
-    # Draw graphs
-    def draw_graphs(self, structure_name='default', names=None, rtn=False):
+    # Draw results
+    def draw_results(self, structure_name='default', names=None, rtn=False):
         if names is None:
             names = list(self.structures[structure_name].sfd.nodes)
 
-        self.Figure1 = plt.figure(figsize=(5, 10))
+        self.Figure1 = plt.figure(figsize=(5, 5))
 
-        plt.subplot(212)  # operate subplot 2
+        # plt.subplot(212)  # operate subplot 2
         plt.xlabel('Time')
         plt.ylabel('Behavior')
         y_axis_minimum = 0
@@ -312,8 +314,14 @@ class Session(object):
             plt.axis([0, self.simulation_time, y_axis_minimum, y_axis_maximum])
             plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
         plt.legend()
+        if rtn:  # if called from external, return the figure without show it.
+            return self.Figure1
+        else:  # otherwise, show the figure.
+            plt.show()
 
-        plt.subplot(211)  # operate subplot 1
+    # Draw graphs
+    def draw_graphs(self, structure_name='default', rtn=False):
+        self.Figure1 = plt.figure(figsize=(5, 5))
         plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
         pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
         nx.draw(self.structures[structure_name].sfd, with_labels=True, pos=pos)
@@ -323,12 +331,70 @@ class Session(object):
         else:  # otherwise, show the figure.
             plt.show()
 
+    # Draw graphs with curve
+    def draw_graphs_with_curve(self, structure_name='default', rtn=False):
+        self.Figure1 = plt.figure(figsize=(5, 5))
+        ax = plt.gca()
+        ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
+
+        # disable all frames/borders
+        ax.axes.get_yaxis().set_visible(False)
+        ax.axes.get_xaxis().set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
+        print(pos)
+        self.draw_network(self.structures[structure_name].sfd, pos, ax)
+        ax.autoscale()
+
+        if rtn: # if figure needs to be returned
+            return self.Figure1
+        else:
+            plt.show()
+
+    # Draw network with FancyArrowPatch
+    # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
+    def draw_network(self, G, pos, ax):
+        for n in G:
+            circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
+            ax.add_patch(circle)
+            G.node[n]['patch'] = circle
+            x, y = pos[n]
+            ax.text(x, y, n, fontsize=8)
+        seen = {}
+        for (u, v, d) in G.edges(data=True):
+            n1 = G.node[u]['patch']
+            n2 = G.node[v]['patch']
+            rad = 0.3
+            if (u, v) in seen:
+                rad = seen.get((u, v))
+                rad = (rad + np.sign(rad)*0.1)*-1
+            alpha = 0.5
+            color = 'k'
+
+            edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
+                                arrowstyle='-|>',
+                                connectionstyle='arc3,rad=%s'%rad,
+                                mutation_scale=15.0,
+                                lw=2,
+                                alpha=alpha,
+                                color=color)
+            seen[(u, v)] = rad
+            ax.add_patch(edge)
+        return edge
+
 
 def main():
     sess0 = Session()
     sess0.first_order_negative()
     sess0.simulate(simulation_time=80)
-    sess0.draw_graphs(names=['stock0', 'flow0'])
+    # sess0.draw_graphs()
+    sess0.draw_graphs_with_curve()
+    # after closing the above window ...
+    # sess0.draw_results(names=['stock0', 'flow0'])
 
 
 if __name__ == '__main__':
