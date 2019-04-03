@@ -264,7 +264,8 @@ class SFDCanvas(Frame):
 
             #TODO temporary solution: first simulate then draw behavior and graph network
             self.simulation_handler()
-            self.session_handler1.sess1.draw_graphs()
+            #TODO rewrite
+            # self.session_handler1.sess1.draw_graphs()
 
         else:
             self.lb.config(text="No file is selected.")
