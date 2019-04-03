@@ -230,8 +230,6 @@ class SessionHandler(object):
         print('\nnodes: ', self.sess1.structures['default'].sfd.nodes)
         print('edges: ', self.sess1.structures['default'].sfd.edges)
 
-        """Below is the function for drawing a SFD"""
-
     # Clear a simulation result but keep the structure
     def clear_a_run(self):
         self.sess1.clear_a_run()
@@ -240,8 +238,6 @@ class SessionHandler(object):
         DOMTree = xml.dom.minidom.parse(filename)
         # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
         self.model = DOMTree.documentElement
-
-        """Below is the function for drawing a SFD"""
 
     def graph_network_drawer(self):
         self.graph_network_window1.graph_figure = FigureCanvasTkAgg(self.sess1.draw_graphs(rtn=True), master=self.graph_network_window1.top)
