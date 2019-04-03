@@ -20,10 +20,10 @@ class SFDCanvas(Frame):
         self.master = master
         self.xmost = 300
         self.ymost = 300
+        self.sfd = None
 
         self.canvas = Canvas(self)
         self.canvas.configure(background='#fff')
-        # self.canvas.pack(side = BOTTOM, fill = BOTH, expand = 1)
 
         self.hbar = Scrollbar(self, orient=HORIZONTAL)
         self.hbar.pack(side=BOTTOM, fill=X)
@@ -33,15 +33,38 @@ class SFDCanvas(Frame):
         self.vbar.pack(side=RIGHT, fill=Y)
         self.vbar.config(command=self.canvas.yview)
 
-        # self.create_widgets()
-
         self.pack(fill=BOTH, expand=1)
-        #self.filename = ''
 
-        # Initialize model handler
-        #self.session_handler1 = SessionHandler()
+    def set_sfd_and_draw(self, sfd):
+        self.sfd = sfd
+        self.sfd_drawer()
 
-    '''
+    def reset_canvas(self):
+        self.canvas.delete('all')
+        # self.lb.config(text='Load and display a Stella SD Model')
+        # self.variables_in_model = ["Variable"]
+        # self.comboxlist["values"] = self.variables_in_model
+        # self.comboxlist.current(0)
+
+        # TODO: rewrite matplotlib usages
+
+        self.xmost = 300
+        self.ymost = 300
+        self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
+
+
+
+    def locate_var(self, name):
+        name = name_handler(name)
+        # print("locating...")
+        # print(name)
+        # print(self.session_handler1.sess1.structures['default'].sfd.nodes)
+        for element in self.sfd.nodes:
+            if element == name:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                return [float(x), float(y)]
+
     def create_stock(self, x, y, w, h, label):
         """
         Center x, Center y, width, height, label
@@ -199,103 +222,13 @@ class SFDCanvas(Frame):
             n += b[i] ** 2
         return l / ((m * n) ** 0.5)
 
-    def locate_var(self, name):
-        name = name_handler(name)
-        # print("locating...")
-        # print(name)
-        # print(self.session_handler1.sess1.structures['default'].sfd.nodes)
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
-            if element == name:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
-                return [float(x), float(y)]
-
     def locate_alias(self, uid):
         # print("locate_alias is called, locating...")
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
+        for element in self.sfd.nodes:
             if element == uid:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
-    
-    '''
-    # Here starts Widgets and Commands
-    '''
-    def create_widgets(self):
-        fm_1 = Frame(self.master)
-        fm_1.configure(background="#fff")
-        self.lb = Label(fm_1, text='Display System Dynamics Model', background="#fff")
-        self.lb.pack()
-        fm_1.pack(side=TOP)
-
-        fm_2 = Frame(fm_1)
-        fm_2.configure(background="#fff")  # Buttons
-        fm_3 = Frame(fm_2)  # first row of buttons
-        self.btn1 = Button(fm_3, text="Select model", command=self.file_load)
-        self.btn1.pack(side=LEFT)
-        self.btn_run = Button(fm_3, text="Run", command=self.simulation_handler)
-        self.btn_run.pack(side=LEFT)
-        # self.btn_run1 = Button(fm_2, text="Run_graph", command=None)
-        # self.btn_run1.pack(side=LEFT)
-        self.comboxlist = ttk.Combobox(fm_3)
-        self.variables_in_model = ["Variable"]
-        self.comboxlist["values"] = self.variables_in_model
-        self.comboxlist.current(0)
-        self.comboxlist.bind("<<ComboboxSelected>>", self.select_variable)
-        self.comboxlist.pack(side=LEFT)
-        fm_3.pack(side=TOP)
-
-        fm_4 = Frame(fm_2)
-        self.btn3 = Button(fm_4, text="Show Figure", command=self.show_figure)
-        self.btn3.pack(side=LEFT)
-        self.btn4 = Button(fm_4, text="Reset canvas", command=self.reset_canvas)
-        self.btn4.pack(side=LEFT)
-        self.btn5 = Button(fm_4, text="Clear a run", command=self.clear_a_run)
-        self.btn5.pack(side=LEFT)
-        fm_4.pack(side=TOP)
-
-        fm_2.pack(side=TOP)
-    '''
-
-    '''
-    def file_load(self):
-        self.filename = filedialog.askopenfilename()
-        if self.filename != '':
-            self.lb.config(text="File selected: " + self.filename)
-            self.session_handler1.read_xmile_model(self.filename)
-            self.sfd_drawer()
-
-            #TODO temporary solution: first simulate then draw behavior and graph network
-            self.simulation_handler()
-            #TODO rewrite
-            # self.session_handler1.sess1.draw_graphs()
-
-        else:
-            self.lb.config(text="No file is selected.")
-    '''
-    '''
-    def reset_canvas(self):
-        self.canvas.delete('all')
-        # self.lb.config(text='Load and display a Stella SD Model')
-        # self.variables_in_model = ["Variable"]
-        # self.comboxlist["values"] = self.variables_in_model
-        # self.comboxlist.current(0)
-
-        self.session_handler1.sess1.reset_a_structure()
-        # TODO: rewrite matplotlib usages
-
-        self.xmost = 300
-        self.ymost = 300
-        self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
-
-    # Clear a simulation result but keep the structure
-    def clear_a_run(self):
-        self.session_handler1.sess1.clear_a_run()
-
-    def file_handler(self, filename):
-        DOMTree = xml.dom.minidom.parse(filename)
-        # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
-        self.model = DOMTree.documentElement
 
     def sfd_drawer(self):
         # now starts the 'drawing' part
@@ -310,7 +243,7 @@ class SFDCanvas(Frame):
         length1 = 115
         radius1 = 8
 
-        for connector in self.session_handler1.sess1.structures['default'].sfd.edges():
+        for connector in self.sfd.edges():
             print('\n', connector)
             from_element = connector[0]
             to_element = connector[1]
@@ -319,20 +252,20 @@ class SFDCanvas(Frame):
             # print(from_cord)
             to_cord = self.locate_var(to_element)
             # print(to_cord)
-            angle = self.session_handler1.sess1.structures['default'].sfd[from_element][to_element][0]['angle']
+            angle = self.sfd[from_element][to_element][0]['angle']
             # print('angle:', angle)
             self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
+        for element in self.sfd.nodes:
             # print(element)
             # print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
             # print(self.session_handler1.sess1.structures['default'].sfd.nodes[element])
             # print("This element: ", element)
             # print("These elements:", self.session_handler1.sess1.structures['default'].sfd.nodes)
-            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == STOCK:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+            if self.sfd.nodes[element]['element_type'] == STOCK:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
                 # print(x,y)
                 self.create_stock(x, y, width1, height1, element)
                 if x > self.xmost:
@@ -341,11 +274,11 @@ class SFDCanvas(Frame):
                     self.ymost = y
 
         # draw flows
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
-            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == FLOW:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
-                points = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['points']
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] == FLOW:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                points = self.sfd.nodes[element]['points']
                 self.create_flow(x, y, points, radius1, element)
                 if x > self.xmost:
                     self.xmost = x
@@ -353,21 +286,21 @@ class SFDCanvas(Frame):
                     self.ymost = y
 
         # draw auxs
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
-            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
                 self.create_aux(x, y, radius1, element)
                 if x > self.xmost:
                     self.xmost = x
                 if y > self.ymost:
                     self.ymost = y
 
-        for element in self.session_handler1.sess1.structures['default'].sfd.nodes:
-            if self.session_handler1.sess1.structures['default'].sfd.nodes[element]['element_type'] == ALIAS:
-                x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
-                y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
-                of_element = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['function']
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] == ALIAS:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                of_element = self.sfd.nodes[element]['function']
                 self.create_alias(x, y, radius1, of_element)
                 if x > self.xmost:
                     self.xmost = x
@@ -379,59 +312,7 @@ class SFDCanvas(Frame):
         # print('Xmost,', self.xmost, 'Ymost,', self.ymost)
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
         self.canvas.pack(side=LEFT, expand=1, fill=BOTH)
-    '''
-    # Here starts the simulation part
 
-    # Depreciated for the graph-based engine
-    """
-    def simulation_handler(self):
-
-        import pysd
-
-        if self.filename != '':
-            new_name = self.filename[:-5]+".xmile"
-            shutil.copy(self.filename, new_name)
-            self.model_run = pysd.read_xmile(new_name)
-            os.remove(new_name)
-            # os.remove(new_name[:-6]+".py")
-            self.results = self.model_run.run()
-            print("Simulation Finished.")
-            self.variables_in_model = self.results.columns.values.tolist()
-            print(self.variables_in_model)
-            self.variables_in_model.remove("TIME")
-            self.comboxlist["values"] = self.variables_in_model
-    """
-
-    '''
-    def simulation_handler(self, simulation_time=13):
-        # if self.filename != '':
-        self.session_handler1.sess1.simulate(simulation_time=simulation_time)
-        #self.variables_in_model = self.session_handler1.sess1.structures['default'].sfd.nodes.data()
-        self.variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
-        print(self.variables_in_model)
-        self.comboxlist["values"] = self.variables_in_model
-        print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
-    '''
-
-    '''
-    def select_variable(self, *args):
-        self.selected_variable = self.comboxlist.get()
-
-    def show_figure(self):
-        f = Figure(figsize=(5, 4), dpi=100)
-        a = f.add_subplot(111)
-        # x = self.results['TIME'].tolist()  # for pysd, depreciated
-        # y = self.results[self.selected_variable].tolist()  # for pysd, depreciated
-        # a.plot(x, y)
-        behavior = self.session_handler1.sess1.structures['default'].sfd.nodes[self.selected_variable]['value']
-        print(behavior)
-        a.plot(behavior, label=self.selected_variable)
-        a.set_title(self.selected_variable)
-        a.set_xlabel('Time')
-        a.set_ylabel(self.selected_variable)
-
-        figure1 = GraphWindow(self.selected_variable, f)
-    '''
 
 class GraphWindow():
     def __init__(self, title, figure):

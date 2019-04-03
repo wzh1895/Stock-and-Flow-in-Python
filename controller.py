@@ -21,7 +21,7 @@ class ControllerBar(Frame):
         self.fm_1.pack(side=TOP)
         self.btn1 = Button(self.fm_1, text="Load model", command=self.file_load)
         self.btn1.pack(side=LEFT)
-        self.btn_run = Button(self.fm_1, text="Run", command=self.session_handler1.simulation_handler)
+        self.btn_run = Button(self.fm_1, text="Run", command=self.simulate)
         self.btn_run.pack(side=LEFT)
         self.comboxlist = ttk.Combobox(self.fm_1)
         self.variables_in_model = ["Variable"]
@@ -29,15 +29,22 @@ class ControllerBar(Frame):
         self.comboxlist.current(0)
         self.comboxlist.bind("<<ComboboxSelected>>", self.select_variable)
         self.comboxlist.pack(side=LEFT)
+        self.sim_time = StringVar()
+        self.sim_time.set("13")
+        self.entry1 = Entry(self.fm_1, width=10, textvariable=self.sim_time)
+        self.entry1.pack()
 
         self.fm_2 = Frame(self.master)
         self.fm_2.pack(side=TOP)
         self.btn3 = Button(self.fm_2, text="Show result", command=self.session_handler1.show_result)
         self.btn3.pack(side=LEFT)
-        self.btn4 = Button(self.fm_2, text="Reset canvas", command=self.session_handler1.reset_canvas)
+        self.btn4 = Button(self.fm_2, text="Reset", command=self.session_handler1.reset)
         self.btn4.pack(side=LEFT)
         self.btn5 = Button(self.fm_2, text="Clear a run", command=self.session_handler1.clear_a_run)
         self.btn5.pack(side=LEFT)
+
+    def simulate(self):
+        self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
 
     def file_load(self):
         file_name_and_variables = self.session_handler1.file_load()
@@ -57,7 +64,7 @@ class ControllerBar(Frame):
 
 def main():
     root = Tk()
-    wid = 400
+    wid = 480
     hei = 80
     controller_bar1 = ControllerBar(root)
     root.wm_title("Controller")
