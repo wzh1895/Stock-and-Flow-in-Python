@@ -63,6 +63,10 @@ Here you can have a quick glance of it:
 
 ![ScreenShot](./screenshots/screenShot_07.png)
 
+And **a folating view assembling SFD display, graph network display, and graph-based simulation** (inspired by GIMP)
+
+![ScreenShot](./screenshots/screenShot_08.png)
+
 ## How to use
 
 **Local-based Display**
@@ -83,6 +87,13 @@ Then you can load the model, simulate and view the outcome in the graphic interf
 
 
 ## Change Log
+
+
+**4 Apr 2019: v0.7.0**
+
+1. Introduced a new floating view
+2. Assembled XMILE loading (with simple parsing), SFD display, Graph-based representation, Graph-based simulation, and result display.
+3. Structure changed to suit this assembling.
 
 **10 Mar 2019: v0.6.0**
 
