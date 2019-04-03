@@ -41,20 +41,8 @@ class SessionHandler(object):
             return (self.filename, self.variables_in_model)
 
     def simulation_handler(self, simulation_time):
+        self.sess1.clear_a_run()
         self.sess1.simulate(simulation_time=simulation_time)
-
-    def reset(self):
-        self.sfd_window1.sfd_canvas1.reset_canvas()
-        self.sess1.reset_a_structure()
-
-    def show_result(self):
-        try:
-            self.simulation_result1.canvas1.get_tk_widget().destroy()
-        except:
-            pass
-        self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
-        self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
-        self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
 
     def add_angle_to_eqn(self, name, eqn):
         if eqn[0] in function_names:
@@ -240,8 +228,34 @@ class SessionHandler(object):
         self.model = DOMTree.documentElement
 
     def graph_network_drawer(self):
-        self.graph_network_window1.graph_figure = FigureCanvasTkAgg(self.sess1.draw_graphs(rtn=True), master=self.graph_network_window1.top)
-        self.graph_network_window1.graph_figure._tkcanvas.pack(side=TOP)
+        try:
+            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+        except:
+            pass
+        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.sess1.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
+        self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
+
+    def show_result(self):
+        try:
+            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        except:
+            pass
+        self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
+        self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
+        self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
+
+    def reset(self):
+        self.sfd_window1.sfd_canvas1.reset_canvas()
+        try:
+            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+        except:
+            pass
+        try:
+            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        except:
+            pass
+        self.sess1.clear_a_run()
+        self.sess1.reset_a_structure()
 
 
 class SFDWindow(object):
