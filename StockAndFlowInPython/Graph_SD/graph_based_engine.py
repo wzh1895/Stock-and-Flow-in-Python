@@ -326,10 +326,7 @@ class Session(object):
 
 
     # Draw graphs
-    def draw_graphs(self, structure_name='default', names=None, rtn=False):
-        if names is None:
-            names = list(self.structures[structure_name].sfd.nodes)
-
+    def draw_graphs(self, structure_name='default', rtn=False):
         self.Figure1 = plt.figure(figsize=(5, 5))
         '''
         plt.subplot(212)  # operate subplot 2

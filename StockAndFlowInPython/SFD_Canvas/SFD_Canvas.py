@@ -429,7 +429,7 @@ class SFDCanvas(Frame):
 class GraphWindow():
     def __init__(self, title, figure):
         top = Toplevel()
-        top.title = title
+        top.title(title)
         graph = FigureCanvasTkAgg(figure, master=top)
         graph.draw()
         graph._tkcanvas.pack()

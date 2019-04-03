@@ -4,6 +4,7 @@ Controller tool bar for this entire project
 
 from tkinter import *
 from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
 from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
 
@@ -16,6 +17,7 @@ class ControllerBar(Frame):
 
         self.sfd_window1 = SFDWindow()
         self.graph_network_window1 = GraphNetworkWindow()
+        self.simulation_result1 = SimulationResult()
 
         self.fm_1 = Frame(self.master)
         self.fm_1.pack(side=TOP)
@@ -40,6 +42,20 @@ class ControllerBar(Frame):
         self.btn5.pack(side=LEFT)
 
         self.session_handler1 = SessionHandler()
+        self.session_handler1.sess1.first_order_negative()
+        self.session_handler1.sess1.simulate(simulation_time=80)
+
+        self.simulation_result1.result_figure = FigureCanvasTkAgg(
+            self.session_handler1.sess1.draw_results(names=['stock0', 'flow0'], rtn=True),
+            master=self.simulation_result1.top
+        )
+        self.simulation_result1.result_figure._tkcanvas.pack(side=TOP)
+
+        self.graph_network_window1.graph_figure = FigureCanvasTkAgg(
+            self.session_handler1.sess1.draw_graphs(rtn=True),
+            master=self.graph_network_window1.top
+        )
+        self.graph_network_window1.graph_figure._tkcanvas.pack(side=TOP)
 
 
 class SFDWindow(object):
@@ -61,13 +77,14 @@ class GraphNetworkWindow(object):
 class SimulationResult(object):
     def __init__(self):
         self.top = Toplevel()
-        self.top.title = "Simulation Result"
+        self.top.title("Simulation Result")
+        self.top.geometry("%dx%d+400+200" % (500, 500))
 
 
 def main():
     root = Tk()
     wid = 400
-    hei = 100
+    hei = 60
     controller_bar1 = ControllerBar(root)
     root.wm_title("Controller")
     root.geometry("%dx%d+100+100" % (wid, hei))
