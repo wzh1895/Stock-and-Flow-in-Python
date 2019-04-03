@@ -35,7 +35,7 @@ class SessionHandler(object):
             # draw sfd
             self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
             # draw graph network
-            self.graph_network_drawer()
+            self.draw_graph_network()
             self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
             print(self.filename)
             return (self.filename, self.variables_in_model)
@@ -227,7 +227,7 @@ class SessionHandler(object):
         # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
         self.model = DOMTree.documentElement
 
-    def graph_network_drawer(self):
+    def draw_graph_network(self):
         try:
             self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
         except:
