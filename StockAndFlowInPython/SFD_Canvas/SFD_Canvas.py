@@ -1,9 +1,8 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
+#from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
 from StockAndFlowInPython.Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
@@ -34,14 +33,15 @@ class SFDCanvas(Frame):
         self.vbar.pack(side=RIGHT, fill=Y)
         self.vbar.config(command=self.canvas.yview)
 
-        self.create_widgets()
+        # self.create_widgets()
 
         self.pack(fill=BOTH, expand=1)
-        self.filename = ''
+        #self.filename = ''
 
         # Initialize model handler
-        self.session_handler1 = SessionHandler()
+        #self.session_handler1 = SessionHandler()
 
+    '''
     def create_stock(self, x, y, w, h, label):
         """
         Center x, Center y, width, height, label
@@ -217,9 +217,10 @@ class SFDCanvas(Frame):
                 x = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][0]
                 y = self.session_handler1.sess1.structures['default'].sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
-
+    
+    '''
     # Here starts Widgets and Commands
-
+    '''
     def create_widgets(self):
         fm_1 = Frame(self.master)
         fm_1.configure(background="#fff")
@@ -254,7 +255,9 @@ class SFDCanvas(Frame):
         fm_4.pack(side=TOP)
 
         fm_2.pack(side=TOP)
+    '''
 
+    '''
     def file_load(self):
         self.filename = filedialog.askopenfilename()
         if self.filename != '':
@@ -269,13 +272,14 @@ class SFDCanvas(Frame):
 
         else:
             self.lb.config(text="No file is selected.")
-
+    '''
+    '''
     def reset_canvas(self):
         self.canvas.delete('all')
-        self.lb.config(text='Load and display a Stella SD Model')
-        self.variables_in_model = ["Variable"]
-        self.comboxlist["values"] = self.variables_in_model
-        self.comboxlist.current(0)
+        # self.lb.config(text='Load and display a Stella SD Model')
+        # self.variables_in_model = ["Variable"]
+        # self.comboxlist["values"] = self.variables_in_model
+        # self.comboxlist.current(0)
 
         self.session_handler1.sess1.reset_a_structure()
         # TODO: rewrite matplotlib usages
@@ -375,7 +379,7 @@ class SFDCanvas(Frame):
         # print('Xmost,', self.xmost, 'Ymost,', self.ymost)
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
         self.canvas.pack(side=LEFT, expand=1, fill=BOTH)
-
+    '''
     # Here starts the simulation part
 
     # Depreciated for the graph-based engine
@@ -397,6 +401,8 @@ class SFDCanvas(Frame):
             self.variables_in_model.remove("TIME")
             self.comboxlist["values"] = self.variables_in_model
     """
+
+    '''
     def simulation_handler(self, simulation_time=13):
         # if self.filename != '':
         self.session_handler1.sess1.simulate(simulation_time=simulation_time)
@@ -405,8 +411,9 @@ class SFDCanvas(Frame):
         print(self.variables_in_model)
         self.comboxlist["values"] = self.variables_in_model
         print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
+    '''
 
-
+    '''
     def select_variable(self, *args):
         self.selected_variable = self.comboxlist.get()
 
@@ -424,7 +431,7 @@ class SFDCanvas(Frame):
         a.set_ylabel(self.selected_variable)
 
         figure1 = GraphWindow(self.selected_variable, f)
-
+    '''
 
 class GraphWindow():
     def __init__(self, title, figure):
