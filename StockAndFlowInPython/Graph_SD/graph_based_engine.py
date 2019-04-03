@@ -16,18 +16,23 @@ class Functions(object):
     def __init__(self):
         pass
 
+    @staticmethod
     def linear(x, a=1, b=0):
         return a * float(x) + b
 
+    @staticmethod
     def addition(x, y):
         return float(x) + float(y)
 
+    @staticmethod
     def subtract(x, y):
         return float(x) - float(y)
 
+    @staticmethod
     def division(x, y):
         return float(x) / float(y)
 
+    @staticmethod
     def multiplication(x, y):
         return float(x) * float(y)
 
@@ -57,7 +62,7 @@ class Structure(object):
         print('adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
 
-        if function is not None and type(function) is not str:  # TODO: parse equation text to above functions, so that models from XMILE can use this as well
+        if function is not None and type(function) is not str:
             for from_variable in function[1:]:
                 print('adding causality, from_var:', from_variable)
                 self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(), angle=from_variable[1])
@@ -138,6 +143,18 @@ class Structure(object):
             # calculate the new value for this stock and add it to the end of its value list
             self.sfd.nodes[stock]['value'].append(self.sfd.nodes[stock]['value'][-1] + affected_stocks[stock])
 
+    def clear_value(self):
+        # clear 'value' for all nodes
+        for node in self.sfd.nodes:
+            if self.sfd.nodes[node]['element_type'] == STOCK:
+                self.sfd.nodes[node]['value'] = [self.sfd.nodes[node]['value'][0]]  # for stock, keep its initial value
+            else:
+                if self.sfd.nodes[node]['function'] is None:  # it's a constant parameter
+                    self.sfd.nodes[node]['value'] = [self.sfd.nodes[node]['value'][0]]
+                else:  # it's not a constant parameter
+                    self.sfd.nodes[node]['value'] = list()  # for other variables, reset its value to empty list
+            print('reset value of', node, 'to', self.sfd.nodes[node]['value'])
+
 
 class Session(object):
     def __init__(self):
@@ -153,12 +170,12 @@ class Session(object):
     def first_order_negative(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # 0type,    1name/uid,  2value/equation/angle           3from,      4to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',   [100],                          None,       None,       289,    145,    None],
+            # 0type,    1name/uid,  2value/equation/angle                         3from,      4to,        5x,     6y,     7pts,
+            [STOCK,     'stock0',   [100],                                        None,       None,       289,    145,    None],
             [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
-            [PARAMETER, 'goal0',    [20],                           None,       None,       163,    251,    None],
+            [PARAMETER, 'goal0',    [20],                                         None,       None,       163,    251,    None],
             [VARIABLE,  'gap0',     [SUBTRACT, ['goal0', 353], ['stock0', 246]],  None,       None,       213,    212,    None],
-            [PARAMETER, 'at0',      [5],                            None,       None,       123,    77,    None],
+            [PARAMETER, 'at0',      [5],                                          None,       None,       123,    77,    None],
             # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
             # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
             # [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
@@ -238,6 +255,14 @@ class Session(object):
         self.structures[structure_name].add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
         print('added alias of', of_element, '\n')
 
+    # Clear a run
+    def clear_a_run(self, structure_name='default'):
+        self.structures[structure_name].clear_value()
+
+    # Reset a structure
+    def reset_a_structure(self, structure_name='default'):
+        self.structures[structure_name].sfd.clear()
+
     # Simulate a structure based on a certain set of parameters
     def simulate(self, structure_name='default', simulation_time=13, dt=0.25):
         self.simulation_time = simulation_time
@@ -259,7 +284,7 @@ class Session(object):
         if names is None:
             names = list(self.structures[structure_name].sfd.nodes)
 
-        Figure1 = plt.figure(figsize=(5, 10))
+        self.Figure1 = plt.figure(figsize=(5, 10))
 
         plt.subplot(212)  # operate subplot 2
         plt.xlabel('Time')
@@ -267,6 +292,7 @@ class Session(object):
         y_axis_minimum = 0
         y_axis_maximum = 0
         for name in names:
+            print("getting min/max for", name)
             # set the range of axis based on this element's behavior
             # 0 -> end of period (time), 0 -> 100 (y range)
             try:
@@ -293,7 +319,7 @@ class Session(object):
         nx.draw(self.structures[structure_name].sfd, with_labels=True, pos=pos)
 
         if rtn:  # if called from external, return the figure without show it.
-            return Figure1
+            return self.Figure1
         else:  # otherwise, show the figure.
             plt.show()
 

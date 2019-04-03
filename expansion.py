@@ -13,13 +13,16 @@ class ExpansionPanel(Frame):
         self.pack(fill=BOTH, expand=1)
         self.sfd_canvas1 = SFDCanvas(self.master)
         self.sfd_canvas1.session_handler1.sess1.first_order_negative()
-        self.sfd_canvas1.model_drawer()
-        self.sfd_canvas1.session_handler1.sess1.simulate(simulation_time=80)
+        self.sfd_canvas1.sfd_drawer()
+        self.sfd_canvas1.simulation_handler(simulation_time=80)
 
         self.simulation_graph = self.sfd_canvas1.session_handler1.sess1.draw_graphs(names=['stock0', 'flow0'], rtn=True)
         self.simulation_figure = FigureCanvasTkAgg(self.simulation_graph, master=self.master)
         self.simulation_figure.draw()
         self.simulation_figure._tkcanvas.pack(side=TOP)
+
+    def test_find_exponential(self):
+        pass
 
 
 def main():

@@ -69,7 +69,7 @@ class Panel(Frame):
         self.sfd_canvas1 = SFDCanvas(self.fm_2)
         if self.suggested_archetype == 'decline_c':
             self.sfd_canvas1.session_handler1.sess1.first_order_negative()
-            self.sfd_canvas1.model_drawer()
+            self.sfd_canvas1.sfd_drawer()
 
         # Run the model
         self.sfd_canvas1.session_handler1.sess1.simulate(simulation_time=80)

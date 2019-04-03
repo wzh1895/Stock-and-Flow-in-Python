@@ -7,7 +7,6 @@ from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
 from StockAndFlowInPython.Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
-import networkx as nx
 import shutil
 import os
 
@@ -246,6 +245,8 @@ class SFDCanvas(Frame):
         self.btn3.pack(side=LEFT)
         self.btn4 = Button(fm_2, text="Reset canvas", command=self.reset_canvas)
         self.btn4.pack(side=LEFT)
+        self.btn5 = Button(fm_2, text="Clear a run", command=self.clear_a_run)
+        self.btn5.pack(side=LEFT)
         fm_2.pack(side=TOP)
 
     def file_load(self):
@@ -253,7 +254,11 @@ class SFDCanvas(Frame):
         if self.filename != '':
             self.lb.config(text="File selected: " + self.filename)
             self.session_handler1.read_xmile_model(self.filename)
-            self.model_drawer()
+            self.sfd_drawer()
+
+            #TODO temporary solution: first simulate then draw behavior and graph network
+            self.simulation_handler()
+            self.session_handler1.sess1.draw_graphs()
 
         else:
             self.lb.config(text="No file is selected.")
@@ -264,16 +269,24 @@ class SFDCanvas(Frame):
         self.variables_in_model = ["Variable"]
         self.comboxlist["values"] = self.variables_in_model
         self.comboxlist.current(0)
+
+        self.session_handler1.sess1.reset_a_structure()
+        # TODO: rewrite matplotlib usages
+
         self.xmost = 300
         self.ymost = 300
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
+
+    # Clear a simulation result but keep the structure
+    def clear_a_run(self):
+        self.session_handler1.sess1.clear_a_run()
 
     def file_handler(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
         # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
         self.model = DOMTree.documentElement
 
-    def model_drawer(self):
+    def sfd_drawer(self):
         # now starts the 'drawing' part
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
 
@@ -377,14 +390,14 @@ class SFDCanvas(Frame):
             self.variables_in_model.remove("TIME")
             self.comboxlist["values"] = self.variables_in_model
     """
-    def simulation_handler(self):
-        if self.filename != '':
-            self.session_handler1.sess1.simulate()
-            #self.variables_in_model = self.session_handler1.sess1.structures['default'].sfd.nodes.data()
-            self.variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
-            print(self.variables_in_model)
-            self.comboxlist["values"] = self.variables_in_model
-            print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
+    def simulation_handler(self, simulation_time=13):
+        # if self.filename != '':
+        self.session_handler1.sess1.simulate(simulation_time=simulation_time)
+        #self.variables_in_model = self.session_handler1.sess1.structures['default'].sfd.nodes.data()
+        self.variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
+        print(self.variables_in_model)
+        self.comboxlist["values"] = self.variables_in_model
+        print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
 
 
     def select_variable(self, *args):

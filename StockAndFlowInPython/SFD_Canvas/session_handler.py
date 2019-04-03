@@ -26,6 +26,18 @@ class SessionHandler(object):
                 if connection_view_array[2] == from_element:
                     return connection_view_array[1]
 
+    def get_into_stock(self, flow_name):  # get the affected stock given a flow's name
+        for stock_view_array in self.stock_views_array:
+            if stock_view_array[2] == flow_name:
+                return stock_view_array[0]
+        return None
+
+    def get_outfrom_stock(self, flow_name):  # get the affected stock given a flow's name
+        for stock_view_array in self.stock_views_array:
+            if stock_view_array[3] == flow_name:
+                return stock_view_array[0]
+        return None
+
     def read_xmile_model(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
         self.model = DOMTree.documentElement
@@ -82,17 +94,30 @@ class SessionHandler(object):
             if stockview.hasAttribute("name"):
                 self.stockviews.append(stockview)
 
+        self.stock_views_array = list()
         for stockview in self.stockviews:
             name = stockview.getAttribute("name")
             name = name_handler(name)
             # print("Adding this stock:", name)
+            inflow = None
+            outflow = None
             for stock_definition in self.stock_definitions:  # Loop to find a particular stock
                 if name_handler(stock_definition.getAttribute("name")) == name:
                     eqn = stock_definition.getElementsByTagName("eqn")[0].firstChild.data
+                    try:
+                        inflow = stock_definition.getElementsByTagName("inflow")[0].firstChild.data
+                    except:
+                        pass
+                    try:
+                        outflow = stock_definition.getElementsByTagName("outflow")[0].firstChild.data
+                    except:
+                        pass
+
             x = float(stockview.getAttribute("x"))
             y = float(stockview.getAttribute("y"))
             print('adding stock', name)
             self.sess1.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
+            self.stock_views_array.append([name, eqn, inflow, outflow, x, y])
 
         # fetch views for all flows and draw
         self.flowviews = []
@@ -113,7 +138,12 @@ class SessionHandler(object):
             x = float(flowview.getAttribute("x"))
             y = float(flowview.getAttribute("y"))
             print('adding flow', name)
-            self.sess1.add_flow(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y, points=points)
+            self.sess1.add_flow(name=name,
+                                equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)),
+                                x=x, y=y,
+                                flow_from=self.get_outfrom_stock(name),
+                                flow_to=self.get_into_stock(name),
+                                points=points)
 
         # fetch views for all auxiliaries and draw
         self.auxviews = []
