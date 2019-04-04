@@ -4,7 +4,7 @@ Controller tool bar for this entire project
 
 from tkinter import *
 from tkinter import ttk
-from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
+from StockAndFlowInPython.session_handler import SessionHandler
 
 
 class ControllerBar(Frame):

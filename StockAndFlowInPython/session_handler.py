@@ -23,9 +23,9 @@ class SessionHandler(object):
         self.simulation_time = 13
 
         # front ends
-        self.sfd_window1 = SFDWindow()
-        self.graph_network_window1 = GraphNetworkWindow()
-        self.simulation_result1 = SimulationResult()
+        self.sfd_window1 = None
+        self.graph_network_window1 = None
+        # self.simulation_result1 = SimulationResult()
 
 
     def file_load(self):
@@ -33,6 +33,7 @@ class SessionHandler(object):
         if self.filename != '':
             self.read_xmile_model(self.filename)
             # draw sfd
+            self.sfd_window1 = SFDWindow()
             self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
             # draw graph network
             self.draw_graph_network()
@@ -232,6 +233,7 @@ class SessionHandler(object):
             self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
         except:
             pass
+        self.graph_network_window1 = GraphNetworkWindow()
         self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.sess1.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
         self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
 
@@ -240,6 +242,7 @@ class SessionHandler(object):
             self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
         except:
             pass
+        self.simulation_result1 = SimulationResult()
         self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
         self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
         self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
