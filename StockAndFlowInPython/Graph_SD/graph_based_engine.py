@@ -360,26 +360,26 @@ class Session(object):
     def draw_network(self, G, pos, ax):
         for n in G:
             circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
-            ax.add_patch(circle)
+            # ax.add_patch(circle)
             G.node[n]['patch'] = circle
             x, y = pos[n]
-            ax.text(x, y, n, fontsize=8)
+            ax.text(x, y, n, fontsize=8, horizontalalignment='center', verticalalignment='center')
         seen = {}
         for (u, v, d) in G.edges(data=True):
             n1 = G.node[u]['patch']
             n2 = G.node[v]['patch']
-            rad = 0.3
+            rad = 0.5
             if (u, v) in seen:
                 rad = seen.get((u, v))
                 rad = (rad + np.sign(rad)*0.1)*-1
             alpha = 0.5
-            color = 'k'
+            color = 'r'
 
             edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
                                 arrowstyle='-|>',
                                 connectionstyle='arc3,rad=%s'%rad,
                                 mutation_scale=15.0,
-                                lw=2,
+                                linewidth=1,
                                 alpha=alpha,
                                 color=color)
             seen[(u, v)] = rad
