@@ -47,7 +47,7 @@ class Panel(Frame):
         self.reference_mode_plot.set_ylabel("Tea-cup Temperature")
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_1)
         self.reference_mode_graph.draw()
-        self.reference_mode_graph._tkcanvas.pack(side=TOP)
+        self.reference_mode_graph.get_tk_widget().pack(side=TOP)
 
         # Calculate similarity and suggest archetype
 
@@ -57,7 +57,7 @@ class Panel(Frame):
         self.comparison_figure.get_axes()[0].set_xticks([])  # disable ticks on X-axis
         self.comparison_graph = FigureCanvasTkAgg(self.comparison_figure, master=self.fm_2)
         self.comparison_graph.draw()
-        self.comparison_graph._tkcanvas.pack(side=TOP)
+        self.comparison_graph.get_tk_widget().pack(side=TOP)
         self.lb3 = Label(self.fm_2, text='Reference mode is classified as:', background='#fff')
         self.lb3.pack(side=TOP)
         self.lb4 = Label(self.fm_2, text=self.suggested_archetype+'\n', font='Helvetica 16 bold', background='#fff')
@@ -79,7 +79,7 @@ class Panel(Frame):
         self.simulation_graph = self.sfd_canvas1.session_handler1.sess1.draw_graphs(names=['stock0', 'flow0'], rtn=True)
         self.simulation_figure = FigureCanvasTkAgg(self.simulation_graph, master=self.fm_3)
         self.simulation_figure.draw()
-        self.simulation_figure._tkcanvas.pack(side=TOP)
+        self.simulation_figure.get_tk_widget().pack(side=TOP)
 
 
 if __name__ == '__main__':

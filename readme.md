@@ -15,7 +15,7 @@ Here you can have a quick glance of it:
 
 **Conceptualization Panel**
 
-![ScreenShot](screenshots/screenShot_06.png)
+![ScreenShot](screenshots/screenShot_09.png)
 
 **Conceptualization Panel**
 

@@ -267,6 +267,7 @@ class Session(object):
 
     # Simulate a structure based on a certain set of parameters
     def simulate(self, simulation_time, structure_name='default', dt=0.25):
+        print('Simulating...')
         self.simulation_time = simulation_time
         self.dt = dt
         if simulation_time == 0:
@@ -278,7 +279,7 @@ class Session(object):
         # main iteration
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            # print('\nExecuting Step {} :\n'.format(i))
+            print('\nExecuting Step {} :'.format(i))
             self.structures[structure_name].step(dt)
 
     # Draw results
@@ -363,12 +364,12 @@ class Session(object):
             # ax.add_patch(circle)
             G.node[n]['patch'] = circle
             x, y = pos[n]
-            ax.text(x, y, n, fontsize=8, horizontalalignment='center', verticalalignment='center')
+            ax.text(x, y, n, fontsize=11, horizontalalignment='left', verticalalignment='center')
         seen = {}
         for (u, v, d) in G.edges(data=True):
             n1 = G.node[u]['patch']
             n2 = G.node[v]['patch']
-            rad = 0.5
+            rad = - 0.5
             if (u, v) in seen:
                 rad = seen.get((u, v))
                 rad = (rad + np.sign(rad)*0.1)*-1

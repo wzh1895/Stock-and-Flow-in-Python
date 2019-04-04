@@ -12,16 +12,18 @@ class ControllerBar(Frame):
         super().__init__(master)
         self.master = master
         self.pack(fill=BOTH, expand=1)
+        self.wid = 480
+        self.hei = 80
 
         self.session_handler1 = SessionHandler()
 
-        self.lb = Label(self.master, text='Display System Dynamics Model', background="#fff")
+        self.lb = Label(self.master, text='Load System Dynamics Model', background="#fff")
         self.lb.pack(side=TOP)
         self.fm_1 = Frame(self.master)
         self.fm_1.pack(side=TOP)
         self.btn1 = Button(self.fm_1, text="Load model", command=self.file_load)
         self.btn1.pack(side=LEFT)
-        self.btn_run = Button(self.fm_1, text="Run", command=self.simulate)
+        self.btn_run = Button(self.fm_1, text="Simulate", command=self.simulate)
         self.btn_run.pack(side=LEFT)
         self.comboxlist = ttk.Combobox(self.fm_1)
         self.variables_in_model = ["Variable"]
@@ -64,11 +66,9 @@ class ControllerBar(Frame):
 
 def main():
     root = Tk()
-    wid = 480
-    hei = 80
     controller_bar1 = ControllerBar(root)
     root.wm_title("Controller")
-    root.geometry("%dx%d+100+100" % (wid, hei))
+    root.geometry("%dx%d+50+100" % (controller_bar1.wid, controller_bar1.hei))
     root.configure(background='#fff')
     root.mainloop()
 

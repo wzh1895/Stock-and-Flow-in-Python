@@ -41,6 +41,17 @@ class SessionHandler(object):
             print(self.filename)
             return (self.filename, self.variables_in_model)
 
+    def generic_structure_load(self, generic_structure_type):
+        if generic_structure_type == 'decline_c':
+            self.sess1.first_order_negative()
+            # draw sfd
+            self.sfd_window1 = SFDWindow()
+            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+            # draw graph network
+            self.draw_graph_network()
+            self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+
+
     def simulation_handler(self, simulation_time):
         self.sess1.clear_a_run()
         self.sess1.simulate(simulation_time=simulation_time)
@@ -265,7 +276,7 @@ class SFDWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Stock and Flow Diagram")
-        self.top.geometry("%dx%d+700+100" % (800, 500))
+        self.top.geometry("%dx%d+1070+550" % (500, 430))
         self.sfd_canvas1 = SFDCanvas(self.top)
 
 
@@ -273,11 +284,11 @@ class GraphNetworkWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Graph Network Structure")
-        self.top.geometry("%dx%d+100+300" % (500, 500))
+        self.top.geometry("%dx%d+1070+50" % (500, 430))
 
 
 class SimulationResult(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Simulation Result")
-        self.top.geometry("%dx%d+400+200" % (500, 500))
+        self.top.geometry("%dx%d+560+50" % (500, 430))
