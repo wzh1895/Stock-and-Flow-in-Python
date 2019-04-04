@@ -57,7 +57,7 @@ class ControllerBar(Frame):
             self.lb.config(text=file_name)
             self.comboxlist['values'] = variables_in_model
 
-    def select_variable(self, *args):
+    def select_variable(self):
         print(self.comboxlist.get())
         self.session_handler1.selected_variable = self.comboxlist.get()
 
