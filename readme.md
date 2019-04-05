@@ -1,28 +1,41 @@
-# Part 1: Stock and Flow in Python
+# Stock and Flow in Python
 
-This project contains a few inter-related modules that are all dealing with System Dynamics in Python.
+This project contains utilities for System Dynamics in Python.
 
-- Conceptualization Panel: this file.
+It contains the following functions:
+
+- Display and simulate simple System Dynamics model using a graph-based engine.
 - [Similarity Calculation](StockAndFlowInPython/similarity_calculation/readme.md): compare behaviors and quantify the similarity.
-- [Stock and Flow Canvas](StockAndFlowInPython/SFD_Canvas/readme.md): display system dynamic Stella models (.stmx file) and simulate with PySD.
+- Suggestion of possible generic structure for a given reference mode, based on similarity calculation.
 - [Stmx Generator](StockAndFlowInPython/stmx_generator/readme.md): store a model in a .stmx file, which can be used by Stella.
 
 ---
 
-This file is about the Conceptualization Panel. It is an attempt to reproduce human conceptualization process (The P'HAPI, especially the P'HA part). The idea is to automate the model conceptualization, in a way not purely driven by data, which the state-of-art.
+## A quick glance
 
-Here you can have a quick glance of it:
+**Display and simulate models**
 
-**Conceptualization Panel**
+![ScreenShot](./screenshots/screenShot_11.png)
 
-![ScreenShot](screenshots/screenShot_06.png)
+**Suggest possible structure for a given reference mode**
 
-**Conceptualization Panel**
+First order negative feedback structure:
 
-To try the demo of conceptualization panel demo, execute:
+![ScreenShot](screenshots/screenShot_09.png)
+
+First order positive feedback structure:
+
+![ScreenShot](screenshots/screenShot_10.png)
+
+## How to use
 
 ```
-python3 conceptualization.py
+python3 controller.py
+```
+or
+
+```
+python3 suggestion.py
 ```
 
 ## Project Structure: PHAPI
@@ -46,46 +59,6 @@ python3 conceptualization.py
 - **I**mplementation
     - Beyond scope at this moment.
     
-# Part 2: Stock and Flow Renderer
-
-## Introduction
-
-This is a python realization of Stock and Flow Diagram display and simulation, based on **Tkinter** and **PySD** (https://github.com/JamesPHoughton/pysd).
-The intention is to allow users to visually view the model. It later became a part of the above project, providing functionalities to display models.
-
-Here you can have a quick glance of it:
-
-**Model display:**
-
-![ScreenShot](./screenshots/screenShot_02.png)
-
-**Simulation result display:**
-
-![ScreenShot](./screenshots/screenShot_07.png)
-
-And **a folating view assembling SFD display, graph network display, and graph-based simulation** (inspired by GIMP)
-
-![ScreenShot](./screenshots/screenShot_08.png)
-
-## How to use
-
-**Local-based Display**
-
-Stock and flow diagrams created by Stella can be displayed using this software.
-
-To display the diagram itself, no additional package other than **Python3** is needed.
-
-To simulate the the model and display the result, **PySD** and **matplotlib** are also needed.
-
-The program could be run from terminal, PowerShell, or CMD by executing:
-
-```
-python3 renderer.py
-```
-
-Then you can load the model, simulate and view the outcome in the graphic interface.
-
-
 ## Change Log
 
 
