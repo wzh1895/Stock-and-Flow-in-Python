@@ -13,7 +13,8 @@ import numpy as np
 class SuggestionPanel(ControllerBar):
     def __init__(self, master, wid=480, hei=80):
         super().__init__(master, wid, hei)
-        self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
+        # self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
+        self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
         self.similarity_calculator1 = SimilarityCalculator()
 
         self.fm_3 = Frame(self.master)
@@ -22,13 +23,13 @@ class SuggestionPanel(ControllerBar):
         self.btn_load_reference_mode.pack(side=LEFT)
         self.btn_calculate_similarity = Button(self.fm_3, text="Calculate similarity", command=self.calculate_similarity)
         self.btn_calculate_similarity.pack(side=LEFT)
-        self.btn_load_generic_structure = Button(self.fm_3, text="Suggest generic structure", command=self.load_generic_structure)
+        self.btn_load_generic_structure = Button(self.fm_3, text="Load closest structure", command=self.load_generic_structure)
         self.btn_load_generic_structure.pack(side=LEFT)
         self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
         self.lb_suggested_generic_stucture.pack(side=TOP)
 
     def load_generic_structure(self):
-        self.session_handler1.generic_structure_load(self.suggested_generic_structure)
+        self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
         variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
         print("variables in model:", variables_in_model)
         print("structure name:", self.suggested_generic_structure)
@@ -51,7 +52,8 @@ class ReferenceMode(object):
     def __init__(self, filename):
         self.case_numerical_data_filename = filename
         self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
-        self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
+        # self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
+        self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
         self.reference_mode_window1 = ReferenceModeWindow(self.tea_cup_temperature_time_series)
 
 

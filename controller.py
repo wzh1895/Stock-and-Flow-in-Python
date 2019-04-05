@@ -32,7 +32,7 @@ class ControllerBar(Frame):
         self.variables_list.bind("<<ComboboxSelected>>", self.select_variable)
         self.variables_list.pack(side=LEFT)
         self.sim_time = StringVar()
-        self.sim_time.set("75")
+        self.sim_time.set("20")
         self.entry1 = Entry(self.fm_1, width=10, textvariable=self.sim_time)
         self.entry1.pack()
 

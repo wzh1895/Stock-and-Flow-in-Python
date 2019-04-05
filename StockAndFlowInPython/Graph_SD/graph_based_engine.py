@@ -144,6 +144,7 @@ class Structure(object):
         for stock in affected_stocks.keys():
             # calculate the new value for this stock and add it to the end of its value list
             self.sfd.nodes[stock]['value'].append(self.sfd.nodes[stock]['value'][-1] + affected_stocks[stock])
+            print('Stock ', stock, ':', self.sfd.nodes[stock]['value'][-1])
 
     def clear_value(self):
         # clear 'value' for all nodes
@@ -183,6 +184,16 @@ class Session(object):
             # [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
             # [CONNECTOR, '3',        311,                           'at0',      'flow0',     0,      0,      None]
             ])
+
+    # Set the model to a first order negative feedback loop
+    def first_order_positive(self, structure_name='default'):
+        # adding a structure that has been pre-defined using multi-dimensional arrays.
+        self.add_elements_batch([
+            # 0type,    1name/uid,  2value/equation/angle                         3from,      4to,        5x,     6y,     7pts,
+            [STOCK, 'stock0', [1], None, None, 289, 145, None],
+            [FLOW, 'flow0', [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]], None, 'stock0', 181, 145,[(85, 145), (266.5, 145)]],
+            [PARAMETER, 'fraction0', [0.1], None, None, 163, 251, None],
+        ])
 
     # Add elements to a structure in a batch (something like a script)
     # Enable using of multi-dimensional arrays.
@@ -279,7 +290,7 @@ class Session(object):
         # main iteration
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            # print('\nExecuting Step {} :'.format(i))
+            print('\nExecuting Step {} :'.format(i))
             self.structures[structure_name].step(dt)
 
     # Draw results
@@ -290,7 +301,7 @@ class Session(object):
         self.Figure1 = plt.figure(figsize=(5, 5))
 
         # plt.subplot(212)  # operate subplot 2
-        plt.xlabel('Time')
+        plt.xlabel('Steps (Time: {} / Dt: {})'.format(self.simulation_time, self.dt))
         plt.ylabel('Behavior')
         y_axis_minimum = 0
         y_axis_maximum = 0
@@ -311,8 +322,8 @@ class Session(object):
                 name_maximum = self.structures[structure_name].sfd.nodes[name]['value'][-1]
             if name_maximum > y_axis_maximum:
                 y_axis_maximum = name_maximum
-
-            plt.axis([0, self.simulation_time, y_axis_minimum, y_axis_maximum])
+            print("Y range: ", y_axis_minimum, '-', y_axis_maximum)
+            plt.axis([0, self.simulation_time/self.dt, y_axis_minimum, y_axis_maximum])
             plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
         plt.legend()
         if rtn:  # if called from external, return the figure without show it.

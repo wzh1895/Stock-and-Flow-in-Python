@@ -40,15 +40,17 @@ class SessionHandler(object):
             print(self.filename)
             return (self.filename, self.variables_in_model)
 
-    def generic_structure_load(self, generic_structure_type):
+    def apply_generic_structure(self, generic_structure_type):
         if generic_structure_type == 'decline_c':
             self.sess1.first_order_negative()
-            # draw sfd
-            self.sfd_window1 = SFDWindow()
-            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
-            # draw graph network
-            self.draw_graph_network()
-            self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+        elif generic_structure_type == 'growth_b':
+            self.sess1.first_order_positive()
+        # draw sfd
+        self.sfd_window1 = SFDWindow()
+        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+        # draw graph network
+        self.draw_graph_network()
+        self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
 
     def simulation_handler(self, simulation_time):
         self.sess1.clear_a_run()

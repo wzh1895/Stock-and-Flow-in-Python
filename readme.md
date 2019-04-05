@@ -15,7 +15,13 @@ Here you can have a quick glance of it:
 
 **Conceptualization Panel**
 
+First order negative feedback structure:
+
 ![ScreenShot](screenshots/screenShot_09.png)
+
+First order positive feedback structure:
+
+![ScreenShot](screenshots/screenShot_10.png)
 
 **Conceptualization Panel**
 
