@@ -20,13 +20,12 @@ class SessionHandler(object):
         self.model = None
         self.variables_in_model = None
         self.selected_variable = None
-        self.simulation_time = 13
+        self.simulation_time = 75
 
         # front ends
         self.sfd_window1 = None
         self.graph_network_window1 = None
         # self.simulation_result1 = SimulationResult()
-
 
     def file_load(self):
         self.filename = filedialog.askopenfilename()
@@ -50,7 +49,6 @@ class SessionHandler(object):
             # draw graph network
             self.draw_graph_network()
             self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
-
 
     def simulation_handler(self, simulation_time):
         self.sess1.clear_a_run()

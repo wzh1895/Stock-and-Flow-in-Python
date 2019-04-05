@@ -8,42 +8,42 @@ from StockAndFlowInPython.session_handler import SessionHandler
 
 
 class ControllerBar(Frame):
-    def __init__(self, master):
+    def __init__(self, master, wid=480, hei=80):
         super().__init__(master)
         self.master = master
         self.pack(fill=BOTH, expand=1)
-        self.wid = 480
-        self.hei = 80
+        self.wid = wid
+        self.hei = hei
 
         self.session_handler1 = SessionHandler()
 
-        self.lb = Label(self.master, text='Load System Dynamics Model', background="#fff")
-        self.lb.pack(side=TOP)
+        self.lb_name = Label(self.master, text='Load System Dynamics Model', background="#fff")
+        self.lb_name.pack(side=TOP)
         self.fm_1 = Frame(self.master)
         self.fm_1.pack(side=TOP)
-        self.btn1 = Button(self.fm_1, text="Load model", command=self.file_load)
-        self.btn1.pack(side=LEFT)
+        self.btn_load_model = Button(self.fm_1, text="Load model", command=self.file_load)
+        self.btn_load_model.pack(side=LEFT)
         self.btn_run = Button(self.fm_1, text="Simulate", command=self.simulate)
         self.btn_run.pack(side=LEFT)
-        self.comboxlist = ttk.Combobox(self.fm_1)
+        self.variables_list = ttk.Combobox(self.fm_1)
         self.variables_in_model = ["Variable"]
-        self.comboxlist["values"] = self.variables_in_model
-        self.comboxlist.current(0)
-        self.comboxlist.bind("<<ComboboxSelected>>", self.select_variable)
-        self.comboxlist.pack(side=LEFT)
+        self.variables_list["values"] = self.variables_in_model
+        self.variables_list.current(0)
+        self.variables_list.bind("<<ComboboxSelected>>", self.select_variable)
+        self.variables_list.pack(side=LEFT)
         self.sim_time = StringVar()
-        self.sim_time.set("13")
+        self.sim_time.set("75")
         self.entry1 = Entry(self.fm_1, width=10, textvariable=self.sim_time)
         self.entry1.pack()
 
         self.fm_2 = Frame(self.master)
         self.fm_2.pack(side=TOP)
-        self.btn3 = Button(self.fm_2, text="Show result", command=self.session_handler1.show_result)
-        self.btn3.pack(side=LEFT)
-        self.btn4 = Button(self.fm_2, text="Reset", command=self.session_handler1.reset)
-        self.btn4.pack(side=LEFT)
-        self.btn5 = Button(self.fm_2, text="Clear a run", command=self.session_handler1.clear_a_run)
-        self.btn5.pack(side=LEFT)
+        self.btn_show_result = Button(self.fm_2, text="Show result", command=self.session_handler1.show_result)
+        self.btn_show_result.pack(side=LEFT)
+        self.btn_reset = Button(self.fm_2, text="Reset", command=self.session_handler1.reset)
+        self.btn_reset.pack(side=LEFT)
+        self.btn_clear_run = Button(self.fm_2, text="Clear a run", command=self.session_handler1.clear_a_run)
+        self.btn_clear_run.pack(side=LEFT)
 
     def simulate(self):
         self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
@@ -56,12 +56,12 @@ class ControllerBar(Frame):
         print("variables in model:", variables_in_model)
         print("file name:", file_name)
         if file_name != '':
-            self.lb.config(text=file_name)
-            self.comboxlist['values'] = variables_in_model
+            self.lb_name.config(text=file_name)
+            self.variables_list['values'] = variables_in_model
 
     def select_variable(self, *args):
-        print(self.comboxlist.get())
-        self.session_handler1.selected_variable = self.comboxlist.get()
+        print(self.variables_list.get())
+        self.session_handler1.selected_variable = self.variables_list.get()
 
 
 def main():

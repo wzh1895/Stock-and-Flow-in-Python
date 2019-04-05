@@ -279,7 +279,7 @@ class Session(object):
         # main iteration
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            print('\nExecuting Step {} :'.format(i))
+            # print('\nExecuting Step {} :'.format(i))
             self.structures[structure_name].step(dt)
 
     # Draw results

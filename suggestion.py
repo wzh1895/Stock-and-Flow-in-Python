@@ -11,31 +11,39 @@ import numpy as np
 
 
 class SuggestionPanel(ControllerBar):
-    def __init__(self, master):
-        super().__init__(master)
-        self.load_reference_mode('./StockAndFlowInPython/case/tea_cup_model.csv')
+    def __init__(self, master, wid=480, hei=80):
+        super().__init__(master, wid, hei)
+        self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
         self.similarity_calculator1 = SimilarityCalculator()
-        self.suggested_generic_structure = self.similarity_calculation()
-        self.load_generic_structure()
+
+        self.fm_3 = Frame(self.master)
+        self.fm_3.pack(side=TOP)
+        self.btn_load_reference_mode = Button(self.fm_3, text="Load reference Mode", command=self.load_reference_mode)
+        self.btn_load_reference_mode.pack(side=LEFT)
+        self.btn_calculate_similarity = Button(self.fm_3, text="Calculate similarity", command=self.calculate_similarity)
+        self.btn_calculate_similarity.pack(side=LEFT)
+        self.btn_load_generic_structure = Button(self.fm_3, text="Suggest generic structure", command=self.load_generic_structure)
+        self.btn_load_generic_structure.pack(side=LEFT)
+        self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
+        self.lb_suggested_generic_stucture.pack(side=TOP)
 
     def load_generic_structure(self):
         self.session_handler1.generic_structure_load(self.suggested_generic_structure)
         variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
         print("variables in model:", variables_in_model)
         print("structure name:", self.suggested_generic_structure)
-        self.lb.config(text=self.suggested_generic_structure)
-        self.comboxlist['values'] = variables_in_model
+        self.lb_name.config(text=self.suggested_generic_structure)
+        self.variables_list['values'] = variables_in_model
 
+    def load_reference_mode(self):
+        self.reference_mode1 = ReferenceMode(self.reference_mode_path)
 
-    def load_reference_mode(self, reference_mode_file_name):
-        self.reference_mode1 = ReferenceMode(reference_mode_file_name)
-
-    def similarity_calculation(self):
-        suggested_generic_structure, comparison_figure = self.similarity_calculator1.similarity_calc(
+    def calculate_similarity(self):
+        self.suggested_generic_structure, self.comparison_figure = self.similarity_calculator1.similarity_calc(
             who_compare=self.reference_mode1.tea_cup_temperature_time_series,
             compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
-        self.comparison_window1 = ComparisonWindow(comparison_figure)
-        return suggested_generic_structure
+        self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
+        self.comparison_window1 = ComparisonWindow(self.comparison_figure)
 
 
 class ReferenceMode(object):
@@ -55,10 +63,6 @@ class ComparisonWindow(object):
         self.comparison_graph = FigureCanvasTkAgg(comparison_figure, master=self.top)
         self.comparison_graph.draw()
         self.comparison_graph.get_tk_widget().pack(side=TOP)
-        #self.comparison_plot = self.comparison_figure.add_subplot(111)
-        #self.comparison_plot.set_xlabel("Time")
-        #self.comparison_plot.set_ylabel("Behavior")
-        #self.comparison_graph =
 
 
 class ReferenceModeWindow(object):
@@ -78,8 +82,7 @@ class ReferenceModeWindow(object):
 
 def main():
     root = Tk()
-    #suggestion_test1 = ControllerBar(root)
-    suggestion_test1 = SuggestionPanel(root)
+    suggestion_test1 = SuggestionPanel(root, 485, 130)
     root.wm_title("Suggestion Test")
     root.geometry("%dx%d+50+100" % (suggestion_test1.wid, suggestion_test1.hei))
     root.configure(background='#fff')
