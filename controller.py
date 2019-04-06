@@ -8,16 +8,14 @@ from StockAndFlowInPython.session_handler import SessionHandler
 
 
 class ControllerBar(Frame):
-    def __init__(self, master, wid=480, hei=80):
+    def __init__(self, master):
         super().__init__(master)
         self.master = master
         self.pack(fill=BOTH, expand=1)
-        self.wid = wid
-        self.hei = hei
 
         self.session_handler1 = SessionHandler()
 
-        self.lb_name = Label(self.master, text='Load System Dynamics Model', background="#fff")
+        self.lb_name = Label(self.master, text='System Dynamics Model', background="#fff")
         self.lb_name.pack(side=TOP)
         self.fm_1 = Frame(self.master)
         self.fm_1.pack(side=TOP)
@@ -44,6 +42,8 @@ class ControllerBar(Frame):
         self.btn_reset.pack(side=LEFT)
         self.btn_clear_run = Button(self.fm_2, text="Clear a run", command=self.session_handler1.clear_a_run)
         self.btn_clear_run.pack(side=LEFT)
+        self.btn_refresh = Button(self.fm_2, text="Refresh", command=self.session_handler1.refresh)
+        self.btn_refresh.pack(side=LEFT)
 
     def simulate(self):
         self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
@@ -68,7 +68,7 @@ def main():
     root = Tk()
     controller_bar1 = ControllerBar(root)
     root.wm_title("Controller")
-    root.geometry("%dx%d+50+100" % (controller_bar1.wid, controller_bar1.hei))
+    root.geometry("%dx%d+50+100" % (485, 80))
     root.configure(background='#fff')
     root.mainloop()
 

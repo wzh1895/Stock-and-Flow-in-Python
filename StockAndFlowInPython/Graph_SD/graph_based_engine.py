@@ -189,10 +189,10 @@ class Session(object):
     def first_order_positive(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # 0type,    1name/uid,  2value/equation/angle                         3from,      4to,        5x,     6y,     7pts,
-            [STOCK, 'stock0', [1], None, None, 289, 145, None],
-            [FLOW, 'flow0', [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]], None, 'stock0', 181, 145,[(85, 145), (266.5, 145)]],
-            [PARAMETER, 'fraction0', [0.1], None, None, 163, 251, None],
+            # 0type,    1name/uid,   2value/equation/angle                                   3from,      4to,        5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
+            [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
         ])
 
     # Add elements to a structure in a batch (something like a script)
@@ -362,7 +362,8 @@ class Session(object):
         self.draw_network(self.structures[structure_name].sfd, pos, ax)
         ax.autoscale()
 
-        if rtn: # if figure needs to be returned
+        if rtn:  # if figure needs to be returned
+            print('xxxxx')
             return self.Figure1
         else:
             plt.show()
@@ -371,32 +372,36 @@ class Session(object):
     # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
     def draw_network(self, G, pos, ax):
         for n in G:
+            print('nnnnn', n)
             circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
             # ax.add_patch(circle)
             G.node[n]['patch'] = circle
             x, y = pos[n]
             ax.text(x, y, n, fontsize=11, horizontalalignment='left', verticalalignment='center')
         seen = {}
-        for (u, v, d) in G.edges(data=True):
-            n1 = G.node[u]['patch']
-            n2 = G.node[v]['patch']
-            rad = - 0.5
-            if (u, v) in seen:
-                rad = seen.get((u, v))
-                rad = (rad + np.sign(rad)*0.1)*-1
-            alpha = 0.5
-            color = 'r'
+        # TODO: Undertsand what happens here and rewrite it in a straight forward way
+        if len(list(G.edges)) != 0:  # when there's only one stock in the model, don't draw edges
+            for (u, v, d) in G.edges(data=True):
+                n1 = G.node[u]['patch']
+                n2 = G.node[v]['patch']
+                rad = - 0.5
+                if (u, v) in seen:
+                    rad = seen.get((u, v))
+                    rad = (rad + np.sign(rad)*0.1)*-1
+                alpha = 0.5
+                color = 'r'
 
-            edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
-                                arrowstyle='-|>',
-                                connectionstyle='arc3,rad=%s'%rad,
-                                mutation_scale=15.0,
-                                linewidth=1,
-                                alpha=alpha,
-                                color=color)
-            seen[(u, v)] = rad
-            ax.add_patch(edge)
-        return edge
+                edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
+                                    arrowstyle='-|>',
+                                    connectionstyle='arc3,rad=%s' % rad,
+                                    mutation_scale=15.0,
+                                    linewidth=1,
+                                    alpha=alpha,
+                                    color=color)
+                seen[(u, v)] = rad
+                ax.add_patch(edge)
+            return edge
+
 
 
 def main():
