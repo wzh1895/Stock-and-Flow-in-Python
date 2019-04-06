@@ -13,8 +13,8 @@ import numpy as np
 class SuggestionPanel(ControllerBar):
     def __init__(self, master):
         super().__init__(master)
-        #self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
-        self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
+        self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
+        #self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
         self.similarity_calculator1 = SimilarityCalculator()
 
         self.fm_3 = Frame(self.master)
@@ -51,9 +51,11 @@ class ReferenceMode(object):
     def __init__(self, filename):
         self.case_numerical_data_filename = filename
         self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
-        #self.time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
-        self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
-        self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="balance")
+        self.time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
+        #self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
+        #self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="Accoutn balance")
+        self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series,
+                                                          time_series_name="Tea-cup Temperature")
 
 
 class ComparisonWindow(object):

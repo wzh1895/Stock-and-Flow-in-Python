@@ -140,11 +140,18 @@ class Structure(object):
                     else:  # otherwise update this flow's value on top of results of previous calculation (f2 = f1 + f0)
                         affected_stocks[successor] += flows_dt[flow]
 
-        # updating stocks values
+        # updating affected stocks values
         for stock in affected_stocks.keys():
             # calculate the new value for this stock and add it to the end of its value list
             self.sfd.nodes[stock]['value'].append(self.sfd.nodes[stock]['value'][-1] + affected_stocks[stock])
             print('Stock ', stock, ':', self.sfd.nodes[stock]['value'][-1])
+
+        # for those stocks not affected, extend its 'values' by the same value as it is
+        for node in self.sfd.nodes:
+            if self.sfd.nodes[node]['element_type'] == STOCK:
+                if node not in affected_stocks.keys():
+                    self.sfd.nodes[node]['value'].append(self.sfd.nodes[node]['value'][-1])
+                    print('Stock ', node, ':', self.sfd.nodes[node]['value'][-1])
 
     def clear_value(self):
         # clear 'value' for all nodes
@@ -288,9 +295,10 @@ class Session(object):
             total_steps = int(simulation_time/dt)
 
         # main iteration
+        print('\nExecuting Step:', end=' ')
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            print('\nExecuting Step {} :'.format(i))
+            print('%3d' % i, end='  ')
             self.structures[structure_name].step(dt)
 
     # Draw results
@@ -309,22 +317,25 @@ class Session(object):
             print("getting min/max for", name)
             # set the range of axis based on this element's behavior
             # 0 -> end of period (time), 0 -> 100 (y range)
-            try:
-                name_minimum = min(self.structures[structure_name].sfd.nodes[name]['value'])
-            except:  # if this element is a constant, there's no min
-                name_minimum = self.structures[structure_name].sfd.nodes[name]['value'][-1]
+
+            name_minimum = min(self.structures[structure_name].sfd.nodes[name]['value'])
+            name_maximum = max(self.structures[structure_name].sfd.nodes[name]['value'])
+            if name_minimum == name_maximum:
+                name_minimum *= 2
+                name_maximum *= 2
+                print('Centered this straight line')
+
             if name_minimum < y_axis_minimum:
                 y_axis_minimum = name_minimum
 
-            try:
-                name_maximum = max(self.structures[structure_name].sfd.nodes[name]['value'])
-            except:  # if this element is a constant, there's no max
-                name_maximum = self.structures[structure_name].sfd.nodes[name]['value'][-1]
             if name_maximum > y_axis_maximum:
                 y_axis_maximum = name_maximum
+
             print("Y range: ", y_axis_minimum, '-', y_axis_maximum)
             plt.axis([0, self.simulation_time/self.dt, y_axis_minimum, y_axis_maximum])
-            plt.plot(self.structures[structure_name].sfd.nodes[name]['value'], label=name)
+            t_series = self.structures[structure_name].sfd.nodes[name]['value']
+            print(t_series)
+            plt.plot(t_series, label=name)
         plt.legend()
         if rtn:  # if called from external, return the figure without show it.
             return self.Figure1
