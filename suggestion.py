@@ -11,9 +11,9 @@ import numpy as np
 
 
 class SuggestionPanel(ControllerBar):
-    def __init__(self, master, wid=480, hei=80):
-        super().__init__(master, wid, hei)
-        # self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
+    def __init__(self, master):
+        super().__init__(master)
+        #self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
         self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
         self.similarity_calculator1 = SimilarityCalculator()
 
@@ -28,6 +28,16 @@ class SuggestionPanel(ControllerBar):
         self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
         self.lb_suggested_generic_stucture.pack(side=TOP)
 
+    def load_reference_mode(self):
+        self.reference_mode1 = ReferenceMode(self.reference_mode_path)
+
+    def calculate_similarity(self):
+        self.suggested_generic_structure, self.comparison_figure = self.similarity_calculator1.similarity_calc(
+            who_compare=self.reference_mode1.time_series,
+            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
+        self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
+        self.comparison_window1 = ComparisonWindow(self.comparison_figure)
+
     def load_generic_structure(self):
         self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
         variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
@@ -36,25 +46,14 @@ class SuggestionPanel(ControllerBar):
         self.lb_name.config(text=self.suggested_generic_structure)
         self.variables_list['values'] = variables_in_model
 
-    def load_reference_mode(self):
-        self.reference_mode1 = ReferenceMode(self.reference_mode_path)
-
-    def calculate_similarity(self):
-        self.suggested_generic_structure, self.comparison_figure = self.similarity_calculator1.similarity_calc(
-            who_compare=self.reference_mode1.tea_cup_temperature_time_series,
-            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
-        self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
-        self.comparison_window1 = ComparisonWindow(self.comparison_figure)
-
-
 class ReferenceMode(object):
     """Class for Reference Mode"""
     def __init__(self, filename):
         self.case_numerical_data_filename = filename
         self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
-        # self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
-        self.tea_cup_temperature_time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
-        self.reference_mode_window1 = ReferenceModeWindow(self.tea_cup_temperature_time_series)
+        #self.time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
+        self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
+        self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="balance")
 
 
 class ComparisonWindow(object):
@@ -68,7 +67,7 @@ class ComparisonWindow(object):
 
 
 class ReferenceModeWindow(object):
-    def __init__(self, time_series):
+    def __init__(self, time_series, time_series_name):
         self.top = Toplevel()
         self.top.title("Reference Mode")
         self.top.geometry("%dx%d+50+550" % (500, 430))
@@ -76,7 +75,7 @@ class ReferenceModeWindow(object):
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
         self.reference_mode_plot.plot(time_series, '*')
         self.reference_mode_plot.set_xlabel("Time")
-        self.reference_mode_plot.set_ylabel("Tea-cup Temperature")
+        self.reference_mode_plot.set_ylabel(time_series_name)
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.top)
         self.reference_mode_graph.draw()
         self.reference_mode_graph.get_tk_widget().pack(side=TOP)
@@ -84,9 +83,9 @@ class ReferenceModeWindow(object):
 
 def main():
     root = Tk()
-    suggestion_test1 = SuggestionPanel(root, 485, 130)
+    suggestion_test1 = SuggestionPanel(root)
     root.wm_title("Suggestion Test")
-    root.geometry("%dx%d+50+100" % (suggestion_test1.wid, suggestion_test1.hei))
+    root.geometry("%dx%d+50+100" % (485, 130))
     root.configure(background='#fff')
     root.mainloop()
 

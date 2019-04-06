@@ -23,7 +23,7 @@ class SFDCanvas(Frame):
         self.sfd = None
 
         self.canvas = Canvas(self)
-        self.canvas.configure(background='#fff')
+        self.canvas.config(background='#fff')
 
         self.hbar = Scrollbar(self, orient=HORIZONTAL)
         self.hbar.pack(side=BOTTOM, fill=X)
