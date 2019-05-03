@@ -28,6 +28,9 @@ class SimilarityCalculator(object):
 
     @staticmethod
     def similarity_calc(who_compare, compare_with='./similarity_calculation/basic_behaviors.csv'):
+        '''
+        Comparing reference mode with known typical behavior patterns.
+        '''
         data = pd.read_csv(compare_with)
 
         basic_behaviors = dict()

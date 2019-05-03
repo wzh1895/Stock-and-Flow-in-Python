@@ -1,13 +1,12 @@
-"""
-main utility for model expansion
-"""
-
 from tkinter import *
 from suggestion import SuggestionPanel
 from StockAndFlowInPython.Graph_SD.graph_based_engine import MULTIPLICATION, LINEAR
 
 
 class ExpansionPanel(SuggestionPanel):
+    '''
+    Main utility for model expansion
+    '''
     def __init__(self, master):
         super().__init__(master)
 

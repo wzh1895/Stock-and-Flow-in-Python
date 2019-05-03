@@ -1,6 +1,3 @@
-"""
-main utility for generic structure suggestion
-"""
 from tkinter import *
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,6 +8,9 @@ import numpy as np
 
 
 class SuggestionPanel(ControllerBar):
+    '''
+    Main utility for suggesting generic structures
+    '''
     def __init__(self, master):
         super().__init__(master)
         self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'

@@ -1,13 +1,12 @@
-"""
-Controller tool bar for this entire project
-"""
-
 from tkinter import *
 from tkinter import ttk
 from StockAndFlowInPython.session_handler import SessionHandler
 
 
 class ControllerBar(Frame):
+    """
+    Controller tool bar for this entire project
+    """
     def __init__(self, master):
         super().__init__(master)
         self.master = master
