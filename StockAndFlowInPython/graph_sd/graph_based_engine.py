@@ -63,21 +63,15 @@ class Structure(object):
         self.sfd.add_node(element_name, element_type=element_type, pos=(x, y), function=function, value=value, points=points)
         print('adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
-
         if function is not None and type(function) is not str:
             for from_variable in function[1:]:
                 print('adding causality, from_var:', from_variable)
                 self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(), angle=from_variable[1])
 
-        # automatically add dependencies, if a flow influences stock(s)
-
-        # if element_type is FLOW and
-
     def add_causality(self, from_element, to_element, uid=0, angle=0):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
 
-    #def add_angle(self, from_element, to_element, uid=0, angle=0):
-
+    # def add_angle(self, from_element, to_element, uid=0, angle=0):
 
     def print_elements(self):
         print('All elements in this SFD:')
@@ -94,6 +88,14 @@ class Structure(object):
     def print_causality(self, from_element, to_element):
         print('Causality from {} to {}:'.format(from_element, to_element))
         print(self.sfd[from_element][to_element])
+
+    def get_coordinate(self, name):
+        """
+        Get the coordinate of a specified variable
+        :param name:
+        :return: coordinate of the variable in a tuple
+        """
+        return self.sfd.nodes[name]['pos']
 
     # The core function for simulation, based on recursion
     def calculate(self, name):
@@ -233,7 +235,7 @@ class Session(object):
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
         self.structures[structure_name].add_element(name, element_type=STOCK, x=x, y=y, value=equation)
-        print('added stock:', name, '\n')
+        print('added stock:', name, 'to graph.\n')
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
@@ -254,26 +256,30 @@ class Session(object):
         # TODO: outflow shoud have a -1 somewhere
         # TODO flow may be used for calculating other variables,
         #  so could have other outgoing causal links
-        print('added flow:', name, '\n')
+        print('added flow:', name, 'to graph\n')
 
     def add_aux(self, name, equation, x=0, y=0, structure_name='default'):
         # Decide if this aux is a parameter or variable
-        # print('here!', equation)
         if type(equation[0]) == int or type(equation[0]) == float:
             # if equation starts with a number
             # It's a parameter
             self.structures[structure_name].add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
-            # It's a variable
+            # It's a variable, has its own function
             self.structures[structure_name].add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
-        print('added aux', name, '\n')
+            # Then it is assumed to take information from other variables, therefore causal links should be created.
+            # Already implemented in structure's add_element function, not needed here.
+            # for info_source_var in equation[1]:
+            #     if info_source_var in self.structures[structure_name].sfd.nodes:  # if this info_source is a var
+            #         self.structures[structure_name].add_causality(info_source_var, name)
+        print('added aux', name, 'to graph.\n')
 
     def add_connector(self, uid, from_element, to_element, angle=0, structure_name='default'):
         self.structures[structure_name].add_causality(from_element, to_element, uid=uid, angle=angle)
 
     def add_alias(self, uid, of_element, x=0, y=0, structure_name='default'):
         self.structures[structure_name].add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
-        print('added alias of', of_element, '\n')
+        print('added alias of', of_element, 'to graph.\n')
 
     # Clear a run
     def clear_a_run(self, structure_name='default'):
@@ -374,7 +380,7 @@ class Session(object):
         ax.autoscale()
 
         if rtn:  # if figure needs to be returned
-            print('xxxxx')
+            print('Engine is returning graph figure.')
             return self.Figure1
         else:
             plt.show()
@@ -383,7 +389,7 @@ class Session(object):
     # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
     def draw_network(self, G, pos, ax):
         for n in G:
-            print('nnnnn', n)
+            print('Engine is drawing network element for', n)
             circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
             # ax.add_patch(circle)
             G.node[n]['patch'] = circle

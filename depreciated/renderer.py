@@ -1,6 +1,6 @@
 # SD-simulator
 from tkinter import *
-from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
 def main():
     root = Tk()

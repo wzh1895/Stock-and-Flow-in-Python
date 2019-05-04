@@ -1,5 +1,5 @@
 """Parsing Utility for XMILE file"""
-from StockAndFlowInPython.Graph_SD.graph_based_engine import LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION
+from StockAndFlowInPython.graph_sd.graph_based_engine import LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION
 
 
 def parsing_multiplication(equation):

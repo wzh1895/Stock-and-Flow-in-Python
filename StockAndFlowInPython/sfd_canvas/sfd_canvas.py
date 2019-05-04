@@ -2,8 +2,8 @@ from tkinter import *
 from tkinter import ttk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from StockAndFlowInPython.SFD_Canvas.session_handler import SessionHandler
-from StockAndFlowInPython.Graph_SD.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
+#from StockAndFlowInPython.sfd_canvas.session_handler import SessionHandler
+from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 import xml.dom.minidom
 import shutil
@@ -36,6 +36,11 @@ class SFDCanvas(Frame):
         self.pack(fill=BOTH, expand=1)
 
     def set_sfd_and_draw(self, sfd):
+        """
+        Receive a graph representation of SFD and draw it on canvas
+        :param sfd: Received stock and Flow representation in graph
+        :return:
+        """
         self.sfd = sfd
         self.sfd_drawer()
 
@@ -103,6 +108,7 @@ class SFDCanvas(Frame):
     def create_connector(self, xA, yA, xB, yB, angle, color='black'):
         # self.create_dot(xA,yA,3,'black')
         # self.create_dot(xB,yB,3,'black')
+        print(angle)
         alpha = math.radians(angle)
         if math.pi < alpha < math.pi * 2:
             alpha -= math.pi * 2

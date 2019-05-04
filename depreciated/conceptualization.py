@@ -6,7 +6,7 @@ from matplotlib.figure import Figure
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.similarity_calculation.similarity_calc import similarity_calc
-from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 import numpy as np
 import pandas as pd
 

@@ -17,13 +17,13 @@ class SuggestionPanel(ControllerBar):
         #self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
         self.similarity_calculator1 = SimilarityCalculator()
 
-        self.fm_3 = Frame(self.master)
-        self.fm_3.pack(side=TOP)
-        self.btn_load_reference_mode = Button(self.fm_3, text="Load reference Mode", command=self.load_reference_mode)
+        self.fm_suggestion = Frame(self.master)
+        self.fm_suggestion.pack(side=TOP)
+        self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
         self.btn_load_reference_mode.pack(side=LEFT)
-        self.btn_calculate_similarity = Button(self.fm_3, text="Calculate similarity", command=self.calculate_similarity)
+        self.btn_calculate_similarity = Button(self.fm_suggestion, text="Calculate similarity", command=self.calculate_similarity)
         self.btn_calculate_similarity.pack(side=LEFT)
-        self.btn_load_generic_structure = Button(self.fm_3, text="Load closest structure", command=self.load_generic_structure)
+        self.btn_load_generic_structure = Button(self.fm_suggestion, text="Load closest structure", command=self.load_generic_structure)
         self.btn_load_generic_structure.pack(side=LEFT)
         self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
         self.lb_suggested_generic_stucture.pack(side=TOP)
@@ -45,6 +45,7 @@ class SuggestionPanel(ControllerBar):
         print("structure name:", self.suggested_generic_structure)
         self.lb_name.config(text=self.suggested_generic_structure)
         self.variables_list['values'] = variables_in_model
+
 
 class ReferenceMode(object):
     """Class for Reference Mode"""

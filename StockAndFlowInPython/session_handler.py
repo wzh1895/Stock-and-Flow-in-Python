@@ -3,9 +3,9 @@ import math
 from tkinter import filedialog
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.Graph_SD.graph_based_engine import Session, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
+from StockAndFlowInPython.graph_sd.graph_based_engine import Session, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
 from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
-from StockAndFlowInPython.SFD_Canvas.SFD_Canvas import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
 
 def name_handler(name):
@@ -46,6 +46,15 @@ class SessionHandler(object):
         self.graph_network_window1 = GraphNetworkWindow()
 
     def apply_generic_structure(self, generic_structure_type):
+        """
+        Retrieve a specific structure type by:
+        1) Establish it in the graph engine;
+        2) Draw SFD
+        2) Draw Graph network
+
+        :param generic_structure_type:
+        :return:
+        """
         if generic_structure_type == 'decline_c':
             self.sess1.first_order_negative()
         elif generic_structure_type == 'growth_b':
@@ -76,13 +85,23 @@ class SessionHandler(object):
                 if connection_view_array[2] == from_element:
                     return connection_view_array[1]
 
-    def get_into_stock(self, flow_name):  # get the affected stock given a flow's name
+    def get_into_stock(self, flow_name):
+        """
+        Get the affected stock given a flow's name
+        :param flow_name:
+        :return:
+        """
         for stock_view_array in self.stock_views_array:
             if stock_view_array[2] == flow_name:
                 return stock_view_array[0]
         return None
 
-    def get_outfrom_stock(self, flow_name):  # get the affected stock given a flow's name
+    def get_outfrom_stock(self, flow_name):
+        """
+        Get the affected stock given a flow's name
+        :param flow_name:
+        :return:
+        """
         for stock_view_array in self.stock_views_array:
             if stock_view_array[3] == flow_name:
                 return stock_view_array[0]
@@ -264,6 +283,12 @@ class SessionHandler(object):
         self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
 
     def reset(self):
+        """
+        Clear SFD canvas;
+        Clear graph network display;
+        Clear simulation results;
+        :return:
+        """
         self.sfd_window1.sfd_canvas1.reset_canvas()
         try:
             self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
@@ -277,7 +302,9 @@ class SessionHandler(object):
         self.sess1.reset_a_structure()
 
     def refresh(self):
-        # remove existing drawings if any
+        """
+        remove existing drawings if any
+        """
         try:
             self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
         except:
