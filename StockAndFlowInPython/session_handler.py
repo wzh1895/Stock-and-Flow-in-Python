@@ -329,7 +329,7 @@ class SFDWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Stock and Flow Diagram")
-        self.top.geometry("%dx%d+1070+550" % (500, 430))
+        self.top.geometry("%dx%d+1070+750" % (800, 600))
         self.sfd_canvas1 = SFDCanvas(self.top)
 
 
@@ -337,7 +337,7 @@ class GraphNetworkWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Graph Network Structure")
-        self.top.geometry("%dx%d+1070+50" % (500, 430))
+        self.top.geometry("%dx%d+1070+50" % (800, 600))
 
 
 class SimulationResult(object):

@@ -108,7 +108,6 @@ class SFDCanvas(Frame):
     def create_connector(self, xA, yA, xB, yB, angle, color='black'):
         # self.create_dot(xA,yA,3,'black')
         # self.create_dot(xB,yB,3,'black')
-        print(angle)
         alpha = math.radians(angle)
         if math.pi < alpha < math.pi * 2:
             alpha -= math.pi * 2
@@ -250,17 +249,18 @@ class SFDCanvas(Frame):
         radius1 = 8
 
         for connector in self.sfd.edges():
-            print('\n', connector)
             from_element = connector[0]
             to_element = connector[1]
-            print('drawing connector from', from_element, 'to', to_element)
-            from_cord = self.locate_var(from_element)
-            # print(from_cord)
-            to_cord = self.locate_var(to_element)
-            # print(to_cord)
-            angle = self.sfd[from_element][to_element][0]['angle']
-            # print('angle:', angle)
-            self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
+            if self.sfd[from_element][to_element][0]['display']:
+                # Only draw when 'display' == True, avoid FLOW--->STOCK
+                print('SFD Canvas is drawing connector from', from_element, 'to', to_element)
+                from_cord = self.locate_var(from_element)
+                # print(from_cord)
+                to_cord = self.locate_var(to_element)
+                # print(to_cord)
+                angle = self.sfd[from_element][to_element][0]['angle']
+                # print('angle:', angle)
+                self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
         for element in self.sfd.nodes:

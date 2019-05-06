@@ -57,19 +57,23 @@ class Structure(object):
         self.uid += 1
         return self.uid
 
-    def add_element(self, element_name, element_type, x=0, y=0, function=None, value=None, points=None):
+    def add_element(self, element_name, element_type, flow_from=None, flow_to=None, x=0, y=0, function=None, value=None, points=None):
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
-        self.sfd.add_node(element_name, element_type=element_type, pos=(x, y), function=function, value=value, points=points)
+        self.sfd.add_node(element_name, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
         print('adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
-            for from_variable in function[1:]:
-                print('adding causality, from_var:', from_variable)
-                self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(), angle=from_variable[1])
+            self.add_dependencies(element_name, function)
 
-    def add_causality(self, from_element, to_element, uid=0, angle=0):
-        self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle)
+    def add_dependencies(self, element_name, function):  # add bunch of causality found in a function
+        for from_variable in function[1:]:
+            print('adding causality, from_var:', from_variable)
+            self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(),
+                               angle=from_variable[1])
+
+    def add_causality(self, from_element, to_element, uid=0, angle=0, display=True):  # add one causality
+        self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, display=display)  # display as a flag for to or not to display
 
     # def add_angle(self, from_element, to_element, uid=0, angle=0):
 
@@ -117,7 +121,8 @@ class Structure(object):
             return new_value  # return the new value to where it was called
 
     def step(self, dt=0.25):
-        flows_dt = dict()  # have a dictionary of flows and their values in this dt, to be added to stocks afterward.
+        flows_dt = dict()
+        # have a dictionary of flows and their values in this dt, to be added to /subtracted from stocks afterward.
 
         # find all flows in the model
         for element in self.sfd.nodes:  # loop through all elements in this SFD,
@@ -138,9 +143,22 @@ class Structure(object):
             for successor in successors:
                 if self.sfd.nodes[successor]['element_type'] == STOCK:  # flow may also affect elements other than stock
                     if successor not in affected_stocks.keys():  # if this flow hasn't been calculated, create a new key
-                        affected_stocks[successor] = flows_dt[flow]
+                        if self.sfd.nodes[flow]['flow_from'] == successor:  # if flow influences this stock negatively
+                            direction_factor = -1
+                        elif self.sfd.nodes[flow]['flow_to'] == successor:  # if flow influences this stock positively
+                            direction_factor = 1
+                        else:
+                            print("Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
+                        affected_stocks[successor] = flows_dt[flow] * direction_factor
                     else:  # otherwise update this flow's value on top of results of previous calculation (f2 = f1 + f0)
-                        affected_stocks[successor] += flows_dt[flow]
+                        if self.sfd.nodes[flow]['flow_from'] == successor:  # if flow influences this stock negatively
+                            direction_factor = -1
+                        elif self.sfd.nodes[flow]['flow_to'] == successor:  # if flow influences this stock positively
+                            direction_factor = 1
+                        else:
+                            print("Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
+                        affected_stocks[successor] = flows_dt[flow] * direction_factor
+                        affected_stocks[successor] += flows_dt[flow] * direction_factor
 
         # updating affected stocks values
         for stock in affected_stocks.keys():
@@ -182,9 +200,9 @@ class Session(object):
     def first_order_negative(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # 0type,    1name/uid,  2value/equation/angle                         3from,      4to,        5x,     6y,     7pts,
+            # 0type,    1name/uid,  2value/equation/angle                         3flow_from,      4flow_to,        5x,     6y,     7pts,
             [STOCK,     'stock0',   [100],                                        None,       None,       289,    145,    None],
-            [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
+            [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'goal0',    [20],                                         None,       None,       163,    251,    None],
             [VARIABLE,  'gap0',     [SUBTRACT, ['goal0', 353], ['stock0', 246]],  None,       None,       213,    212,    None],
             [PARAMETER, 'at0',      [5],                                          None,       None,       123,    77,    None],
@@ -198,9 +216,9 @@ class Session(object):
     def first_order_positive(self, structure_name='default'):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3from,      4to,        5x,     6y,     7pts,
+            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
             [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [(85, 145), (266.5, 145)]],
+            [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
         ])
 
@@ -239,30 +257,21 @@ class Session(object):
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
-        if type(equation[0]) == int or type(equation[0]) == float:
+        if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number
             function = None
             value = equation  # it's a constant
         else:
             function = equation  # it's a function
             value = list()
-        self.structures[structure_name].add_element(name, element_type=FLOW, x=x, y=y, function=function, value=value, points=points)
-
-        # If the flow influences a stock, create the causal link
-        if flow_to is not None:
-            self.structures[structure_name].add_causality(name, flow_to)
-        if flow_from is not None:
-            self.structures[structure_name].add_causality(name, flow_from)
-        # TODO: outflow shoud have a -1 somewhere
-        # TODO flow may be used for calculating other variables,
-        #  so could have other outgoing causal links
+        self.structures[structure_name].add_element(name, element_type=FLOW, flow_from=flow_from, flow_to=flow_to, x=x, y=y, function=function, value=value, points=points)
+        self.create_stock_flow_connection(name, structure_name, flow_from=flow_from, flow_to=flow_to)
         print('added flow:', name, 'to graph\n')
 
     def add_aux(self, name, equation, x=0, y=0, structure_name='default'):
         # Decide if this aux is a parameter or variable
-        if type(equation[0]) == int or type(equation[0]) == float:
-            # if equation starts with a number
-            # It's a parameter
+        if type(equation[0]) is int or type(equation[0]) is float:
+            # if equation starts with a number, it's a parameter
             self.structures[structure_name].add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable, has its own function
@@ -273,6 +282,82 @@ class Session(object):
             #     if info_source_var in self.structures[structure_name].sfd.nodes:  # if this info_source is a var
             #         self.structures[structure_name].add_causality(info_source_var, name)
         print('added aux', name, 'to graph.\n')
+
+    def replace_equation(self, name, new_equation, structure_name='default'):
+        """
+        Replace the equation of a variable.
+        :param name: The name of the variable
+        :param new_equation: The new equation
+        :param structure_name: The structure the variable is in
+        :return:
+        """
+        # step 1: remove all incoming connectors into this variable (node)
+        # step 2: replace the equation of this variable in the graph representation
+        # step 3: add connectors based on the new equation (only when the new equation is a function instead of a number
+        print("Replacing equation of {}".format(name))
+        # step 1:
+        to_remove = list()
+        for u, v in self.structures[structure_name].sfd.in_edges(name):
+            print(u, v)
+            to_remove.append((u, v))
+        self.structures[structure_name].sfd.remove_edges_from(to_remove)
+        print("Edges removed.")
+        # step 2:
+        if type(new_equation[0]) is int or type(new_equation[0]) is float:
+            # If equation starts with a number, it's a constant value
+            self.structures[structure_name].sfd.nodes[name]['function'] = None
+            self.structures[structure_name].sfd.nodes[name]['value'] = new_equation
+            print("Equation replaced.")
+        else:
+            # It's a variable, has its own function
+            self.structures[structure_name].sfd.nodes[name]['function'] = new_equation
+            self.structures[structure_name].sfd.nodes[name]['value'] = list()
+            print("Equation replaced.")
+            # step 3:
+            if new_equation is not None and type(new_equation) is not str:
+                self.structures[structure_name].add_dependencies(name, new_equation)
+                print("New edges created.")
+
+    def create_stock_flow_connection(self, name, structure_name, flow_from=None, flow_to=None):
+        """
+        Connect stock and flow.
+        :param name: The flow's name
+        :param structure_name: The structure to modify
+        :param flow_from: The stock this flow coming from
+        :param flow_to: The stock this flow going into
+        :return:
+        """
+        # If the flow influences a stock, create the causal link
+        if flow_from is not None:  # Just set up
+            self.structures[structure_name].sfd.nodes[name]['flow_from'] = flow_from
+            self.structures[structure_name].add_causality(name, flow_from, display=False)
+        if flow_to is not None:  # Just set up
+            self.structures[structure_name].sfd.nodes[name]['flow_to'] = flow_to
+            self.structures[structure_name].add_causality(name, flow_to, display=False)
+
+    def remove_stock_flow_connection(self, name, structure_name, stock_name):
+        """
+        Disconnect stock and flow
+        :param name: The flow's name
+        :param structure_name: The structure to modify
+        :param stock_name: The stock this flow no longer connected to
+        :return:
+        """
+        if self.structures[structure_name].sfd.nodes[name]['flow_from'] == stock_name:
+            self.structures[structure_name].sfd.remove_edge(name, stock_name)
+            self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
+        if self.structures[structure_name].sfd.nodes[name]['flow_to'] == stock_name:
+            self.structures[structure_name].sfd.remove_edge(name, stock_name)
+            self.structures[structure_name].sfd.nodes[name]['flow_to'] = None
+
+        # # Set the previous 'from' to None, and remove the causal link if it exists
+        # if self.structures[structure_name].sfd.nodes[name]['flow_from'] is not None:
+        #     self.structures[structure_name].sfd.remove_edge(name, self.structures[structure_name].sfd.nodes[name]['flow_from'])
+        #     self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
+        # # Set the previous 'to' to None, and remove the causal link if it exists
+        # if self.structures[structure_name].sfd.nodes[name]['flow_from'] is not None:
+        #     self.structures[structure_name].sfd.remove_edge(name, self.structures[structure_name].sfd.nodes[name]['flow_from'])
+        #     self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
 
     def add_connector(self, uid, from_element, to_element, angle=0, structure_name='default'):
         self.structures[structure_name].add_causality(from_element, to_element, uid=uid, angle=angle)
@@ -312,7 +397,7 @@ class Session(object):
         if names is None:
             names = list(self.structures[structure_name].sfd.nodes)
 
-        self.Figure1 = plt.figure(figsize=(5, 5))
+        self.figure1 = plt.figure(figsize=(5, 5))
 
         # plt.subplot(212)  # operate subplot 2
         plt.xlabel('Steps (Time: {} / Dt: {})'.format(self.simulation_time, self.dt))
@@ -344,7 +429,7 @@ class Session(object):
             plt.plot(t_series, label=name)
         plt.legend()
         if rtn:  # if called from external, return the figure without show it.
-            return self.Figure1
+            return self.figure1
         else:  # otherwise, show the figure.
             plt.show()
 
@@ -362,7 +447,7 @@ class Session(object):
 
     # Draw graphs with curve
     def draw_graphs_with_curve(self, structure_name='default', rtn=False):
-        self.Figure1 = plt.figure(figsize=(5, 5))
+        self.Figure1 = plt.figure(figsize=(8, 5))
         ax = plt.gca()
         ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
 
@@ -375,7 +460,7 @@ class Session(object):
         ax.spines['left'].set_visible(False)
 
         pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
-        print(pos)
+        print("The graph contains elements with their positions:", pos)
         self.draw_network(self.structures[structure_name].sfd, pos, ax)
         ax.autoscale()
 
@@ -418,7 +503,6 @@ class Session(object):
                 seen[(u, v)] = rad
                 ax.add_patch(edge)
             return edge
-
 
 
 def main():
