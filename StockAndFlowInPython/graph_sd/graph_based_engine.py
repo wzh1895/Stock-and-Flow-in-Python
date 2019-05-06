@@ -447,7 +447,7 @@ class Session(object):
 
     # Draw graphs with curve
     def draw_graphs_with_curve(self, structure_name='default', rtn=False):
-        self.Figure1 = plt.figure(figsize=(8, 5))
+        self.Figure1 = plt.figure(figsize=(8, 6))
         ax = plt.gca()
         ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
 

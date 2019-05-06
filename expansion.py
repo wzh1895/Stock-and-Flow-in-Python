@@ -41,7 +41,9 @@ class ExpansionPanel(SuggestionPanel):
         self.disconnect_stock_flow(flow_name='outflow0', stock_name='stock0')
         self.connect_stock_flow(flow_name='outflow0', new_flow_from='stock0')
         self.build_aux(name='fraction1', equation=0.1,)
-        # self.simulate()
+        self.connect_stock_flow(flow_name='inflow0', new_flow_to='stock0')
+        self.replace_equation(name='inflow0', new_equation=[MULTIPLICATION, ['stock0', 50], ['fraction1', 40]])
+        self.simulate()
 
     def build_stock(self, name, initial_value, x=0, y=0):
         """
