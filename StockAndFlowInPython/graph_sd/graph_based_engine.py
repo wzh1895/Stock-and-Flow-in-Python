@@ -425,7 +425,9 @@ class Session(object):
             print("Y range: ", y_axis_minimum, '-', y_axis_maximum)
             plt.axis([0, self.simulation_time/self.dt, y_axis_minimum, y_axis_maximum])
             t_series = self.structures[structure_name].sfd.nodes[name]['value']
-            print(t_series)
+            print("Time series of {}:".format(name))
+            for i in range(len(t_series)):
+                print("{0} at DT {1} : {2:8.4f}".format(name, i+1, t_series[i]))
             plt.plot(t_series, label=name)
         plt.legend()
         if rtn:  # if called from external, return the figure without show it.
