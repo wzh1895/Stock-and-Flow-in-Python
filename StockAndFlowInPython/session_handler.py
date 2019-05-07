@@ -9,7 +9,7 @@ from StockAndFlowInPython.graph_sd.graph_based_engine import Session, function_n
 from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
-SLEEP_TIME = 0.5
+SLEEP_TIME = 0.2
 
 def name_handler(name):
     return name.replace(' ', '_').replace('\n', '_')
@@ -279,10 +279,10 @@ class SessionHandler(object):
         self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
 
     def show_result(self):
-        try:
-            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
-        except:
-            pass
+        # try:
+        #     self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        # except:
+        #     pass
         self.simulation_result1 = SimulationResult()
         self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
         self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
@@ -393,22 +393,32 @@ class SessionHandler(object):
 
             if flow_from is not None and flow_to is not None:
                 print("This flow influences 2 stocks")
-                x = self.sess1.structures['default'].get_coordinate(flow_from)[0] + \
-                    self.sess1.structures['default'].get_coordinate(flow_to)[0]
-                y = self.sess1.structures['default'].get_coordinate(flow_from)[1] + \
-                    self.sess1.structures['default'].get_coordinate(flow_to)[1]
+                x1 = self.sess1.structures['default'].get_coordinate(flow_from)[0]
+                y1 = self.sess1.structures['default'].get_coordinate(flow_from)[1]
+                x2 = self.sess1.structures['default'].get_coordinate(flow_to)[0]
+                y2 = self.sess1.structures['default'].get_coordinate(flow_to)[1]
+                x = (x1 + x2)/2
+                y = (y1 + y2)/2
+                direction_x = (x2-x1)/abs(x2-x1)
+                direction_y = (y2-y1)/abs(y2-y1)
+                if abs(x2 - x1) > abs(y2 - y1):
+                    points = [(x1+direction_x*23, y1), (x, y1), (x, y2), (x2-direction_x*23, y2)]
+                else:
+                    points = [(x1, y1+direction_y*18), (x1, y), (x2, y), (x2, y2-direction_y*18)]
             elif flow_from is not None:
                 print("This flow flows from {}".format(flow_from))
                 y = self.sess1.structures['default'].get_coordinate(flow_from)[1]
                 x = self.sess1.structures['default'].get_coordinate(flow_from)[0] + 107
+                points = [[x - 85.5, y], [x + 85.5, y]]
             elif flow_to is not None:
                 print("This flow flows to {}".format(flow_to))
                 y = self.sess1.structures['default'].get_coordinate(flow_to)[1]
                 x = self.sess1.structures['default'].get_coordinate(flow_to)[0] - 107
+                points = [[x - 85.5, y], [x + 85.5, y]]
 
             # Points need to be generated as well
             # calculating using: x=181, y=145, points=[(85, 145), (266.5, 145)]
-            points = [[x - 85.5, y], [x + 85.5, y]]
+            # points = [[x - 85.5, y], [x + 85.5, y]]
 
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 

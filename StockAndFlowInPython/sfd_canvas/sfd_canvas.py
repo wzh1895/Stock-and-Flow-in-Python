@@ -85,7 +85,8 @@ class SFDCanvas(Frame):
             if i != len(pts)-2:
                 self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1])
             else:
-                self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1], arrow=LAST)
+                self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1],
+                                        arrow=LAST, arrowshape=(15, 18, 8))
         # self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 10), text=label)
@@ -208,7 +209,7 @@ class SFDCanvas(Frame):
         y.append(yB)
 
         self.canvas.create_line(x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3], x[4], y[4], x[5], y[5], x[6], y[6],
-                                x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=LAST)
+                                x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=LAST, arrowshape=(9, 11, 4))
 
         # print('\n')
 
@@ -243,8 +244,8 @@ class SFDCanvas(Frame):
         self.canvas.config(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
 
         # set common parameters
-        width1 = 46
-        height1 = 35
+        width_stock = 45
+        height_stock = 35
         length1 = 115
         radius1 = 8
 
@@ -273,7 +274,7 @@ class SFDCanvas(Frame):
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 # print(x,y)
-                self.create_stock(x, y, width1, height1, element)
+                self.create_stock(x, y, width_stock, height_stock, element)
                 if x > self.xmost:
                     self.xmost = x
                 if y > self.ymost:

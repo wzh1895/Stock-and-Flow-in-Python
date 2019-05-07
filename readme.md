@@ -27,6 +27,10 @@ First order positive feedback structure:
 
 ![ScreenShot](screenshots/screenShot_10.png)
 
+**Expand a model structure by adding components**
+
+![ScreenShot](./screenshots/screenShot_12.png)
+
 ## How to use
 
 ```
@@ -61,6 +65,9 @@ python3 suggestion.py
     
 ## Change Log
 
+**7 May 2019: v0.8.0**
+
+1. Added utilities for model expansion (Building up by adding components), ready for HCI development
 
 **4 Apr 2019: v0.7.0**
 
