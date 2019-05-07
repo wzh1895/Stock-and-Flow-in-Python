@@ -2,14 +2,17 @@ import random
 import time
 from tkinter import *
 from suggestion import SuggestionPanel
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR
+from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
+    MULTIPLICATION, LINEAR
 
 SLEEP_TIME = 0.5
+
 
 class ExpansionPanel(SuggestionPanel):
     """
     Main utility for model expansion
     """
+
     def __init__(self, master):
         super().__init__(master)
 
@@ -32,17 +35,19 @@ class ExpansionPanel(SuggestionPanel):
                         # y=145,
                         points=[(85, 145), (266.5, 145)])
         self.build_aux(name='fraction0', equation=0.1,
-                        # x=163,
-                        # y=251
-                        )
+                       # x=163,
+                       # y=251
+                       )
         self.build_flow(name='outflow0', equation=5, flow_from='stock0')
         self.replace_equation(name='outflow0', new_equation=[MULTIPLICATION, ['stock0', 100], ['fraction0', 150]])
         self.disconnect_stock_flow(flow_name='inflow0', stock_name='stock0')
         self.disconnect_stock_flow(flow_name='outflow0', stock_name='stock0')
         self.connect_stock_flow(flow_name='outflow0', new_flow_from='stock0')
-        self.build_aux(name='fraction1', equation=0.1,)
+        self.build_aux(name='fraction1', equation=0.1, )
         self.connect_stock_flow(flow_name='inflow0', new_flow_to='stock0')
         self.replace_equation(name='inflow0', new_equation=[MULTIPLICATION, ['stock0', 50], ['fraction1', 40]])
+        self.delete_variable(name='inflow0')
+        self.delete_variable(name='fraction1')
         self.simulate()
 
     def build_stock(self, name, initial_value, x=0, y=0):
@@ -124,7 +129,7 @@ class ExpansionPanel(SuggestionPanel):
 
             # Points need to be generated as well
             # calculating using: x=181, y=145, points=[(85, 145), (266.5, 145)]
-            points = [[x-85.5, y], [x+85.5, y]]
+            points = [[x - 85.5, y], [x + 85.5, y]]
 
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
@@ -187,8 +192,8 @@ class ExpansionPanel(SuggestionPanel):
         # When it is isolated: centered
         if len(linked_vars) == 0:
             print("Generating location. Isolated.")
-            base_x = canvas_width/2
-            base_y = canvas_height/2
+            base_x = canvas_width / 2
+            base_y = canvas_height / 2
             random_range = 150
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
@@ -207,11 +212,22 @@ class ExpansionPanel(SuggestionPanel):
             for linked_var in linked_vars:
                 base_x += self.session_handler1.sess1.structures['default'].get_coordinate(linked_var)[0]
                 base_y += self.session_handler1.sess1.structures['default'].get_coordinate(linked_var)[1]
-            base_x = round(base_x/len(linked_vars))
-            base_y = round(base_y/len(linked_vars))
+            base_x = round(base_x / len(linked_vars))
+            base_y = round(base_y / len(linked_vars))
             random_range = 150
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
+
+    def delete_variable(self, name):
+        """
+        Remove a variable from model structure
+        :param name: Name of the variable
+        :return:
+        """
+        self.session_handler1.sess1.delete_variable(name=name)
+        self.session_handler1.refresh()
+        self.variables_list['values'] = self.session_handler1.variables_in_model
+        time.sleep(SLEEP_TIME)
 
     def replace_equation(self, name, new_equation):
         """

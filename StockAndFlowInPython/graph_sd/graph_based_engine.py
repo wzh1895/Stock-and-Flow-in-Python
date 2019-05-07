@@ -64,9 +64,9 @@ class Structure(object):
         print('adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
-            self.add_dependencies(element_name, function)
+            self.add_function_dependencies(element_name, function)
 
-    def add_dependencies(self, element_name, function):  # add bunch of causality found in a function
+    def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
         for from_variable in function[1:]:
             print('adding causality, from_var:', from_variable)
             self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(),
@@ -101,8 +101,11 @@ class Structure(object):
         """
         return self.sfd.nodes[name]['pos']
 
-    # The core function for simulation, based on recursion
     def calculate(self, name):
+        """
+        Core function for simulation, based on recursion
+        :param name: Name of the element to calculate
+        """
         if self.sfd.nodes[name]['element_type'] == STOCK:
             # if the node is a stock
             return self.sfd.nodes[name]['value'][-1]  # just return its value, update afterward.
@@ -121,6 +124,9 @@ class Structure(object):
             return new_value  # return the new value to where it was called
 
     def step(self, dt=0.25):
+        """
+        Core function for simulation. Calculating all flows and adjust stocks accordingly based on recursion.
+        """
         flows_dt = dict()
         # have a dictionary of flows and their values in this dt, to be added to /subtracted from stocks afterward.
 
@@ -174,7 +180,10 @@ class Structure(object):
                     print('Stock ', node, ':', self.sfd.nodes[node]['value'][-1])
 
     def clear_value(self):
-        # clear 'value' for all nodes
+        """
+        Clear values for all nodes
+        :return:
+        """
         for node in self.sfd.nodes:
             if self.sfd.nodes[node]['element_type'] == STOCK:
                 self.sfd.nodes[node]['value'] = [self.sfd.nodes[node]['value'][0]]  # for stock, keep its initial value
@@ -315,8 +324,18 @@ class Session(object):
             print("Equation replaced.")
             # step 3:
             if new_equation is not None and type(new_equation) is not str:
-                self.structures[structure_name].add_dependencies(name, new_equation)
+                self.structures[structure_name].add_function_dependencies(name, new_equation)
                 print("New edges created.")
+
+    def delete_variable(self, name, structure_name='default'):
+        """
+        Delete a variable
+        :param name:
+        :param structure_name:
+        :return:
+        """
+        self.structures[structure_name].sfd.remove_node(name)
+        print("{} is removed from the graph.".format(name))
 
     def create_stock_flow_connection(self, name, structure_name, flow_from=None, flow_to=None):
         """
@@ -335,7 +354,7 @@ class Session(object):
             self.structures[structure_name].sfd.nodes[name]['flow_to'] = flow_to
             self.structures[structure_name].add_causality(name, flow_to, display=False)
 
-    def remove_stock_flow_connection(self, name, structure_name, stock_name):
+    def remove_stock_flow_connection(self, name, stock_name, structure_name='default'):
         """
         Disconnect stock and flow
         :param name: The flow's name
