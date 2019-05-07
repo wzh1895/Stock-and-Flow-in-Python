@@ -46,6 +46,7 @@ class ControllerBar(Frame):
 
     def simulate(self):
         self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
+        self.variables_list['values'] = self.session_handler1.variables_in_model
 
     def file_load(self):
         file_name_and_variables = self.session_handler1.file_load()
