@@ -75,8 +75,6 @@ class Structure(object):
     def add_causality(self, from_element, to_element, uid=0, angle=0, display=True):  # add one causality
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, display=display)  # display as a flag for to or not to display
 
-    # def add_angle(self, from_element, to_element, uid=0, angle=0):
-
     def print_elements(self):
         print('All elements in this SFD:')
         print(self.sfd.nodes.data())
@@ -456,19 +454,19 @@ class Session(object):
 
     # Draw graphs
     def draw_graphs(self, structure_name='default', rtn=False):
-        self.Figure1 = plt.figure(figsize=(5, 5))
+        self.figure1 = plt.figure(figsize=(5, 5))
         plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
         pos = nx.get_node_attributes(self.structures[structure_name].sfd, 'pos')
         nx.draw(self.structures[structure_name].sfd, with_labels=True, pos=pos)
 
         if rtn:  # if called from external, return the figure without show it.
-            return self.Figure1
+            return self.figure1
         else:  # otherwise, show the figure.
             plt.show()
 
     # Draw graphs with curve
     def draw_graphs_with_curve(self, structure_name='default', rtn=False):
-        self.Figure1 = plt.figure(figsize=(8, 6))
+        self.figure1 = plt.figure(figsize=(8, 6))
         ax = plt.gca()
         ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
 
@@ -487,7 +485,7 @@ class Session(object):
 
         if rtn:  # if figure needs to be returned
             print('Engine is returning graph figure.')
-            return self.Figure1
+            return self.figure1
         else:
             plt.show()
 
