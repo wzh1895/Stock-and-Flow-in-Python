@@ -42,6 +42,19 @@ or
 python3 suggestion.py
 ```
 
+or
+```
+python3 expansion.py
+```
+
+## Dependencies
+
+- dtw
+- networkx
+- matplotlib
+- numpy
+- pandas
+
 ## Project Structure: PHAPI
 
 (**Problem --> Hypothesis <--> Analysis** --> Policy --> Implementation) (*1)

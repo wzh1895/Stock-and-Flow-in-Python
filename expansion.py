@@ -53,7 +53,7 @@ class ExpansionPanel(SuggestionPanel):
 
 def main():
     root = Tk()
-    root.geometry("%dx%d+50+100" % (1800, 900))
+    root.geometry("%dx%d+50+100" % (450, 160))
     root.wm_title("Expansion Test")
     root.configure(background='#fff')
     ExpansionPanel(root)
