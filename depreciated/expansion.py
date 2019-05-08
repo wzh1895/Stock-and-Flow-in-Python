@@ -1,7 +1,6 @@
 from tkinter import *
-from suggestion import SuggestionPanel
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
-    MULTIPLICATION, LINEAR
+from depreciated.suggestion import SuggestionPanel
+from StockAndFlowInPython.graph_sd.graph_based_engine import MULTIPLICATION
 
 
 class ExpansionPanel(SuggestionPanel):

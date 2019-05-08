@@ -1,4 +1,3 @@
-pysd
 matplotlib
 dtw
 numpy

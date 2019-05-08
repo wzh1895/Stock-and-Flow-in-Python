@@ -36,16 +36,6 @@ First order positive feedback structure:
 ```
 python3 controller.py
 ```
-or
-
-```
-python3 suggestion.py
-```
-
-or
-```
-python3 expansion.py
-```
 
 ## Dependencies
 
