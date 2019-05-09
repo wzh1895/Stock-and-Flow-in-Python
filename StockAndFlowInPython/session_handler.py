@@ -11,6 +11,7 @@ from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
 SLEEP_TIME = 0.2
 
+
 def name_handler(name):
     return name.replace(' ', '_').replace('\n', '_')
 

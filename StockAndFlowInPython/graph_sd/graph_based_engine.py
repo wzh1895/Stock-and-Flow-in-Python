@@ -72,8 +72,8 @@ class Structure(object):
             self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(),
                                angle=from_variable[1])
 
-    def add_causality(self, from_element, to_element, uid=0, angle=0, display=True):  # add one causality
-        self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, display=display)  # display as a flag for to or not to display
+    def add_causality(self, from_element, to_element, uid=0, angle=0, polarity=None, display=True):  # add one causality
+        self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
     def print_elements(self):
         print('All elements in this SFD:')
@@ -146,6 +146,7 @@ class Structure(object):
             # print('Successors of {}: '.format(flow), successors)
             for successor in successors:
                 if self.sfd.nodes[successor]['element_type'] == STOCK:  # flow may also affect elements other than stock
+                    direction_factor = 1  # initialize
                     if successor not in affected_stocks.keys():  # if this flow hasn't been calculated, create a new key
                         if self.sfd.nodes[flow]['flow_from'] == successor:  # if flow influences this stock negatively
                             direction_factor = -1

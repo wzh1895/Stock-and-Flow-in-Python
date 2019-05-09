@@ -86,7 +86,7 @@ class SFDCanvas(Frame):
                 self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1])
             else:
                 self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1],
-                                        arrow=LAST, arrowshape=(15, 18, 8))
+                                        arrow=LAST, arrowshape=(8, 10, 3))
         # self.canvas.create_line(xA, yA, xB, yB, arrow=LAST)
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#fff")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 10), text=label)
