@@ -24,7 +24,7 @@ class ControllerBar(Frame):
         self.lb_name.pack(side=TOP)
         self.fm_controller1 = Frame(self.master)
         self.fm_controller1.pack(side=TOP)
-        self.btn_load_model = Button(self.fm_controller1, text="Load model", command=self.file_load)
+        self.btn_load_model = Button(self.fm_controller1, text="Load model", command=self.load_model)
         self.btn_load_model.pack(side=LEFT)
         self.btn_run = Button(self.fm_controller1, text="Simulate", command=self.simulate)
         self.btn_run.pack(side=LEFT)
@@ -74,7 +74,7 @@ class ControllerBar(Frame):
         self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
         self.variables_list['values'] = self.session_handler1.variables_in_model
 
-    def file_load(self):
+    def load_model(self):
         file_name_and_variables = self.session_handler1.file_load()
         print(file_name_and_variables)
         file_name = file_name_and_variables[0]

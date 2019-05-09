@@ -1,5 +1,5 @@
 from tkinter import *
-from controller import ControllerBar
+from controller_bar import ControllerBar
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
 
