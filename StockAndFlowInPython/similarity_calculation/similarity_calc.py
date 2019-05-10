@@ -27,10 +27,10 @@ class SimilarityCalculator(object):
         pass
 
     @staticmethod
-    def similarity_calc(who_compare, compare_with='./similarity_calculation/basic_behaviors.csv'):
-        '''
-        Comparing reference mode with known typical behavior patterns.
-        '''
+    def categorize_behavior(who_compare, compare_with='./similarity_calculation/basic_behaviors.csv'):
+        """
+        Compare reference mode with known typical behavior patterns.
+        """
         data = pd.read_csv(compare_with)
 
         basic_behaviors = dict()
@@ -60,7 +60,7 @@ class SimilarityCalculator(object):
         distances = {} # distance :basic behavior
         for basic_behavior in basic_behaviors.keys():
             y = basic_behaviors[basic_behavior]
-            dist, cost, acc, path = dtw(x, y, dist=lambda x,y: np.linalg.norm(x-y, ord=1))
+            dist, cost, acc, path = dtw(x, y, dist=lambda x, y: np.linalg.norm(x-y, ord=1))
             distances[dist] = basic_behavior
             # print(basic_behavior, dist)
             comparison_plot.plot(y)
@@ -71,7 +71,51 @@ class SimilarityCalculator(object):
         comparison_plot.plot(x)
         return closest_behavior, comparison_figure
 
+    @staticmethod
+    def similarity_calc(who_compare, compare_with):
+        # print(who_compare)
+        # print(compare_with)
+        """
+        Compare two behaviors
+        :param who_compare:
+        :param compare_with:
+        :return:
+        """
+        # stretch x0 to a length close to 100.
+        # Temporarily only consider len(x0) < 100.
+        factor_x1 = round(100 / len(who_compare))
+        x1 = np.kron(who_compare, np.ones((factor_x1, 1)))
+        # print('x1', x1)
+
+        # stretch x0 to a height close to 100.
+        # Temporarily only consider vertical range of x0 < 100.
+        factor_y1 = 100.0 / (who_compare.max() - who_compare.min())
+        series_1 = np.array([(i - who_compare.min()) * factor_y1 for i in x1]).reshape(-1, 1)
+        # print('series_1', series_1)
+
+        # stretch y0 to a length close to 100.
+        # Temporarily only consider len(x0) < 100.
+        factor_x2 = round(100 / len(compare_with))
+        x2 = np.kron(compare_with, np.ones((factor_x2, 1)))
+
+        # stretch y0 to a height close to 100.
+        # Temporarily only consider vertical range of x0 < 100.
+        factor_y2 = 100.0 / (compare_with.max() - compare_with.min())
+        series_2 = np.array([(i - compare_with.min()) * factor_y2 for i in x2]).reshape(-1, 1)
+
+        comparison_figure = Figure(figsize=(5, 4))
+        comparison_plot = comparison_figure.add_subplot(111)
+
+        dist, cost, acc, path = dtw(series_1, series_2, dist=lambda x, y: np.linalg.norm(x - y, ord=1))
+        # print(basic_behavior, dist)
+        comparison_plot.plot(series_1)
+        comparison_plot.plot(series_2)
+        print("Distance: {}".format(dist))
+        return dist, comparison_figure
+
+
+
 
 if __name__ == '__main__':
     similarity_calculator1 = SimilarityCalculator()
-    similarity_calculator1.similarity_calc(test1)
+    similarity_calculator1.categorize_behavior(test1)

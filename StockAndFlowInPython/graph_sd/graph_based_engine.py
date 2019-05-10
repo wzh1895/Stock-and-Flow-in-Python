@@ -169,14 +169,14 @@ class Structure(object):
         for stock in affected_stocks.keys():
             # calculate the new value for this stock and add it to the end of its value list
             self.sfd.nodes[stock]['value'].append(self.sfd.nodes[stock]['value'][-1] + affected_stocks[stock])
-            print('Stock ', stock, ':', self.sfd.nodes[stock]['value'][-1])
+            # print('Stock ', stock, ': {:.4f}'.format(self.sfd.nodes[stock]['value'][-1]))
 
         # for those stocks not affected, extend its 'values' by the same value as it is
         for node in self.sfd.nodes:
             if self.sfd.nodes[node]['element_type'] == STOCK:
                 if node not in affected_stocks.keys():
                     self.sfd.nodes[node]['value'].append(self.sfd.nodes[node]['value'][-1])
-                    print('Stock ', node, ':', self.sfd.nodes[node]['value'][-1])
+                    # print('Stock ', node, ': {:.4f}'.format(self.sfd.nodes[node]['value'][-1]))
 
     def clear_value(self):
         """
@@ -228,6 +228,22 @@ class Session(object):
             [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
             [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
+        ])
+
+    # Set the model to one stock + one outflow
+    def basic_stock_outflow(self):
+        self.add_elements_batch([
+            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
+            [STOCK,     'stock0',    [100],                                                    None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [4],                                                    'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
+        ])
+
+    # Set the model to one stock + one outflow
+    def basic_stock_inflow(self):
+        self.add_elements_batch([
+            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                                    None,            None,            289,    145,    None],
+            [FLOW,      'flow0',     [4],                                                    None,            'stock0',        181,    145, [[85, 145], [266.5, 145]]],
         ])
 
     # Add elements to a structure in a batch (something like a script)
@@ -404,11 +420,15 @@ class Session(object):
             total_steps = int(simulation_time/dt)
 
         # main iteration
-        print('\nExecuting Step:', end=' ')
         for i in range(total_steps):
             # stock_behavior.append(structure0.sfd.nodes['stock0']['value'])
-            print('%3d' % i, end='  ')
+            # print('Step: {} '.format(i), end=' ')
             self.structures[structure_name].step(dt)
+
+    # Return a behavior
+    def get_behavior(self, name, structure_name='default'):
+        # print(self.structures[structure_name].sfd.nodes[name]['value'])
+        return self.structures[structure_name].sfd.nodes[name]['value']
 
     # Draw results
     def draw_results(self, structure_name='default', names=None, rtn=False):

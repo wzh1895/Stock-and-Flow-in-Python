@@ -54,7 +54,7 @@ class ControllerBar(Frame):
 
         self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
         # self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
-        self.similarity_calculator1 = SimilarityCalculator()
+        # self.similarity_calculator1 = SimilarityCalculator()
 
         self.fm_suggestion = Frame(self.master)
         self.fm_suggestion.pack(side=TOP)
@@ -93,7 +93,7 @@ class ControllerBar(Frame):
         self.reference_mode1 = ReferenceMode(self.reference_mode_path)
 
     def calculate_similarity(self):
-        self.suggested_generic_structure, self.comparison_figure = self.similarity_calculator1.similarity_calc(
+        self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
             who_compare=self.reference_mode1.time_series,
             compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
         self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
@@ -113,7 +113,7 @@ class ReferenceMode(object):
     def __init__(self, filename):
         self.case_numerical_data_filename = filename
         self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
-        self.time_series = np.array(self.case_numerical_data["tea-cup"].tolist()).reshape(-1, 1)
+        self.time_series = np.array(self.case_numerical_data["stock0"].tolist()).reshape(-1, 1)
         #self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
         #self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="Accoutn balance")
         self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series,

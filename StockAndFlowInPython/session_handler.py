@@ -482,7 +482,7 @@ class SessionHandler(object):
             print("Generating location. Isolated.")
             base_x = canvas_width / 2
             base_y = canvas_height / 2
-            random_range = 150
+            random_range = 50
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
         # When it is linked to only one exiting variable: somewhere around it
@@ -490,7 +490,7 @@ class SessionHandler(object):
             print("Generating location. Linked to one variable.")
             base_x = self.sess1.structures['default'].get_coordinate(linked_vars[0])[0]
             base_y = self.sess1.structures['default'].get_coordinate(linked_vars[0])[1]
-            random_range = 150
+            random_range = 65
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
         # when it is linked to 2 or more variables: somewhere around the geometric center
@@ -502,7 +502,7 @@ class SessionHandler(object):
                 base_y += self.sess1.structures['default'].get_coordinate(linked_var)[1]
             base_x = round(base_x / len(linked_vars))
             base_y = round(base_y / len(linked_vars))
-            random_range = 150
+            random_range = 80
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
 
@@ -616,7 +616,7 @@ class SFDWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Stock and Flow Diagram")
-        self.top.geometry("%dx%d+1070+750" % (800, 600))
+        self.top.geometry("%dx%d+1070+750" % (500, 430))
         self.sfd_canvas1 = SFDCanvas(self.top)
 
 
@@ -624,7 +624,7 @@ class GraphNetworkWindow(object):
     def __init__(self):
         self.top = Toplevel()
         self.top.title("Graph Network Structure")
-        self.top.geometry("%dx%d+1070+50" % (800, 600))
+        self.top.geometry("%dx%d+1070+50" % (500, 430))
 
 
 class SimulationResult(object):
