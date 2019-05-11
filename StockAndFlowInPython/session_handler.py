@@ -643,12 +643,25 @@ class NewGraphNetworkWindow(Toplevel):
             self.graph_network_canvas.get_tk_widget().destroy()
         except :
             pass
-        self.figure = plt.figure(figsize=(8, 6))
+        fig, ax = plt.subplots()
         nx.draw(self.graph_network, with_labels=True)
-        self.graph_network_canvas = FigureCanvasTkAgg(self.figure, master=self)
+        self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)
         self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
         self.update()
 
+    # def update_graph_network_grave(self):
+    #     try:
+    #         self.graph_network_canvas.get_tk_widget().destroy()
+    #     except :
+    #         pass
+    #     fig, ax = plt.subplots()
+    #     art = plot_network(self.graph_network, ax=ax)
+    #     self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)
+    #     self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
+    #     self.update()
+    #
+    # def highlighter(self, event):
+    #     print("Triggered")
 
 class SimulationResult(object):
     def __init__(self):

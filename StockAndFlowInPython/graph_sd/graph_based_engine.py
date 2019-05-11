@@ -49,8 +49,9 @@ function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
 
 
 class Structure(object):
-    def __init__(self):
+    def __init__(self, structure_name):
         self.sfd = nx.MultiDiGraph()
+        self.sfd.graph['structure_name'] = structure_name
         self.uid = 0
 
     def uid_getter(self):
@@ -195,14 +196,14 @@ class Structure(object):
 
 
 class Session(object):
-    def __init__(self):
+    def __init__(self, structure_name='default'):
         self.simulation_time = None
         self.dt = 0.25
         self.structures = dict()
-        self.add_structure()  # Automatically add a default structure
+        self.add_structure(structure_name)  # Automatically add a default structure
 
     def add_structure(self, structure_name='default'):
-        self.structures[structure_name] = Structure()
+        self.structures[structure_name] = Structure(structure_name)
 
     # Set the model to a first order negative feedback loop
     def first_order_negative(self, structure_name='default'):
