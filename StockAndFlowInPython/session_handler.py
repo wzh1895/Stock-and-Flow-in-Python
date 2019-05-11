@@ -2,6 +2,9 @@ import xml.dom.minidom
 import math
 import time
 import random
+import matplotlib.pyplot as plt
+import networkx as nx
+from grave import plot_network
 from tkinter import filedialog
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -625,6 +628,26 @@ class GraphNetworkWindow(object):
         self.top = Toplevel()
         self.top.title("Graph Network Structure")
         self.top.geometry("%dx%d+1070+50" % (500, 430))
+
+
+class NewGraphNetworkWindow(Toplevel):
+    def __init__(self, graph_network):
+        super().__init__()
+        self.title("Graph Network Structure")
+        self.geometry("%dx%d+1070+50" % (500, 430))
+        self.graph_network = graph_network
+        self.update_graph_network()
+
+    def update_graph_network(self):
+        try:
+            self.graph_network_canvas.get_tk_widget().destroy()
+        except :
+            pass
+        self.figure = plt.figure(figsize=(8, 6))
+        nx.draw(self.graph_network, with_labels=True)
+        self.graph_network_canvas = FigureCanvasTkAgg(self.figure, master=self)
+        self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
+        self.update()
 
 
 class SimulationResult(object):

@@ -1,15 +1,19 @@
 from tkinter import *
 from tkinter import filedialog
 from controller_bar import ControllerBar, ComparisonWindow, ReferenceModeWindow
-from StockAndFlowInPython.session_handler import SessionHandler
+from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from grave import plot_network
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Session, function_names, STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
 import pandas as pd
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 import random
+import copy
 
 
 class ExpansionTest(ControllerBar):
@@ -33,35 +37,36 @@ class ExpansionTest(ControllerBar):
         self.time_series = dict()
         self.reference_modes = dict()
 
-        #self.full_procedure()
+        # self.full_procedure()
 
         # Initialize concept CLDs (generic structures)
         self.concept_clds = list()
         self.concept_clds.append(SessionHandler())
         self.concept_clds[-1].sess1.basic_stock_inflow()
         self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 50
+        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 100
 
         self.concept_clds.append(SessionHandler())
         self.concept_clds[-1].sess1.basic_stock_outflow()
         self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 50
+        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 100
 
         self.concept_clds.append(SessionHandler())
         self.concept_clds[-1].sess1.first_order_positive()
         self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 50
+        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 100
 
         self.concept_clds.append(SessionHandler())
         self.concept_clds[-1].sess1.first_order_negative()
         self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 50
+        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 100
 
         # Initialize builder rack
         self.possibility_rack = list()
 
-        # Specify round to iterate
-        self.iteration_time = 1
+        # Initialize expansion manager
+        self.expansion_manager = ExpansionManager()
+        self.expansion_manager.add_structure(structure=0)
 
         # Load reference mode
         self.load_reference_mode()
@@ -71,19 +76,21 @@ class ExpansionTest(ControllerBar):
 
         # Main loop
         random.seed(10)
+
+        # Specify round to iterate
+        self.iteration_time = 2
         i = 1
         while i <= self.iteration_time:
             print('Expansion: Iterating {}'.format(i))
+            self.expansion_manager.add_structure(structure=i)
             # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].sess1.get_behavior('stock0'))))
             for concept_cld in self.concept_clds:
                 self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
                                            compare_with=concept_cld.sess1.get_behavior('stock0'))
+            self.expansion_manager.display_tree()
             i += 1
 
     def generate_possibility(self):
-        pass
-
-    def test_possibility(self):
         pass
 
     def structural_similarity(self):
@@ -93,10 +100,10 @@ class ExpansionTest(ControllerBar):
         print("Expansion: Calculating similarity...")
         distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
                                                     np.array(compare_with).reshape(-1, 1))
-        ComparisonWindow(comparison_figure)
+        # ComparisonWindow(comparison_figure)
         return distance
 
-    def adjust_likelihood(self):
+    def adjust_concept_cld_likelihood(self):
         pass
 
     def get_reference_mode_file_name(self):
@@ -125,7 +132,7 @@ class ExpansionTest(ControllerBar):
 
     def full_procedure(self):
         # Show graph/diagram windows
-        self.session_handler1.show_sfd_window()
+        # self.session_handler1.show_sfd_window()
         self.session_handler1.show_graph_network_window()
         # Load a reference mode
         self.load_reference_mode()
@@ -150,11 +157,75 @@ class ExpansionTest(ControllerBar):
     #     self.session_handler1.build_flow(name='flow0', equation=4, flow_from='stock0')
 
 
+class ExpansionManager(object):
+    """
+    The class containing and managing all variants of structures
+    """
+    def __init__(self):
+        self.tree = nx.DiGraph()
+        self.uid = 0
+        self.tree_window = NewGraphNetworkWindow(self.tree)
+
+    def get_uid(self):
+        """
+        Get unique id for structure
+        """
+        self.uid += 1
+        return self.uid - 1
+
+    def add_structure(self, structure):
+        """
+        Add a structure, usually as starting point
+        """
+        self.tree.add_node(self.get_uid(), structure=structure, activity=10)
+
+    def derive_structure(self, base_structure_uid):
+        """
+        Derive a new structure from an existing one
+        """
+        # add a new node
+        new_uid = self.get_uid()
+        self.tree.add_node(new_uid,
+                           structure=copy.deepcopy(self.tree.nodes[base_structure_uid]['structure']),
+                           activity=self.tree.nodes[base_structure_uid]['activity']
+                           )
+        # build a link from the old to the new
+        self.tree.add_edge(base_structure_uid, new_uid)
+
+    def cool_down(self):
+        """
+        Update structures' activity (cooling down) after one iteration
+        """
+        for u in self.tree.nodes:
+            self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1
+
+    def random_single(self):
+        """
+        Return one structure
+        """
+        pass
+
+    def random_pair(self):
+        """
+        Return a pair of structures for competition
+        """
+        pass
+
+    def update_activity_elo(self, winner, loser):
+        """
+        Update winner and loser's activity using Elo Rating System
+        """
+        pass
+
+    def display_tree(self):
+        self.tree_window.update_graph_network()
+
+
 class SelectReferenceMode(Toplevel):
     def __init__(self, time_series):
         super().__init__()
         self.title("Select Reference Mode...")
-        self.geometry("+5+250")
+        self.geometry("600x400+5+250")
         self.time_series = time_series
         self.selected_reference_mode = None
         self.reference_mode_type = None
