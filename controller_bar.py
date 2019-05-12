@@ -101,7 +101,7 @@ class ControllerBar(Frame):
 
     def load_generic_structure(self):
         self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
-        variables_in_model = list(self.session_handler1.sess1.structures['default'].sfd.nodes)
+        variables_in_model = list(self.session_handler1.model_structure.sfd.nodes)
         print("variables in model:", variables_in_model)
         print("structure name:", self.suggested_generic_structure)
         self.lb_name.config(text=self.suggested_generic_structure)
@@ -134,7 +134,7 @@ class ReferenceModeWindow(object):
     def __init__(self, time_series, time_series_name):
         self.top = Toplevel()
         self.top.title("Reference Mode")
-        self.top.geometry("%dx%d+50+550" % (500, 430))
+        self.top.geometry("%dx%d+5+250" % (500, 430))
         self.reference_mode_figure = Figure(figsize=(5, 4))
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
         self.reference_mode_plot.plot(time_series, '*')

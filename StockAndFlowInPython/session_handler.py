@@ -8,7 +8,7 @@ from grave import plot_network
 from tkinter import filedialog
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.graph_sd.graph_based_engine import Session, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
 from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
@@ -20,9 +20,9 @@ def name_handler(name):
 
 
 class SessionHandler(object):
-    def __init__(self):
+    def __init__(self, structure_name='default'):
         # backends
-        self.sess1 = Session()
+        self.model_structure = Structure(structure_name)
         self.filename = ''
         self.model = None
         self.variables_in_model = None
@@ -39,10 +39,10 @@ class SessionHandler(object):
             self.read_xmile_model(self.filename)
             # draw sfd
             self.show_sfd_window()
-            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
             # draw graph network
             self.draw_graph_network()
-            self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+            self.variables_in_model = list(self.model_structure.sfd.nodes)
             print(self.filename)
             return (self.filename, self.variables_in_model)
 
@@ -63,19 +63,19 @@ class SessionHandler(object):
         :return:
         """
         if generic_structure_type == 'decline_c':
-            self.sess1.first_order_negative()
+            self.model_structure.first_order_negative()
         elif generic_structure_type == 'growth_b':
-            self.sess1.first_order_positive()
+            self.model_structure.first_order_positive()
         # draw sfd
         self.sfd_window1 = SFDWindow()
-        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
         # draw graph network
         self.draw_graph_network()
-        self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+        self.variables_in_model = list(self.model_structure.sfd.nodes)
 
     def simulation_handler(self, simulation_time):
-        self.sess1.clear_a_run()
-        self.sess1.simulate(simulation_time=simulation_time)
+        self.model_structure.clear_a_run()
+        self.model_structure.simulate(simulation_time=simulation_time)
 
     def add_angle_to_eqn(self, name, eqn):
         if eqn[0] in function_names:
@@ -161,7 +161,7 @@ class SessionHandler(object):
 
             # print("From and to", from_element, to_element)
             print('formatting connector', uid, angle, 'from:', from_element, 'to:', to_element)
-            # self.sess1.add_connector(uid=uid, angle=angle, from_element=from_element, to_element=to_element)
+            # self.model_structure.add_connector(uid=uid, angle=angle, from_element=from_element, to_element=to_element)
             self.connection_views_array.append([uid, angle, from_element, to_element])
 
         # fetch views for all stocks and draw
@@ -192,7 +192,7 @@ class SessionHandler(object):
             x = float(stockview.getAttribute("x"))
             y = float(stockview.getAttribute("y"))
             print('adding stock', name)
-            self.sess1.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
+            self.model_structure.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
             self.stock_views_array.append([name, eqn, inflow, outflow, x, y])
 
         # fetch views for all flows and draw
@@ -214,12 +214,12 @@ class SessionHandler(object):
             x = float(flowview.getAttribute("x"))
             y = float(flowview.getAttribute("y"))
             print('adding flow', name)
-            self.sess1.add_flow(name=name,
-                                equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)),
-                                x=x, y=y,
-                                flow_from=self.get_outfrom_stock(name),
-                                flow_to=self.get_into_stock(name),
-                                points=points)
+            self.model_structure.add_flow(name=name,
+                                          equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)),
+                                          x=x, y=y,
+                                          flow_from=self.get_outfrom_stock(name),
+                                          flow_to=self.get_into_stock(name),
+                                          points=points)
 
         # fetch views for all auxiliaries and draw
         self.auxviews = []
@@ -238,7 +238,7 @@ class SessionHandler(object):
             x = float(auxview.getAttribute("x"))
             y = float(auxview.getAttribute("y"))
             print('adding aux', name)
-            self.sess1.add_aux(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
+            self.model_structure.add_aux(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
 
         # fetch views for all aliases and draw
         self.aliasviews = []
@@ -256,17 +256,17 @@ class SessionHandler(object):
             # print('\n', uid, 'of', of, 'bbbbbbbb\n')
             of = name_handler(of)
             print('adding alias', name)
-            self.sess1.add_alias(uid=uid, of_element=of, x=x, y=y)
+            self.model_structure.add_alias(uid=uid, of_element=of, x=x, y=y)
 
-        print('\nnodes: ', self.sess1.structures['default'].sfd.nodes)
-        print('edges: ', self.sess1.structures['default'].sfd.edges)
+        print('\nnodes: ', self.model_structure.sfd.nodes)
+        print('edges: ', self.model_structure.sfd.edges)
 
     def clear_a_run(self):
         """
         Clear a simulation result but keep the structure
         :return:
         """
-        self.sess1.clear_a_run()
+        self.model_structure.clear_a_run()
 
     def file_handler(self, filename):
         DOMTree = xml.dom.minidom.parse(filename)
@@ -279,7 +279,7 @@ class SessionHandler(object):
         except:
             pass
         self.show_graph_network_window()
-        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.sess1.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
+        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
         self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
 
     def show_result(self):
@@ -288,7 +288,7 @@ class SessionHandler(object):
         # except:
         #     pass
         self.simulation_result1 = SimulationResult()
-        self.result_figure = self.sess1.draw_results(names=[self.selected_variable], rtn=True)
+        self.result_figure = self.model_structure.draw_results(names=[self.selected_variable], rtn=True)
         self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
         self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
 
@@ -308,8 +308,8 @@ class SessionHandler(object):
             self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
         except:
             pass
-        self.sess1.clear_a_run()
-        self.sess1.reset_a_structure()
+        self.model_structure.clear_a_run()
+        self.model_structure.reset_a_structure()
 
     def refresh(self):
         """
@@ -325,14 +325,14 @@ class SessionHandler(object):
             pass
 
         # draw graph network again
-        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.sess1.draw_graphs_with_curve(rtn=True),
+        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True),
                                                                master=self.graph_network_window1.top)
         self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
         # draw sfd again
         self.sfd_window1.sfd_canvas1.reset_canvas()
-        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.sess1.structures['default'].sfd)
+        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
         # update variables' list
-        self.variables_in_model = list(self.sess1.structures['default'].sfd.nodes)
+        self.variables_in_model = list(self.model_structure.sfd.nodes)
 
     def build_stock(self, name, initial_value, x=0, y=0):
         """
@@ -349,7 +349,7 @@ class SessionHandler(object):
             x = pos[0]
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
-        self.sess1.add_stock(name=name, equation=[initial_value], x=x, y=y)
+        self.model_structure.add_stock(name=name, equation=[initial_value], x=x, y=y)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -397,10 +397,10 @@ class SessionHandler(object):
 
             if flow_from is not None and flow_to is not None:
                 print("This flow influences 2 stocks")
-                x1 = self.sess1.structures['default'].get_coordinate(flow_from)[0]
-                y1 = self.sess1.structures['default'].get_coordinate(flow_from)[1]
-                x2 = self.sess1.structures['default'].get_coordinate(flow_to)[0]
-                y2 = self.sess1.structures['default'].get_coordinate(flow_to)[1]
+                x1 = self.model_structure.get_coordinate(flow_from)[0]
+                y1 = self.model_structure.get_coordinate(flow_from)[1]
+                x2 = self.model_structure.get_coordinate(flow_to)[0]
+                y2 = self.model_structure.get_coordinate(flow_to)[1]
                 x = (x1 + x2)/2
                 y = (y1 + y2)/2
                 direction_x = (x2-x1)/abs(x2-x1)
@@ -411,13 +411,13 @@ class SessionHandler(object):
                     points = [(x1, y1+direction_y*18), (x1, y), (x2, y), (x2, y2-direction_y*18)]
             elif flow_from is not None:
                 print("This flow flows from {}".format(flow_from))
-                y = self.sess1.structures['default'].get_coordinate(flow_from)[1]
-                x = self.sess1.structures['default'].get_coordinate(flow_from)[0] + 107
+                y = self.model_structure.get_coordinate(flow_from)[1]
+                x = self.model_structure.get_coordinate(flow_from)[0] + 107
                 points = [[x - 85.5, y], [x + 85.5, y]]
             elif flow_to is not None:
                 print("This flow flows to {}".format(flow_to))
-                y = self.sess1.structures['default'].get_coordinate(flow_to)[1]
-                x = self.sess1.structures['default'].get_coordinate(flow_to)[0] - 107
+                y = self.model_structure.get_coordinate(flow_to)[1]
+                x = self.model_structure.get_coordinate(flow_to)[0] - 107
                 points = [[x - 85.5, y], [x + 85.5, y]]
 
             # Points need to be generated as well
@@ -426,13 +426,13 @@ class SessionHandler(object):
 
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
-        self.sess1.add_flow(name=name,
-                            equation=equation,
-                            flow_from=flow_from,
-                            flow_to=flow_to,
-                            x=x,
-                            y=y,
-                            points=points)
+        self.model_structure.add_flow(name=name,
+                                      equation=equation,
+                                      flow_from=flow_from,
+                                      flow_to=flow_to,
+                                      x=x,
+                                      y=y,
+                                      points=points)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -462,10 +462,10 @@ class SessionHandler(object):
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
-        self.sess1.add_aux(name=name,
-                           equation=equation,
-                           x=x,
-                           y=y)
+        self.model_structure.add_aux(name=name,
+                                     equation=equation,
+                                     x=x,
+                                     y=y)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -491,8 +491,8 @@ class SessionHandler(object):
         # When it is linked to only one exiting variable: somewhere around it
         elif len(linked_vars) == 1:
             print("Generating location. Linked to one variable.")
-            base_x = self.sess1.structures['default'].get_coordinate(linked_vars[0])[0]
-            base_y = self.sess1.structures['default'].get_coordinate(linked_vars[0])[1]
+            base_x = self.model_structure.get_coordinate(linked_vars[0])[0]
+            base_y = self.model_structure.get_coordinate(linked_vars[0])[1]
             random_range = 65
             return random.randint(base_x - random_range, base_x + random_range), \
                    random.randint(base_y - random_range, base_y + random_range)
@@ -501,8 +501,8 @@ class SessionHandler(object):
             base_x = base_y = 0
             print("Generating location. Linked to {} variables.".format(len(linked_vars)))
             for linked_var in linked_vars:
-                base_x += self.sess1.structures['default'].get_coordinate(linked_var)[0]
-                base_y += self.sess1.structures['default'].get_coordinate(linked_var)[1]
+                base_x += self.model_structure.get_coordinate(linked_var)[0]
+                base_y += self.model_structure.get_coordinate(linked_var)[1]
             base_x = round(base_x / len(linked_vars))
             base_y = round(base_y / len(linked_vars))
             random_range = 80
@@ -515,7 +515,7 @@ class SessionHandler(object):
         :param name: Name of the variable
         :return:
         """
-        self.sess1.delete_variable(name=name)
+        self.model_structure.delete_variable(name=name)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -527,7 +527,7 @@ class SessionHandler(object):
         :return:
         """
         new_equation = self.wrap_equation(new_equation)
-        self.sess1.replace_equation(name, new_equation)
+        self.model_structure.replace_equation(name, new_equation)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -543,46 +543,46 @@ class SessionHandler(object):
         # step 2: replace flow_from/flow_to by the new flow_from/to in the graph representation
         # step 3: add connectors according to the new flow_from/to
         if new_flow_from is not None:
-            self.sess1.create_stock_flow_connection(flow_name, structure_name='default',
-                                                                     flow_from=new_flow_from)
+            self.model_structure.create_stock_flow_connection(flow_name, structure_name='default',
+                                                              flow_from=new_flow_from)
             # Rearrange layout
             # pos
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] = \
-                self.sess1.structures['default'].sfd.nodes[new_flow_from]['pos'][0] + 109
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1] = \
-                self.sess1.structures['default'].sfd.nodes[new_flow_from]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] = \
+                self.model_structure.sfd.nodes[new_flow_from]['pos'][0] + 109
+            self.model_structure.sfd.nodes[flow_name]['pos'][1] = \
+                self.model_structure.sfd.nodes[new_flow_from]['pos'][1]
             # points
             # left point
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][0][0] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] - 85.5
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][0][1] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][1]
             # right point
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][1][0] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] + 85.5
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][1][1] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][1]
 
         if new_flow_to is not None:
-            self.sess1.create_stock_flow_connection(flow_name, structure_name='default',
-                                                                     flow_to=new_flow_to)
+            self.model_structure.create_stock_flow_connection(flow_name, structure_name='default',
+                                                              flow_to=new_flow_to)
             # Rearrange layout
             # pos
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] = \
-                self.sess1.structures['default'].sfd.nodes[new_flow_to]['pos'][0] - 109
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1] = \
-                self.sess1.structures['default'].sfd.nodes[new_flow_to]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] = \
+                self.model_structure.sfd.nodes[new_flow_to]['pos'][0] - 109
+            self.model_structure.sfd.nodes[flow_name]['pos'][1] = \
+                self.model_structure.sfd.nodes[new_flow_to]['pos'][1]
             # points
             # left point
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][0][0] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] - 85.5
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][0][1] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][1]
             # right point
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][1][0] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] + 85.5
-            self.sess1.structures['default'].sfd.nodes[flow_name]['points'][1][1] = \
-                self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = \
+                self.model_structure.sfd.nodes[flow_name]['pos'][1]
 
         self.refresh()
         time.sleep(SLEEP_TIME)
@@ -594,22 +594,22 @@ class SessionHandler(object):
         :param stock_name:
         :return:
         """
-        self.sess1.remove_stock_flow_connection(flow_name, structure_name='default', stock_name=stock_name)
+        self.model_structure.remove_stock_flow_connection(flow_name, structure_name='default', stock_name=stock_name)
         # Rearrange layout by 1) decide flow is on which side of the stock 2) increase the distance
-        stock_x = self.sess1.structures['default'].get_coordinate(stock_name)[0]
-        flow_x = self.sess1.structures['default'].get_coordinate(flow_name)[0]
+        stock_x = self.model_structure.get_coordinate(stock_name)[0]
+        flow_x = self.model_structure.get_coordinate(flow_name)[0]
         if stock_x >= flow_x:  # move flow leftward
             # pos
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] -= 20
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] -= 20
             # points
-            for i in range(len(self.sess1.structures['default'].sfd.nodes[flow_name]['points'])):
-                self.sess1.structures['default'].sfd.nodes[flow_name]['points'][i][0] -= 20
+            for i in range(len(self.model_structure.sfd.nodes[flow_name]['points'])):
+                self.model_structure.sfd.nodes[flow_name]['points'][i][0] -= 20
         else:  # move flow rightward
             # pos
-            self.sess1.structures['default'].sfd.nodes[flow_name]['pos'][0] += 20
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] += 20
             # points
-            for i in range(len(self.sess1.structures['default'].sfd.nodes[flow_name]['points'])):
-                self.sess1.structures['default'].sfd.nodes[flow_name]['points'][i][0] += 20
+            for i in range(len(self.model_structure.sfd.nodes[flow_name]['points'])):
+                self.model_structure.sfd.nodes[flow_name]['points'][i][0] += 20
 
         self.refresh()
         time.sleep(SLEEP_TIME)
@@ -631,10 +631,10 @@ class GraphNetworkWindow(object):
 
 
 class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network):
+    def __init__(self, graph_network, window_title="Graph Network Structure"):
         super().__init__()
-        self.title("Graph Network Structure")
-        self.geometry("%dx%d+1070+50" % (500, 430))
+        self.title(window_title)
+        self.geometry("%dx%d+650+250" % (500, 430))
         self.graph_network = graph_network
         self.update_graph_network()
 
@@ -662,6 +662,7 @@ class NewGraphNetworkWindow(Toplevel):
     #
     # def highlighter(self, event):
     #     print("Triggered")
+
 
 class SimulationResult(object):
     def __init__(self):

@@ -5,14 +5,17 @@ from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, Grap
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
-from StockAndFlowInPython.graph_sd.graph_based_engine import Session, function_names, STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
+    PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
+from StockAndFlowInPython.structure_utilities import StructureUtilities
 import pandas as pd
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
 import copy
+
 
 class ExpansionTest(ControllerBar):
     def __init__(self, master):
@@ -39,13 +42,16 @@ class ExpansionTest(ControllerBar):
 
         # Initialize concept CLDs (generic structures)
         self.concept_manager = ConceptManager()
+        self.concept_manager.generate_distribution()
 
         # Initialize builder rack
         self.possibility_rack = list()
 
-        # Initialize expansion manager
-        self.expansion_manager = StructureManager()
-        self.expansion_manager.add_structure(structure=0)
+        # Initialize structure manager
+        self.structure_manager = StructureManager()
+        root_structure = Structure()
+        root_structure.add_stock(name='stock0', equation=50)
+        self.structure_manager.add_structure(structure=root_structure)
 
         # Load reference mode
         self.load_reference_mode()
@@ -57,21 +63,25 @@ class ExpansionTest(ControllerBar):
         random.seed(10)
 
         # Specify round to iterate
-        self.iteration_time = 2
+        self.iteration_time = 1
         i = 1
         while i <= self.iteration_time:
             print('Expansion: Iterating {}'.format(i))
-            self.expansion_manager.derive_structure(self.expansion_manager.uid-1)
-            # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].sess1.get_behavior('stock0'))))
+            # self.structure_manager.derive_structure(self.structure_manager.uid - 1)
+            self.generate_candidate_structure()
+            # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].model_structure.get_behavior('stock0'))))
             for concept_cld in self.concept_manager.concept_clds:
                 self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
-                                           compare_with=concept_cld.sess1.get_behavior('stock0'))
-            self.expansion_manager.generate_distribution()
-            self.expansion_manager.display_tree()
+                                           compare_with=self.concept_manager.concept_clds[concept_cld].model_structure.get_behavior('stock0'))
             i += 1
 
-    def generate_possibility(self):
-        pass
+    def generate_candidate_structure(self):
+        """Generate a new candidate structure"""
+        base = self.structure_manager.random_single()
+        target = self.concept_manager.random_single()
+        new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
+        print('Generated new candidate structure:', new)
+        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def structural_similarity(self):
         pass
@@ -79,11 +89,12 @@ class ExpansionTest(ControllerBar):
     def behavioral_similarity(self, who_compare, compare_with):
         print("Expansion: Calculating similarity...")
         distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
-                                                    np.array(compare_with).reshape(-1, 1))
+                                                                           np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
 
-    def adjust_concept_cld_likelihood(self):
+    def adjust_concept_cld_likelihood(self, ):
+        """As a result of a higher similarity to (part of) the reference mode"""
         pass
 
     def get_reference_mode_file_name(self):
@@ -99,7 +110,7 @@ class ExpansionTest(ControllerBar):
         self.numerical_data = pd.read_csv(self.reference_mode_path)
         for column in self.numerical_data:
             self.time_series[column] = self.numerical_data[column].tolist()
-        select_dialog = SelectReferenceMode(self.time_series)
+        select_dialog = SelectReferenceModeWindow(self.time_series)
         self.wait_window(select_dialog)  # important!
         reference_mode_type = select_dialog.reference_mode_type
         reference_mode_name = select_dialog.selected_reference_mode
@@ -111,74 +122,44 @@ class ExpansionTest(ControllerBar):
         self.add_reference_mode()
 
 
-class ConceptManager(object):
-    """The class containing and managing all concept clds"""
-    def __init__(self):
-        self.concept_clds = list()
-        self.concept_clds.append(SessionHandler())
-        self.concept_clds[-1].sess1.basic_stock_inflow()
-        self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 10
-
-        self.concept_clds.append(SessionHandler())
-        self.concept_clds[-1].sess1.basic_stock_outflow()
-        self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 10
-
-        self.concept_clds.append(SessionHandler())
-        self.concept_clds[-1].sess1.first_order_positive()
-        self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 10
-
-        self.concept_clds.append(SessionHandler())
-        self.concept_clds[-1].sess1.first_order_negative()
-        self.concept_clds[-1].sess1.simulate(simulation_time=25)
-        self.concept_clds[-1].sess1.structures['default'].sfd.graph['likelihood'] = 10
-
-
-    def generate_distribution(self):
-        """Generate a list, containing multiple uids of each structure"""
-        distribution_list = list()
-        for concept_cld in list(self.concept_clds):
-            for i in range(concept_cld.sess1.structures['default'].sfd.graph['likelihood']):
-                distribution_list.append(concept_cld.sess1.structures['default'].sfd.graph['structure_name'])
-        return distribution_list
-
-    # def generate_distribution(self):
-    #     """Generate a list, containing multiple uids of each structure"""
-    #     distribution_list = list()
-    #     for structure in list(self.concept_clds):
-    #         for i in range(self.tree.nodes[structure]['activity']):
-    #             distribution_list.append(structure)
-    #     return distribution_list
-
-
 class StructureManager(object):
     """The class containing and managing all variants of structures"""
+
     def __init__(self):
         self.tree = nx.DiGraph()
         self.uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree)
+        self.tree_window = NewGraphNetworkWindow(self.tree, "Expansion tree")
+        self.candidate_structure_window = CandidateStructureWindow(self.tree)
 
-    def get_uid(self):
+    def generate_uid(self):
         """Get unique id for structure"""
         self.uid += 1
         return self.uid - 1
 
     def add_structure(self, structure):
         """Add a structure, usually as starting point"""
-        self.tree.add_node(self.get_uid(), structure=structure, activity=10)
+        self.tree.add_node(self.generate_uid(), structure=structure, activity=10)
+        self.update_candidate_structure_window()
 
-    def derive_structure(self, base_structure_uid):
+    def get_uid_by_structure(self, structure):
+        for u in list(self.tree.nodes):
+            if self.tree.nodes[u]['structure'] == structure:
+                return u
+        print(
+            'StructureManager: Can not find uid for given structure {}.'.format(structure.sfd.graph['structure_name']))
+
+    def derive_structure(self, base_structure, new_structure):
         """Derive a new structure from an existing one"""
         # add a new node
-        new_uid = self.get_uid()
+        new_uid = self.generate_uid()
+        print('Deriving structure from {} to {}'.format(base_structure, new_structure))
         self.tree.add_node(new_uid,
-                           structure=copy.deepcopy(self.tree.nodes[base_structure_uid]['structure']),
-                           activity=self.tree.nodes[base_structure_uid]['activity']
+                           structure=new_structure,
+                           activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']
                            )
         # build a link from the old to the new
-        self.tree.add_edge(base_structure_uid, new_uid)
+        self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
+        self.update_candidate_structure_window()
 
     def cool_down(self):
         """Update structures' activity (cooling down) after one iteration"""
@@ -187,39 +168,157 @@ class StructureManager(object):
 
     def random_single(self):
         """Return one structure"""
-        return random.choice(self.generate_distribution())
+        random_structure_uid = random.choice(self.generate_distribution())
+        print('Random structure found:', self.tree.nodes[random_structure_uid])
+        return self.tree.nodes[random_structure_uid]['structure']
 
     def random_pair(self):
         """Return a pair of structures for competition"""
-        return random.choices(self.generate_distribution(), k=2)
+        random_structures_uid = random.choices(self.generate_distribution(), k=2)
+        return self.tree.nodes[random_structures_uid[0]]['structure'], \
+               self.tree.nodes[random_structures_uid[1]]['structure']
 
     def update_activity_elo(self, winner, loser):
         """Update winner and loser's activity using Elo Rating System"""
         r_winner = self.tree.nodes[winner]['activity']
         r_loser = self.tree.nodes[loser]['activity']
-        e_winner = 1/(1+10**((r_loser-r_winner)/400))
-        e_loser = 1/(1+10**((r_winner-r_loser)/400))
+        e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
+        e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
         gain_loser = 0
         k = 32
-        r_winner = r_winner + k*(gain_winner-e_winner)
-        r_loser = r_loser + k*(gain_loser-e_loser)
+        r_winner = r_winner + k * (gain_winner - e_winner)
+        r_loser = r_loser + k * (gain_loser - e_loser)
         self.tree.nodes[winner]['activity'] = r_winner
         self.tree.nodes[loser]['activity'] = r_loser
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
         distribution_list = list()
-        for structure in list(self.tree.nodes):
-            for i in range(self.tree.nodes[structure]['activity']):
-                distribution_list.append(structure)
+        for u in list(self.tree.nodes):
+            for i in range(self.tree.nodes[u]['activity']):
+                distribution_list.append(u)
         return distribution_list
 
     def display_tree(self):
         self.tree_window.update_graph_network()
 
+    def update_candidate_structure_window(self):
+        try:
+            self.candidate_structure_window.candidate_structure_list.destroy()
+        except:
+            pass
+        self.display_tree()
+        self.candidate_structure_window.generate_candidate_structure_list()
 
-class SelectReferenceMode(Toplevel):
+
+class ConceptManager(object):
+    """The class containing and managing all concept clds"""
+
+    def __init__(self):
+        self.concept_clds = dict()
+
+        self.add_concept_cld(name='basic_stock_inflow')
+        self.add_concept_cld(name='basic_stock_outflow')
+        self.add_concept_cld(name='first_order_positive')
+        self.add_concept_cld(name='first_order_negative')
+
+    def add_concept_cld(self, name, likelihood=10):
+        a = SessionHandler()
+        a.model_structure.set_predefined_structure[name]()
+        a.model_structure.simulate(simulation_time=25)
+        a.model_structure.sfd.graph['likelihood'] = likelihood
+        self.concept_clds[name] = a
+
+    def get_concept_cld_by_name(self, name):
+        for concept_cld in self.concept_clds:
+            if concept_cld.model_structure.sfd.graph['structure_name'] == name:
+                return concept_cld
+
+    def generate_distribution(self):
+        """Generate a list, containing multiple uids of each structure"""
+        distribution_list = list()
+        for concept_cld in self.concept_clds.keys():
+            for i in range(self.concept_clds[concept_cld].model_structure.sfd.graph['likelihood']):
+                distribution_list.append(self.concept_clds[concept_cld].model_structure.sfd.graph['structure_name'])
+        # print('Concept CLD distribution list:', distribution_list)
+        return distribution_list
+
+    def random_single(self):
+        """Return one structure"""
+        random_concept_cld_name = random.choice(self.generate_distribution())
+        print('Random concept CLD found:', random_concept_cld_name)
+        return self.concept_clds[random_concept_cld_name].model_structure
+
+    def random_pair(self):
+        """Return a pair of structures for competition"""
+        return random.choices(self.generate_distribution(), k=2)
+
+    def update_likelihood_elo(self, winner, loser):
+        """Update winner and loser's activity using Elo Rating System"""
+        r_winner = self.get_concept_cld_by_name(winner).model_structure.sfd.graph['likelihood']
+        r_loser = self.get_concept_cld_by_name(loser).model_structure.sfd.graph['likelihood']
+        e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
+        e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
+        gain_winner = 1
+        gain_loser = 0
+        k = 32
+        r_winner = r_winner + k * (gain_winner - e_winner)
+        r_loser = r_loser + k * (gain_loser - e_loser)
+        self.get_concept_cld_by_name(winner).model_structure.sfd.graph['likelihood'] = r_winner
+        self.get_concept_cld_by_name(loser).model_structure.sfd.graph['likelihood'] = r_loser
+
+
+class CandidateStructureWindow(Toplevel):
+    def __init__(self, tree):
+        super().__init__()
+        self.title("Display Candidate Structure")
+        self.geometry("600x400+5+750")
+
+        self.selected_candidate_structure = None
+        self.fm_select = Frame(self)
+        self.fm_select.pack(side=LEFT)
+
+        self.tree = tree
+
+        self.fm_display = Frame(self)
+        self.fm_display.pack(side=LEFT)
+
+        self.generate_candidate_structure_list()
+
+    def generate_candidate_structure_list(self):
+        self.candidate_structure_list = Listbox(self.fm_select)
+        self.candidate_structure_list.pack(side=TOP)
+        for u in list(self.tree.nodes):
+            # print("adding entry", u)
+            self.candidate_structure_list.insert(END, u)
+        self.candidate_structure_list.bind('<<ListboxSelect>>', self.display_candidate_structure)
+
+    def display_candidate_structure(self, evt):
+        selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
+        self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
+        try:
+            self.candidate_structure_canvas.get_tk_widget().destroy()
+        except:
+            pass
+        fig, ax = plt.subplots()
+        nx.draw(self.selected_candidate_structure.sfd, with_labels=True)
+        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display)
+        self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
+        self.update()
+
+        # self.candidate_structure_figure = Figure(figsize=(5, 4))
+        # self.candidate_structure_plot = self.reference_mode_figure.add_subplot(111)
+        # self.candidate_structure_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())],
+        #            '*')
+        # self.candidate_structure_plot.set_xlabel("Time")
+        # self.candidate_structure_plot.set_ylabel(self.time_series_list.get(self.time_series_list.curselection()))
+        # self.candidate_structure_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
+        # self.candidate_structure_graph.draw()
+        # self.candidate_structure_graph.get_tk_widget().pack(side=LEFT)
+
+
+class SelectReferenceModeWindow(Toplevel):
     def __init__(self, time_series):
         super().__init__()
         self.title("Select Reference Mode...")
@@ -240,7 +339,8 @@ class SelectReferenceMode(Toplevel):
         self.radio_button_type_1.pack(side=TOP, anchor='w')
         self.radio_button_type_2 = Radiobutton(self.fm_select, text='Flow', variable=self.ref_md_type, value=FLOW)
         self.radio_button_type_2.pack(side=TOP, anchor='w')
-        self.radio_button_type_3 = Radiobutton(self.fm_select, text='Auxiliary', variable=self.ref_md_type, value=VARIABLE)
+        self.radio_button_type_3 = Radiobutton(self.fm_select, text='Auxiliary', variable=self.ref_md_type,
+                                               value=VARIABLE)
         self.radio_button_type_3.pack(side=TOP, anchor='w')
 
         self.fm_display = Frame(self)
@@ -260,7 +360,8 @@ class SelectReferenceMode(Toplevel):
             pass
         self.reference_mode_figure = Figure(figsize=(5, 4))
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
-        self.reference_mode_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())], '*')
+        self.reference_mode_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())],
+                                      '*')
         self.reference_mode_plot.set_xlabel("Time")
         self.reference_mode_plot.set_ylabel(self.time_series_list.get(self.time_series_list.curselection()))
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
@@ -280,6 +381,7 @@ class SelectReferenceMode(Toplevel):
 
 def main():
     root = Tk()
+    root.geometry("+5+50")
     root.wm_title("Expansion Test")
     root.configure(background='#fff')
     ExpansionTest(root)

@@ -63,7 +63,7 @@ class SFDCanvas(Frame):
         name = name_handler(name)
         # print("locating...")
         # print(name)
-        # print(self.session_handler1.sess1.structures['default'].sfd.nodes)
+        # print(self.session_handler1.model_structure.sfd.nodes)
         for element in self.sfd.nodes:
             if element == name:
                 x = self.sfd.nodes[element]['pos'][0]
@@ -266,10 +266,10 @@ class SFDCanvas(Frame):
         # draw stocks
         for element in self.sfd.nodes:
             # print(element)
-            # print(self.session_handler1.sess1.structures['default'].sfd.nodes.data())
-            # print(self.session_handler1.sess1.structures['default'].sfd.nodes[element])
+            # print(self.session_handler1.model_structure.sfd.nodes.data())
+            # print(self.session_handler1.model_structure.sfd.nodes[element])
             # print("This element: ", element)
-            # print("These elements:", self.session_handler1.sess1.structures['default'].sfd.nodes)
+            # print("These elements:", self.session_handler1.model_structure.sfd.nodes)
             if self.sfd.nodes[element]['element_type'] == STOCK:
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
