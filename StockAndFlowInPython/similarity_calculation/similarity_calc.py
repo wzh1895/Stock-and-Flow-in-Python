@@ -110,7 +110,7 @@ class SimilarityCalculator(object):
         # print(basic_behavior, dist)
         comparison_plot.plot(series_1)
         comparison_plot.plot(series_2)
-        print("Distance: {}".format(dist))
+        print("    Distance: {}".format(dist))
         return dist, comparison_figure
 
 

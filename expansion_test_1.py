@@ -8,10 +8,11 @@ from StockAndFlowInPython.similarity_calculation.similarity_calc import Similari
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
-from StockAndFlowInPython.structure_utilities import StructureUtilities
+# from StockAndFlowInPython.structure_utilities import StructureUtilities
 import pandas as pd
 import numpy as np
 import networkx as nx
+import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import random
 import copy
@@ -49,30 +50,33 @@ class ExpansionTest(ControllerBar):
 
         # Initialize structure manager
         self.structure_manager = StructureManager()
-        root_structure = Structure()
-        root_structure.add_stock(name='stock0', equation=50)
+        root_structure = SessionHandler()
+        root_structure.model_structure.add_stock(name='stock0', equation=50)
         self.structure_manager.add_structure(structure=root_structure)
 
         # Load reference mode
         self.load_reference_mode()
 
         # Display reference mode
-        self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes['stock0'][1], 'stock0')
+        self.reference_modes_name_list = list(self.reference_modes.keys())
+        self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
+                                                          self.reference_modes_name_list[0])
 
         # Main loop
         random.seed(10)
 
         # Specify round to iterate
-        self.iteration_time = 1
+        self.iteration_time = 30
         i = 1
         while i <= self.iteration_time:
             print('Expansion: Iterating {}'.format(i))
             # self.structure_manager.derive_structure(self.structure_manager.uid - 1)
             self.generate_candidate_structure()
             # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].model_structure.get_behavior('stock0'))))
-            for concept_cld in self.concept_manager.concept_clds:
-                self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
-                                           compare_with=self.concept_manager.concept_clds[concept_cld].model_structure.get_behavior('stock0'))
+            # for concept_cld in self.concept_manager.concept_clds:
+            #     self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
+            #                                compare_with=self.concept_manager.concept_clds[concept_cld].model_structure.get_behavior('stock0'))
+            self.structure_manager.cool_down()
             i += 1
 
     def generate_candidate_structure(self):
@@ -80,14 +84,12 @@ class ExpansionTest(ControllerBar):
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
         new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
-        print('Generated new candidate structure:', new)
+        print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
-    def structural_similarity(self):
-        pass
-
     def behavioral_similarity(self, who_compare, compare_with):
-        print("Expansion: Calculating similarity...")
+        print("    Expansion: Calculating similarity...")
+
         distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
                                                                            np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
@@ -122,6 +124,37 @@ class ExpansionTest(ControllerBar):
         self.add_reference_mode()
 
 
+class StructureUtilities(object):
+    @staticmethod
+    def calculate_structural_similarity(who_compare, compare_with):
+        return
+
+    @staticmethod
+    def expand_structure(base_structure, target_structure):
+        base = copy.deepcopy(base_structure)
+
+        base_structure_stocks = base_structure.model_structure.all_stocks()
+        start_with_stock_base = random.choice(base_structure_stocks)
+
+        target_structure_stocks = target_structure.model_structure.all_stocks()
+        start_with_stock_target = random.choice(target_structure_stocks)
+
+        in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_stock_base)
+
+        # print("In_edges in target for {}".format(start_with_stock_base), in_edges_in_target)
+
+        chosen_in_edge_in_target = random.choice(list(in_edges_in_target))
+        # print("In_edge chosen: ", chosen_in_edge_in_target)
+
+        subgraph_from_target = target_structure.model_structure.sfd.edge_subgraph([chosen_in_edge_in_target])
+
+        base_structure.model_structure.sfd = nx.compose(base_structure.model_structure.sfd, subgraph_from_target)
+        # print("New structure nodes:", base_structure.model_structure.sfd.nodes.data())
+        # print("New structure edges:", base_structure.model_structure.sfd.edges.data())
+
+        return base
+
+
 class StructureManager(object):
     """The class containing and managing all variants of structures"""
 
@@ -146,13 +179,25 @@ class StructureManager(object):
             if self.tree.nodes[u]['structure'] == structure:
                 return u
         print(
-            'StructureManager: Can not find uid for given structure {}.'.format(structure.sfd.graph['structure_name']))
+            '    StructureManager: Can not find uid for given structure {}.'.format(structure.sfd.graph['structure_name']))
 
     def derive_structure(self, base_structure, new_structure):
         """Derive a new structure from an existing one"""
+        # decide if this new_structure has been generated before. if so: add activity. if not: add it.
+        # 1. identical to base_structure it self
+        if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
+            self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] += 1
+            print("The new structure is identical to the base structure")
+            return
+        for u in self.tree.neighbors(self.get_uid_by_structure(base_structure)):
+            if nx.is_isomorphic(self.tree.nodes[u]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
+                self.tree.nodes[u]['activity'] += 1
+                print("The new structure already exists in base structure's neighbours")
+                return
+
         # add a new node
         new_uid = self.generate_uid()
-        print('Deriving structure from {} to {}'.format(base_structure, new_structure))
+        print('    Deriving structure from {} to {}'.format(base_structure, new_structure))
         self.tree.add_node(new_uid,
                            structure=new_structure,
                            activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']
@@ -169,7 +214,7 @@ class StructureManager(object):
     def random_single(self):
         """Return one structure"""
         random_structure_uid = random.choice(self.generate_distribution())
-        print('Random structure found:', self.tree.nodes[random_structure_uid])
+        print('    Random structure found:', self.tree.nodes[random_structure_uid])
         return self.tree.nodes[random_structure_uid]['structure']
 
     def random_pair(self):
@@ -247,8 +292,8 @@ class ConceptManager(object):
     def random_single(self):
         """Return one structure"""
         random_concept_cld_name = random.choice(self.generate_distribution())
-        print('Random concept CLD found:', random_concept_cld_name)
-        return self.concept_clds[random_concept_cld_name].model_structure
+        print('    Random concept CLD found:', random_concept_cld_name)
+        return self.concept_clds[random_concept_cld_name]
 
     def random_pair(self):
         """Return a pair of structures for competition"""
@@ -298,24 +343,24 @@ class CandidateStructureWindow(Toplevel):
         selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
         self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
         try:
+            plt.close()
             self.candidate_structure_canvas.get_tk_widget().destroy()
         except:
             pass
         fig, ax = plt.subplots()
-        nx.draw(self.selected_candidate_structure.sfd, with_labels=True)
+
+        node_attrs_function = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'function')
+        custom_node_attrs = dict()
+        for node, attr in node_attrs_function.items():
+            custom_node_attrs[node] = "{}={}".format(node, attr)
+
+        nx.draw(self.selected_candidate_structure.model_structure.sfd,
+                labels= custom_node_attrs
+                #with_labels=True
+                )
         self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
         self.update()
-
-        # self.candidate_structure_figure = Figure(figsize=(5, 4))
-        # self.candidate_structure_plot = self.reference_mode_figure.add_subplot(111)
-        # self.candidate_structure_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())],
-        #            '*')
-        # self.candidate_structure_plot.set_xlabel("Time")
-        # self.candidate_structure_plot.set_ylabel(self.time_series_list.get(self.time_series_list.curselection()))
-        # self.candidate_structure_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
-        # self.candidate_structure_graph.draw()
-        # self.candidate_structure_graph.get_tk_widget().pack(side=LEFT)
 
 
 class SelectReferenceModeWindow(Toplevel):

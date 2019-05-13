@@ -1,5 +1,6 @@
 import networkx as nx
 import copy
+import random
 
 
 class StructureUtilities(object):
@@ -9,7 +10,7 @@ class StructureUtilities(object):
 
     @staticmethod
     def expand_structure(base_structure, target_structure):
-        print('before deep copy:', base_structure)
         base = copy.deepcopy(base_structure)
-        print('after deep copy:', base)
+        base_structure_stocks = base_structure.model_structure.all_stocks()
+        stock_
         return base

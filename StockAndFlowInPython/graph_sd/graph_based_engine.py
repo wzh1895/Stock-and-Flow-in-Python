@@ -50,7 +50,7 @@ function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
 
 class Structure(object):
     def __init__(self, structure_name='default'):
-        self.sfd = nx.MultiDiGraph()
+        self.sfd = nx.DiGraph()
         self.sfd.graph['structure_name'] = structure_name
         self.uid = 0
         self.simulation_time = None
@@ -101,14 +101,14 @@ class Structure(object):
         print('Graph: Causality from {} to {}:'.format(from_element, to_element))
         print(self.sfd[from_element][to_element])
 
-    def get_all_stocks(self):
+    def all_stocks(self):
         stocks = list()
         for node, attributes in self.sfd.nodes.data():
             if attributes['element_type'] == STOCK:
                 stocks.append(node)
         return stocks
 
-    def get_all_flow(self):
+    def all_flows(self):
         flows = list()
         for node, attributes in self.sfd.nodes.data():
             if attributes['element_type'] == FLOW:
@@ -567,7 +567,7 @@ def main():
     structure0.first_order_negative()
     structure0.simulate(simulation_time=80)
     structure0.draw_graphs_with_curve()
-    structure0.get_all_stocks()
+    structure0.all_stocks()
 
 
 if __name__ == '__main__':
