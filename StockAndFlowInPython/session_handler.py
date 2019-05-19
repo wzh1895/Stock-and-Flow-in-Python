@@ -633,10 +633,10 @@ class GraphNetworkWindow(object):
 
 
 class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network, window_title="Graph Network Structure"):
+    def __init__(self, graph_network, window_title="Graph Network Structure", width=500, height=430, x=650, y=250):
         super().__init__()
         self.title(window_title)
-        self.geometry("%dx%d+650+250" % (500, 430))
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
         self.graph_network = graph_network
         self.update_graph_network()
 

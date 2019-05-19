@@ -39,6 +39,76 @@ class Functions(object):
         return float(x) * float(y)
 
 
+class Linear(object):
+    def __init__(self, *args):
+        self.function_name = 'Linear'
+        self.args = args
+
+    def __str__(self):
+        return str(self.args[1]) + ' * ' + str(self.args[0]) + ' + ' + str(self.args[2])
+
+    __repr__ = __str__
+
+    def __call__(self):
+        return float(self.args[1]) * float(self.args[0]) + float(self.args[2])
+
+
+class Addition(object):
+    def __init__(self, *args):
+        self.function_name = 'Addition'
+        self.args = args
+
+    def __str__(self):
+        return str(self.args[0]) + ' + ' + str(self.args[1])
+
+    __repr__ = __str__
+
+    def __call__(self):
+        return float(self.args[0]) + float(self.args[1])
+
+
+class Subtract(object):
+    def __init__(self, *args):
+        self.function_name = 'Subtract'
+        self.args = args
+
+    def __str__(self):
+        return str(self.args[0]) + ' - ' + str(self.args[1])
+
+    __repr__ = __str__
+
+    def __call__(self):
+        return float(self.args[0]) - float(self.args[1])
+
+
+class Division(object):
+    def __init__(self, *args):
+        self.function_name = 'Division'
+        self.args = args
+
+    def __str__(self):
+        return str(self.args[0]) + ' / ' + str(self.args[1])
+
+    __repr__ = __str__
+
+    def __call__(self):
+        return float(self.args[0]) / float(self.args[1])
+
+
+class Multiplication(object):
+    def __init__(self, *args):
+        self.function_name = 'Multiplication'
+        self.args = args
+
+    def __str__(self):
+        return str(self.args[0]) + ' * ' + str(self.args[1])
+
+    __repr__ = __str__
+
+    def __call__(self):
+        return float(self.args[0]) * float(self.args[1])
+
+
 LINEAR = Functions.linear
 SUBTRACT = Functions.subtract
 DIVISION = Functions.division
@@ -563,11 +633,17 @@ class Structure(object):
 
 
 def main():
-    structure0 = Structure()
-    structure0.first_order_negative()
-    structure0.simulate(simulation_time=80)
-    structure0.draw_graphs_with_curve()
-    structure0.all_stocks()
+    # structure0 = Structure()
+    # structure0.first_order_negative()
+    # structure0.simulate(simulation_time=80)
+    # structure0.draw_graphs_with_curve()
+    # structure0.all_stocks()
+    linear1 = Linear(2, 4, 6)
+    print(linear1)
+    print(linear1())
+    subtract1 = Subtract(8, 6)
+    print(subtract1)
+    print(subtract1())
 
 
 if __name__ == '__main__':

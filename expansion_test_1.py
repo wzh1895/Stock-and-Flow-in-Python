@@ -1,9 +1,10 @@
 from tkinter import *
+from tkinter import ttk
 from tkinter import filedialog
-from controller_bar import ControllerBar, ComparisonWindow, ReferenceModeWindow
-from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR
+from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, \
@@ -18,13 +19,69 @@ import random
 import copy
 
 
-class ExpansionTest(ControllerBar):
+class ExpansionTest(Frame):
     def __init__(self, master):
         super().__init__(master)
+        self.pack(fill=BOTH, expand=1)
 
+        self.session_handler1 = SessionHandler()
+
+        self.menubar = Menu(self.master)
+        self.filemenu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='File', menu=self.filemenu)
+        self.filemenu.add_command(label='Load reference', command=self.load_reference_mode)
+
+        self.master.config(menu=self.menubar)
+
+        # self.lb_name = Label(self.master, text='System Dynamics Model', background="#fff")
+        # self.lb_name.pack(side=TOP)
+        self.fm_controller1 = Frame(self.master)
+        self.fm_controller1.pack(side=TOP)
+        # self.btn_load_model = Button(self.fm_controller1, text="Load model", command=self.load_model)
+        # self.btn_load_model.pack(side=LEFT)
+        # self.btn_run = Button(self.fm_controller1, text="Simulate", command=self.simulate)
+        # self.btn_run.pack(side=LEFT)
+        # self.variables_list = ttk.Combobox(self.fm_controller1)
+        self.variables_in_model = ["Variable"]
+        # self.variables_list["values"] = self.variables_in_model
+        # self.variables_list.current(0)
+        # self.variables_list.bind("<<ComboboxSelected>>", self.select_variable)
+        # self.variables_list.pack(side=LEFT)
+        # self.sim_time = StringVar()
+        # self.sim_time.set("20")
+        # self.entry1 = Entry(self.fm_controller1, width=10, textvariable=self.sim_time)
+        # self.entry1.pack()
+
+        self.fm_controller2 = Frame(self.master)
+        self.fm_controller2.pack(side=TOP)
+        # self.btn_show_result = Button(self.fm_controller2, text="Show result",
+        #                               command=self.session_handler1.show_result)
+        # self.btn_show_result.pack(side=LEFT)
+        # self.btn_reset = Button(self.fm_controller2, text="Reset", command=self.session_handler1.reset)
+        # self.btn_reset.pack(side=LEFT)
+        # self.btn_clear_run = Button(self.fm_controller2, text="Clear a run", command=self.session_handler1.clear_a_run)
+        # self.btn_clear_run.pack(side=LEFT)
+        # self.btn_refresh = Button(self.fm_controller2, text="Refresh", command=self.session_handler1.refresh)
+        # self.btn_refresh.pack(side=LEFT)
+
+        # Suggestion
+
+        self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
+        # self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
+        # self.similarity_calculator1 = SimilarityCalculator()
+
+        self.fm_suggestion = Frame(self.master)
+        self.fm_suggestion.pack(side=TOP)
+        self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
+        self.btn_load_reference_mode.pack(side=LEFT)
+        # self.btn_calculate_similarity = Button(self.fm_suggestion, text="Calculate similarity", command=self.calculate_similarity)
+        # self.btn_calculate_similarity.pack(side=LEFT)
+        # self.btn_load_generic_structure = Button(self.fm_suggestion, text="Load closest structure", command=self.load_generic_structure)
+        # self.btn_load_generic_structure.pack(side=LEFT)
+        # self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
+        # self.lb_suggested_generic_stucture.pack(side=TOP)
         # Overwriting
-        self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode",
-                                              command=self.load_reference_mode)
+        # self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
 
         # Expansion
         # self.fm_expansion = Frame(self.master)
@@ -66,7 +123,7 @@ class ExpansionTest(ControllerBar):
         random.seed(10)
 
         # Specify round to iterate
-        self.iteration_time = 60
+        self.iteration_time = ITERATION_TIME
         i = 1
         while i <= self.iteration_time:
             print('Expansion: Iterating {}'.format(i))
@@ -77,6 +134,40 @@ class ExpansionTest(ControllerBar):
             #                                compare_with=self.concept_manager.concept_clds[concept_cld].model_structure.get_behavior('stock0'))
             # self.structure_manager.cool_down()
             i += 1
+
+    def simulate(self):
+        self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
+        self.variables_list['values'] = self.session_handler1.variables_in_model
+
+    def load_model(self):
+        file_name_and_variables = self.session_handler1.file_load()
+        print(file_name_and_variables)
+        file_name = file_name_and_variables[0]
+        variables_in_model = file_name_and_variables[1]
+        print("variables in model:", variables_in_model)
+        print("file name:", file_name)
+        if file_name != '':
+            self.lb_name.config(text=file_name)
+            self.variables_list['values'] = variables_in_model
+
+    def select_variable(self, *args):
+        print(self.variables_list.get())
+        self.session_handler1.selected_variable = self.variables_list.get()
+
+    def calculate_similarity(self):
+        self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
+            who_compare=self.reference_mode1.time_series,
+            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
+        self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
+        self.comparison_window1 = ComparisonWindow(self.comparison_figure)
+
+    def load_generic_structure(self):
+        self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
+        variables_in_model = list(self.session_handler1.model_structure.sfd.nodes)
+        print("variables in model:", variables_in_model)
+        print("structure name:", self.suggested_generic_structure)
+        self.lb_name.config(text=self.suggested_generic_structure)
+        self.variables_list['values'] = variables_in_model
 
     def generate_candidate_structure(self):
         """Generate a new candidate structure"""
@@ -132,41 +223,7 @@ class StructureUtilities(object):
     def expand_structure(base_structure, target_structure):
         new_base = copy.deepcopy(base_structure)
         print("    Base_structure: ", new_base.model_structure.sfd.nodes(data=True))
-        """
-        # get all stocks in base structure
-        base_structure_stocks = new_base.model_structure.all_stocks()
 
-        # pick a stock from base_structure to start with. Now: randomly. Future: guided by activity.
-        start_with_stock_base = random.choice(base_structure_stocks)
-        print("    {} in base_structure is chosen to start with".format(start_with_stock_base))
-        print("    Details: ", new_base.model_structure.sfd.nodes[start_with_stock_base])
-
-        # get all stocks in target structure
-        target_structure_stocks = target_structure.model_structure.all_stocks()
-
-        # pick a stock from target_structure to start with. Now: randomly. Future: guided by activity.
-        start_with_stock_target = random.choice(target_structure_stocks)
-        print("    {} in target_structure is chosen to start with".format(start_with_stock_target))
-        print("    Details: ", target_structure.model_structure.sfd.nodes[start_with_stock_target])
-        """
-
-        """
-        # get all in_edges into this stock in base_structure
-        in_edges_in_base = new_base.model_structure.sfd.in_edges(start_with_stock_base)
-        print("    In_edges in base_structure for {}".format(start_with_stock_base), [in_edge_in_base[0] for in_edge_in_base in in_edges_in_base])
-
-        # get all in_edges into this stock in target_structure
-        in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_stock_target)
-        print("    In_edges in target_structure for {}".format(start_with_stock_target), [in_edge_in_target[0] for in_edge_in_target in in_edges_in_target])
-
-        # pick an in_edge from all in_edges into this stock in target_structure
-        chosen_in_edge_in_target = random.choice(list(in_edges_in_target))
-        print("    In_edge chosen in target_structure: ", chosen_in_edge_in_target[0], '--->', chosen_in_edge_in_target[1])
-
-        # extract the part of structure containing this in_edge in target_structure
-        subgraph_from_target = target_structure.model_structure.sfd.edge_subgraph([chosen_in_edge_in_target])
-        print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data=True)))
-        """
         # Base
 
         # get all elements in base structure
@@ -224,7 +281,7 @@ class StructureManager(object):
     def __init__(self):
         self.tree = nx.DiGraph()
         self.uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree, "Expansion tree")
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", x=750, y=50)
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
 
     def generate_uid(self):
@@ -234,7 +291,7 @@ class StructureManager(object):
 
     def add_structure(self, structure):
         """Add a structure, usually as starting point"""
-        self.tree.add_node(self.generate_uid(), structure=structure, activity=10)
+        self.tree.add_node(self.generate_uid(), structure=structure, activity=20)
         self.update_candidate_structure_window()
 
     def get_uid_by_structure(self, structure):
@@ -275,7 +332,7 @@ class StructureManager(object):
         print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
         self.tree.add_node(new_uid,
                            structure=new_structure,
-                           activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']//3
+                           activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']//ACTIVITY_DEMOMINATOR
                            )
         # build a link from the old structure to the new structure
         self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
@@ -390,10 +447,10 @@ class ConceptManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree):
+    def __init__(self, tree, width=1200, height=400, x=5, y=700):
         super().__init__()
         self.title("Display Candidate Structure")
-        self.geometry("1200x400+5+750")
+        self.geometry("1200x400+5+750".format(width, height, x, y))
 
         self.selected_candidate_structure = None
         self.fm_select = Frame(self)
@@ -439,8 +496,12 @@ class CandidateStructureWindow(Toplevel):
         node_attrs_value = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'value')
         custom_node_attrs = dict()
         for node, attr in node_attrs_function.items():
+            # when the element only has a value but no function
             if attr is None:
                 attr = node_attrs_value[node][0]
+            # when the element has a function
+            else:
+                attr = [attr[0]] + [factor[0] for factor in attr[1:]]
             custom_node_attrs[node] = "{}={}".format(node, attr)
 
         nx.draw(self.selected_candidate_structure.model_structure.sfd,
@@ -474,10 +535,10 @@ class CandidateStructureWindow(Toplevel):
 
 
 class SelectReferenceModeWindow(Toplevel):
-    def __init__(self, time_series):
+    def __init__(self, time_series, width=600, height=400, x=5, y=130):
         super().__init__()
         self.title("Select Reference Mode...")
-        self.geometry("600x400+5+250")
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
         self.time_series = time_series
         self.selected_reference_mode = None
         self.reference_mode_type = None
@@ -532,6 +593,43 @@ class SelectReferenceModeWindow(Toplevel):
         self.reference_mode_type = None
         self.selected_reference_mode = None
         self.destroy()
+
+
+class ReferenceMode(object):
+    """Class for Reference Mode"""
+    def __init__(self, filename):
+        self.case_numerical_data_filename = filename
+        self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
+        self.time_series = np.array(self.case_numerical_data["stock0"].tolist()).reshape(-1, 1)
+        #self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
+        #self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="Accoutn balance")
+        self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series,
+                                                          time_series_name="Tea-cup Temperature")
+
+
+class ComparisonWindow(object):
+    def __init__(self, comparison_figure):
+        self.top = Toplevel()
+        self.top.title("Comparison with Generic Behaviors")
+        self.top.geometry("%dx%d+560+550" % (500, 430))
+        self.comparison_graph = FigureCanvasTkAgg(comparison_figure, master=self.top)
+        self.comparison_graph.draw()
+        self.comparison_graph.get_tk_widget().pack(side=TOP)
+
+
+class ReferenceModeWindow(object):
+    def __init__(self, time_series, time_series_name, width=500, height=430, x=200, y=50):
+        self.top = Toplevel()
+        self.top.title("Reference Mode")
+        self.top.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.reference_mode_figure = Figure(figsize=(5, 4))
+        self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
+        self.reference_mode_plot.plot(time_series, '*')
+        self.reference_mode_plot.set_xlabel("Time")
+        self.reference_mode_plot.set_ylabel(time_series_name)
+        self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.top)
+        self.reference_mode_graph.draw()
+        self.reference_mode_graph.get_tk_widget().pack(side=TOP)
 
 
 def main():
