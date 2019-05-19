@@ -120,13 +120,13 @@ class ExpansionTest(Frame):
                                                           self.reference_modes_name_list[0])
 
         # Main loop
-        random.seed(10)
+        # random.seed(10)
 
         # Specify round to iterate
         self.iteration_time = ITERATION_TIME
         i = 1
         while i <= self.iteration_time:
-            print('Expansion: Iterating {}'.format(i))
+            print('\n\nExpansion: Iterating {}'.format(i))
             self.generate_candidate_structure()
             # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].model_structure.get_behavior('stock0'))))
             # for concept_cld in self.concept_manager.concept_clds:
@@ -394,10 +394,9 @@ class ConceptManager(object):
 
     def __init__(self):
         self.concept_clds = dict()
-
         self.add_concept_cld(name='basic_stock_inflow')
         self.add_concept_cld(name='basic_stock_outflow')
-        self.add_concept_cld(name='first_order_positive')
+        # self.add_concept_cld(name='first_order_positive')
         self.add_concept_cld(name='first_order_negative')
 
     def add_concept_cld(self, name, likelihood=10):
