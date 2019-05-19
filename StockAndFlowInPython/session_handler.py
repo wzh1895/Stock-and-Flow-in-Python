@@ -12,7 +12,7 @@ from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function
 from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
-SLEEP_TIME = 0.2
+SLEEP_TIME = 0
 
 
 def name_handler(name):
@@ -345,12 +345,14 @@ class SessionHandler(object):
         """
         print("\n==>Building stock {}\n".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
+            # TODO: fix this line
             pos = self.generate_location(self.sfd_window1, [])
             x = pos[0]
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
         self.model_structure.add_stock(name=name, equation=[initial_value], x=x, y=y)
-        self.refresh()
+        # TODO: fix this line
+        # self.refresh()
         time.sleep(SLEEP_TIME)
 
     def wrap_equation(self, equation):

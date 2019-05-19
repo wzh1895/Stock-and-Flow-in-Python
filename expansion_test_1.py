@@ -51,7 +51,7 @@ class ExpansionTest(ControllerBar):
         # Initialize structure manager
         self.structure_manager = StructureManager()
         root_structure = SessionHandler()
-        root_structure.model_structure.add_stock(name='stock0', equation=50)
+        root_structure.build_stock(name='stock0', initial_value=50, x=100, y=100)
         self.structure_manager.add_structure(structure=root_structure)
 
         # Load reference mode
@@ -66,17 +66,16 @@ class ExpansionTest(ControllerBar):
         random.seed(10)
 
         # Specify round to iterate
-        self.iteration_time = 30
+        self.iteration_time = 60
         i = 1
         while i <= self.iteration_time:
             print('Expansion: Iterating {}'.format(i))
-            # self.structure_manager.derive_structure(self.structure_manager.uid - 1)
             self.generate_candidate_structure()
             # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].model_structure.get_behavior('stock0'))))
             # for concept_cld in self.concept_manager.concept_clds:
             #     self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
             #                                compare_with=self.concept_manager.concept_clds[concept_cld].model_structure.get_behavior('stock0'))
-            self.structure_manager.cool_down()
+            # self.structure_manager.cool_down()
             i += 1
 
     def generate_candidate_structure(self):
@@ -84,11 +83,11 @@ class ExpansionTest(ControllerBar):
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
         new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
-        print('    Generated new candidate structure:', new)
+        # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def behavioral_similarity(self, who_compare, compare_with):
-        print("    Expansion: Calculating similarity...")
+        # print("    Expansion: Calculating similarity...")
 
         distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
                                                                            np.array(compare_with).reshape(-1, 1))
@@ -131,28 +130,92 @@ class StructureUtilities(object):
 
     @staticmethod
     def expand_structure(base_structure, target_structure):
-        base = copy.deepcopy(base_structure)
+        new_base = copy.deepcopy(base_structure)
+        print("    Base_structure: ", new_base.model_structure.sfd.nodes(data=True))
+        """
+        # get all stocks in base structure
+        base_structure_stocks = new_base.model_structure.all_stocks()
 
-        base_structure_stocks = base_structure.model_structure.all_stocks()
+        # pick a stock from base_structure to start with. Now: randomly. Future: guided by activity.
         start_with_stock_base = random.choice(base_structure_stocks)
+        print("    {} in base_structure is chosen to start with".format(start_with_stock_base))
+        print("    Details: ", new_base.model_structure.sfd.nodes[start_with_stock_base])
 
+        # get all stocks in target structure
         target_structure_stocks = target_structure.model_structure.all_stocks()
+
+        # pick a stock from target_structure to start with. Now: randomly. Future: guided by activity.
         start_with_stock_target = random.choice(target_structure_stocks)
+        print("    {} in target_structure is chosen to start with".format(start_with_stock_target))
+        print("    Details: ", target_structure.model_structure.sfd.nodes[start_with_stock_target])
+        """
 
-        in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_stock_base)
+        """
+        # get all in_edges into this stock in base_structure
+        in_edges_in_base = new_base.model_structure.sfd.in_edges(start_with_stock_base)
+        print("    In_edges in base_structure for {}".format(start_with_stock_base), [in_edge_in_base[0] for in_edge_in_base in in_edges_in_base])
 
-        # print("In_edges in target for {}".format(start_with_stock_base), in_edges_in_target)
+        # get all in_edges into this stock in target_structure
+        in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_stock_target)
+        print("    In_edges in target_structure for {}".format(start_with_stock_target), [in_edge_in_target[0] for in_edge_in_target in in_edges_in_target])
 
+        # pick an in_edge from all in_edges into this stock in target_structure
         chosen_in_edge_in_target = random.choice(list(in_edges_in_target))
-        # print("In_edge chosen: ", chosen_in_edge_in_target)
+        print("    In_edge chosen in target_structure: ", chosen_in_edge_in_target[0], '--->', chosen_in_edge_in_target[1])
 
+        # extract the part of structure containing this in_edge in target_structure
         subgraph_from_target = target_structure.model_structure.sfd.edge_subgraph([chosen_in_edge_in_target])
+        print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data=True)))
+        """
+        # Base
 
-        base_structure.model_structure.sfd = nx.compose(base_structure.model_structure.sfd, subgraph_from_target)
-        # print("New structure nodes:", base_structure.model_structure.sfd.nodes.data())
-        # print("New structure edges:", base_structure.model_structure.sfd.edges.data())
+        # get all elements in base structure
+        base_structure_elements = list(new_base.model_structure.sfd.nodes)
+        # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
+        start_with_element_base = random.choice(base_structure_elements)
+        print("    {} in base_structure is chosen to start with".format(start_with_element_base))
+        print("    Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
 
-        return base
+        # get all in_edges into this element in base_structure
+        in_edges_in_base = new_base.model_structure.sfd.in_edges(start_with_element_base)
+        print("    In_edges in base_structure for {}".format(start_with_element_base),
+              [in_edge_in_base[0] for in_edge_in_base in in_edges_in_base])
+
+        # Target
+
+        # get all elements in target structure
+        target_structure_elements = list(target_structure.model_structure.sfd.nodes)
+
+        # pick an element from target_structure to start with. Now: randomly. Future: guided by activity.
+        start_with_element_target = random.choice(target_structure_elements)
+        print("    {} in target_structure is chosen to start with".format(start_with_element_target))
+        print("    Details: ", target_structure.model_structure.sfd.nodes[start_with_element_target])
+
+        # get all in_edges into this element in target_structure
+        in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_element_target)
+        # make sure the element to start with is not an end (boundary)
+        while len(in_edges_in_target) == 0:
+            start_with_element_target = random.choice(target_structure_elements)
+            in_edges_in_target = target_structure.model_structure.sfd.in_edges(start_with_element_target)
+        print("    In_edges in target_structure for {}".format(start_with_element_target),
+              [in_edge_in_target[0] for in_edge_in_target in in_edges_in_target])
+
+        # pick an in_edge from all in_edges into this element in target_structure
+        chosen_in_edge_in_target = random.choice(list(in_edges_in_target))
+        print("    In_edge chosen in target_structure: ", chosen_in_edge_in_target[0], '--->',
+              chosen_in_edge_in_target[1])
+
+        # Merge
+
+        # extract the part of structure containing this in_edge in target_structure
+        subgraph_from_target = target_structure.model_structure.sfd.edge_subgraph([chosen_in_edge_in_target])
+        print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data=True)))
+
+        new_base.model_structure.sfd = nx.compose(new_base.model_structure.sfd, subgraph_from_target)
+        print("New structure nodes:", new_base.model_structure.sfd.nodes.data())
+        print("New structure edges:", new_base.model_structure.sfd.edges.data())
+
+        return new_base
 
 
 class StructureManager(object):
@@ -185,24 +248,36 @@ class StructureManager(object):
         """Derive a new structure from an existing one"""
         # decide if this new_structure has been generated before. if so: add activity. if not: add it.
         # 1. identical to base_structure it self
-        if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
+        # if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
+        GM = iso.DiGraphMatcher(base_structure.model_structure.sfd, new_structure.model_structure.sfd,
+                                node_match=iso.categorical_node_match(attr=['equation'], default=[None])
+                                # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
+                                )
+        if GM.is_isomorphic():
             self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] += 1
-            print("The new structure is identical to the base structure")
+            print("    The new structure is identical to the base structure")
             return
-        for u in self.tree.neighbors(self.get_uid_by_structure(base_structure)):
-            if nx.is_isomorphic(self.tree.nodes[u]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
-                self.tree.nodes[u]['activity'] += 1
-                print("The new structure already exists in base structure's neighbours")
+        # 2. identical to a neighbor of the base_structure
+        for neighbour in self.tree.neighbors(self.get_uid_by_structure(base_structure)):
+            GM = iso.DiGraphMatcher(self.tree.nodes[neighbour]['structure'].model_structure.sfd,
+                                    new_structure.model_structure.sfd,
+                                    node_match=iso.categorical_node_match(attr=['equation'], default=[None])
+                                    # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
+                                    )
+            if GM.is_isomorphic():
+            # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
+                self.tree.nodes[neighbour]['activity'] += 1
+                print("    The new structure already exists in base structure's neighbours")
                 return
 
         # add a new node
         new_uid = self.generate_uid()
-        print('    Deriving structure from {} to {}'.format(base_structure, new_structure))
+        print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
         self.tree.add_node(new_uid,
                            structure=new_structure,
-                           activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']
+                           activity=self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']//3
                            )
-        # build a link from the old to the new
+        # build a link from the old structure to the new structure
         self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
         self.update_candidate_structure_window()
 
@@ -214,7 +289,7 @@ class StructureManager(object):
     def random_single(self):
         """Return one structure"""
         random_structure_uid = random.choice(self.generate_distribution())
-        print('    Random structure found:', self.tree.nodes[random_structure_uid])
+        print('    No. {} is chosen as base_structure;'.format(random_structure_uid))
         return self.tree.nodes[random_structure_uid]['structure']
 
     def random_pair(self):
@@ -292,7 +367,7 @@ class ConceptManager(object):
     def random_single(self):
         """Return one structure"""
         random_concept_cld_name = random.choice(self.generate_distribution())
-        print('    Random concept CLD found:', random_concept_cld_name)
+        print('    {} is chosen as target_structure;'.format(random_concept_cld_name))
         return self.concept_clds[random_concept_cld_name]
 
     def random_pair(self):
@@ -318,7 +393,7 @@ class CandidateStructureWindow(Toplevel):
     def __init__(self, tree):
         super().__init__()
         self.title("Display Candidate Structure")
-        self.geometry("600x400+5+750")
+        self.geometry("1200x400+5+750")
 
         self.selected_candidate_structure = None
         self.fm_select = Frame(self)
@@ -326,22 +401,33 @@ class CandidateStructureWindow(Toplevel):
 
         self.tree = tree
 
-        self.fm_display = Frame(self)
-        self.fm_display.pack(side=LEFT)
+        self.fm_display_structure = Frame(self)
+        self.fm_display_structure.configure(width=500)
+        self.fm_display_structure.pack(side=LEFT)
+
+        self.fm_display_behaviour = Frame(self)
+        self.fm_display_behaviour.configure(width=500)
+        self.fm_display_behaviour.pack(side=LEFT)
 
         self.generate_candidate_structure_list()
 
     def generate_candidate_structure_list(self):
         self.candidate_structure_list = Listbox(self.fm_select)
+        self.candidate_structure_list.configure(width=10, height=20)
         self.candidate_structure_list.pack(side=TOP)
         for u in list(self.tree.nodes):
             # print("adding entry", u)
             self.candidate_structure_list.insert(END, u)
-        self.candidate_structure_list.bind('<<ListboxSelect>>', self.display_candidate_structure)
+        self.candidate_structure_list.bind('<<ListboxSelect>>', self.display_candidate)
 
-    def display_candidate_structure(self, evt):
+    def display_candidate(self, evt):
+        self.display_candidate_structure()
+        self.display_candidate_behaviour()
+
+    def display_candidate_structure(self):
         selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
         self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
+
         try:
             plt.close()
             self.candidate_structure_canvas.get_tk_widget().destroy()
@@ -350,16 +436,40 @@ class CandidateStructureWindow(Toplevel):
         fig, ax = plt.subplots()
 
         node_attrs_function = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'function')
+        node_attrs_value = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'value')
         custom_node_attrs = dict()
         for node, attr in node_attrs_function.items():
+            if attr is None:
+                attr = node_attrs_value[node][0]
             custom_node_attrs[node] = "{}={}".format(node, attr)
 
         nx.draw(self.selected_candidate_structure.model_structure.sfd,
-                labels= custom_node_attrs
+                labels=custom_node_attrs,
+                font_size=6
                 #with_labels=True
                 )
-        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display)
+        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
+
+        # Display behavior
+        self.update()
+
+    def display_candidate_behaviour(self):
+        try:
+            self.simulation_result_canvas.get_tk_widget().destroy()
+        except:
+            pass
+
+        selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
+        self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
+
+        self.selected_candidate_structure.simulation_handler(25)
+
+        result_figure = self.selected_candidate_structure.model_structure.draw_results(names=['stock0'], rtn=True)
+        self.simulation_result_canvas = FigureCanvasTkAgg(figure=result_figure, master=self.fm_display_behaviour)
+        self.simulation_result_canvas.get_tk_widget().pack(side=LEFT)
+
+        # Display result
         self.update()
 
 
