@@ -89,7 +89,7 @@ class SimilarityCalculator(object):
 
         # stretch x0 to a height close to 100.
         # Temporarily only consider vertical range of x0 < 100.
-        factor_y1 = 100.0 / (who_compare.max() - who_compare.min())
+        factor_y1 = 100.0 / (who_compare.max() - who_compare.min()) if who_compare.max() != who_compare.min() else 1
         series_1 = np.array([(i - who_compare.min()) * factor_y1 for i in x1]).reshape(-1, 1)
         # print('series_1', series_1)
 
@@ -100,7 +100,7 @@ class SimilarityCalculator(object):
 
         # stretch y0 to a height close to 100.
         # Temporarily only consider vertical range of x0 < 100.
-        factor_y2 = 100.0 / (compare_with.max() - compare_with.min())
+        factor_y2 = 100.0 / (compare_with.max() - compare_with.min()) if compare_with.max() != compare_with.min() else 1
         series_2 = np.array([(i - compare_with.min()) * factor_y2 for i in x2]).reshape(-1, 1)
 
         comparison_figure = Figure(figsize=(5, 4))
