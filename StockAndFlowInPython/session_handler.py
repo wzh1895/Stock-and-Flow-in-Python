@@ -633,11 +633,15 @@ class GraphNetworkWindow(object):
 
 
 class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network, window_title="Graph Network Structure", width=500, height=430, x=650, y=250):
+    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red", width=500, height=430, x=650, y=250, attr=None):
         super().__init__()
         self.title(window_title)
-        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.width = width
+        self.height = height
+        self.geometry("+{}+{}".format(x, y))
         self.graph_network = graph_network
+        self.attr = attr
+        self.node_color = node_color
         self.update_graph_network()
 
     def update_graph_network(self):
@@ -646,8 +650,18 @@ class NewGraphNetworkWindow(Toplevel):
         except :
             pass
         fig, ax = plt.subplots()
-        nx.draw(self.graph_network, with_labels=True)
+
+        node_attr_mapping = nx.get_node_attributes(self.graph_network, self.attr)
+        for node, attr in node_attr_mapping.items():
+            node_attr_mapping[node] = "{} [{}]".format(node, attr)
+        nx.draw(self.graph_network,
+                labels=node_attr_mapping,
+                font_size=8,
+                node_color=self.node_color
+                #with_labels=True
+                )
         self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)
+        self.graph_network_canvas.get_tk_widget().configure(width=self.width, height=self.height)
         self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
         self.update()
 

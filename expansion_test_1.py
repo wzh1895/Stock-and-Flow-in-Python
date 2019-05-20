@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR
+from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
@@ -120,14 +120,38 @@ class ExpansionTest(Frame):
                                                           self.reference_modes_name_list[0])
 
         # Main loop
-        # random.seed(10)
 
         # Specify round to iterate
         self.iteration_time = ITERATION_TIME
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
-            self.generate_candidate_structure()
+            # adjust concept CLDs' likelihood
+            random_two_clds = [None, None]
+            while random_two_clds[0] == random_two_clds[1]: # The two cannot be the same
+                random_two_clds = self.concept_manager.random_pair()
+            print(random_two_clds)
+            # random_two_clds_similarity = {random_two_clds[0]: self.behavioral_similarity(random_two_clds[0].model_structure.sfd.node['stock0']['value'],
+            #                                                          self.reference_modes['stock0'][1]),
+            #                               random_two_clds[1]: self.behavioral_similarity(random_two_clds[1].model_structure.sfd.node['stock0']['value'],
+            #                                                          self.reference_modes['stock0'][1])
+            #                               }
+            random_two_clds_similarity = {random_two_clds[0]: self.behavioral_similarity(
+                                                self.concept_manager.concept_clds[random_two_clds[0]].model_structure.sfd.node['stock0']['value'],
+                                                self.reference_modes['stock0'][1]),
+                                          random_two_clds[1]: self.behavioral_similarity(
+                                                self.concept_manager.concept_clds[random_two_clds[1]].model_structure.sfd.node['stock0']['value'],
+                                                self.reference_modes['stock0'][1])
+                                          }
+            print(random_two_clds_similarity)
+            # a larger distance -> a lower likelihood
+            if random_two_clds_similarity[random_two_clds[0]] < random_two_clds_similarity[random_two_clds[1]]:
+                self.concept_manager.update_likelihood_elo(random_two_clds[0], random_two_clds[1])
+            else:
+                self.concept_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
+            print(self.concept_manager.concept_clds_likelihood)
+            # generate new candidate structure
+            #self.generate_candidate_structure()
             # print(SimilarityCalculator.similarity_calc(np.array(self.reference_modes['stock0'][1]), np.array(self.concept_clds[0].model_structure.get_behavior('stock0'))))
             # for concept_cld in self.concept_manager.concept_clds:
             #     self.behavioral_similarity(who_compare=self.reference_modes['stock0'][1],
@@ -135,39 +159,39 @@ class ExpansionTest(Frame):
             # self.structure_manager.cool_down()
             i += 1
 
-    def simulate(self):
-        self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
-        self.variables_list['values'] = self.session_handler1.variables_in_model
+    # def simulate(self):
+    #     self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
+    #     self.variables_list['values'] = self.session_handler1.variables_in_model
 
-    def load_model(self):
-        file_name_and_variables = self.session_handler1.file_load()
-        print(file_name_and_variables)
-        file_name = file_name_and_variables[0]
-        variables_in_model = file_name_and_variables[1]
-        print("variables in model:", variables_in_model)
-        print("file name:", file_name)
-        if file_name != '':
-            self.lb_name.config(text=file_name)
-            self.variables_list['values'] = variables_in_model
+    # def load_model(self):
+    #     file_name_and_variables = self.session_handler1.file_load()
+    #     print(file_name_and_variables)
+    #     file_name = file_name_and_variables[0]
+    #     variables_in_model = file_name_and_variables[1]
+    #     print("variables in model:", variables_in_model)
+    #     print("file name:", file_name)
+    #     if file_name != '':
+    #         self.lb_name.config(text=file_name)
+    #         self.variables_list['values'] = variables_in_model
 
-    def select_variable(self, *args):
-        print(self.variables_list.get())
-        self.session_handler1.selected_variable = self.variables_list.get()
+    # def select_variable(self, *args):
+    #     print(self.variables_list.get())
+    #     self.session_handler1.selected_variable = self.variables_list.get()
 
-    def calculate_similarity(self):
-        self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
-            who_compare=self.reference_mode1.time_series,
-            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
-        self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
-        self.comparison_window1 = ComparisonWindow(self.comparison_figure)
+    # def calculate_similarity(self):
+    #     self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
+    #         who_compare=self.reference_mode1.time_series,
+    #         compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
+    #     self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
+    #     self.comparison_window1 = ComparisonWindow(self.comparison_figure)
 
-    def load_generic_structure(self):
-        self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
-        variables_in_model = list(self.session_handler1.model_structure.sfd.nodes)
-        print("variables in model:", variables_in_model)
-        print("structure name:", self.suggested_generic_structure)
-        self.lb_name.config(text=self.suggested_generic_structure)
-        self.variables_list['values'] = variables_in_model
+    # def load_generic_structure(self):
+    #     self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
+    #     variables_in_model = list(self.session_handler1.model_structure.sfd.nodes)
+    #     print("variables in model:", variables_in_model)
+    #     print("structure name:", self.suggested_generic_structure)
+    #     self.lb_name.config(text=self.suggested_generic_structure)
+    #     self.variables_list['values'] = variables_in_model
 
     def generate_candidate_structure(self):
         """Generate a new candidate structure"""
@@ -178,8 +202,7 @@ class ExpansionTest(Frame):
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def behavioral_similarity(self, who_compare, compare_with):
-        # print("    Expansion: Calculating similarity...")
-
+        print("    Expansion: Calculating similarity...")
         distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
                                                                            np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
@@ -269,6 +292,16 @@ class StructureUtilities(object):
         print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data='function')))
 
         new_base.model_structure.sfd = nx.compose(new_base.model_structure.sfd, subgraph_from_target)
+
+        # check and fix dependencies
+        # print(chosen_in_edge_in_target[1])
+        in_edges_to_new_node = target_structure.model_structure.sfd.in_edges(chosen_in_edge_in_target[1])
+        # print(in_edges_to_new_node)
+        for in_edge in in_edges_to_new_node:
+            if in_edge[0] in new_base.model_structure.sfd.nodes and in_edge not in new_base.model_structure.sfd.edges:
+                print("Found a missing edge: ", in_edge)
+                new_base.model_structure.sfd.add_edge(*in_edge)
+
         print("New structure nodes:", new_base.model_structure.sfd.nodes.data('function'))
         print("New structure edges:", new_base.model_structure.sfd.edges.data())
 
@@ -281,7 +314,7 @@ class StructureManager(object):
     def __init__(self):
         self.tree = nx.DiGraph()
         self.uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", x=750, y=50)
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue", width=800, height=800, x=750, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
 
     def generate_uid(self):
@@ -383,43 +416,48 @@ class StructureManager(object):
         self.tree_window.update_graph_network()
 
     def update_candidate_structure_window(self):
-        try:
-            self.candidate_structure_window.candidate_structure_list.destroy()
-        except:
-            pass
+        # try:
+        #     self.candidate_structure_window.candidate_structure_list.destroy()
+        # except:
+        #     pass
         self.display_tree()
         self.candidate_structure_window.generate_candidate_structure_list()
 
 
 class ConceptManager(object):
-    """The class containing and managing all concept clds"""
+    """The class containing and managing all concept CLDs"""
 
     def __init__(self):
         self.concept_clds = dict()
+        self.concept_clds_likelihood = dict()
         self.add_concept_cld(name='basic_stock_inflow')
         self.add_concept_cld(name='basic_stock_outflow')
-        # self.add_concept_cld(name='first_order_positive')
+        self.add_concept_cld(name='first_order_positive')
         self.add_concept_cld(name='first_order_negative')
 
-    def add_concept_cld(self, name, likelihood=10):
+    def add_concept_cld(self, name, likelihood=INITIAL_LIKELIHOOD):
         a = SessionHandler()
         a.model_structure.set_predefined_structure[name]()
         a.model_structure.simulate(simulation_time=25)
-        a.model_structure.sfd.graph['likelihood'] = likelihood
+        # a.model_structure.sfd.graph['likelihood'] = likelihood
         self.concept_clds[name] = a
+        self.concept_clds_likelihood[name] = likelihood
 
-    def get_concept_cld_by_name(self, name):
-        for concept_cld in self.concept_clds:
-            if concept_cld.model_structure.sfd.graph['structure_name'] == name:
-                return concept_cld
+    # def get_concept_cld_by_name(self, name):
+    #     for concept_cld in self.concept_clds:
+    #         if concept_cld.model_structure.sfd.graph['structure_name'] == name:
+    #             return concept_cld
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
         distribution_list = list()
-        for concept_cld in self.concept_clds.keys():
-            for i in range(self.concept_clds[concept_cld].model_structure.sfd.graph['likelihood']):
-                distribution_list.append(self.concept_clds[concept_cld].model_structure.sfd.graph['structure_name'])
+        # for concept_cld in self.concept_clds.keys():
+        #     for i in range(self.concept_clds[concept_cld].model_structure.sfd.graph['likelihood']):
+        #         distribution_list.append(self.concept_clds[concept_cld].model_structure.sfd.graph['structure_name'])
         # print('Concept CLD distribution list:', distribution_list)
+        for concept_cld in self.concept_clds_likelihood.keys():
+            for i in range(self.concept_clds_likelihood[concept_cld]):
+                distribution_list.append(concept_cld)
         return distribution_list
 
     def random_single(self):
@@ -430,12 +468,16 @@ class ConceptManager(object):
 
     def random_pair(self):
         """Return a pair of structures for competition"""
-        return random.choices(self.generate_distribution(), k=2)
+        random_two = random.choices(self.generate_distribution(), k=2)
+        # return self.concept_clds[random_two[0]], self.concept_clds[random_two[1]]
+        return random_two
 
     def update_likelihood_elo(self, winner, loser):
         """Update winner and loser's activity using Elo Rating System"""
-        r_winner = self.get_concept_cld_by_name(winner).model_structure.sfd.graph['likelihood']
-        r_loser = self.get_concept_cld_by_name(loser).model_structure.sfd.graph['likelihood']
+        # r_winner = self.concept_clds[winner].model_structure.sfd.graph['likelihood']
+        # r_loser = self.concept_clds[loser].model_structure.sfd.graph['likelihood']
+        r_winner = self.concept_clds_likelihood[winner]
+        r_loser = self.concept_clds_likelihood[loser]
         e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
         e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
@@ -443,15 +485,17 @@ class ConceptManager(object):
         k = 32
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
-        self.get_concept_cld_by_name(winner).model_structure.sfd.graph['likelihood'] = r_winner
-        self.get_concept_cld_by_name(loser).model_structure.sfd.graph['likelihood'] = r_loser
+        # self.concept_clds[winner].model_structure.sfd.graph['likelihood'] = r_winner
+        # self.concept_clds[loser].model_structure.sfd.graph['likelihood'] = r_loser
+        self.concept_clds_likelihood[winner] = round(r_winner) if r_winner > 0 else 1
+        self.concept_clds_likelihood[loser] = round(r_loser) if r_loser > 0 else 1
 
 
 class CandidateStructureWindow(Toplevel):
     def __init__(self, tree, width=1200, height=400, x=5, y=700):
         super().__init__()
         self.title("Display Candidate Structure")
-        self.geometry("1200x400+5+750".format(width, height, x, y))
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
 
         self.selected_candidate_structure = None
         self.fm_select = Frame(self)
@@ -466,13 +510,23 @@ class CandidateStructureWindow(Toplevel):
         self.fm_display_behaviour = Frame(self)
         self.fm_display_behaviour.configure(width=500)
         self.fm_display_behaviour.pack(side=LEFT)
-
         self.generate_candidate_structure_list()
 
     def generate_candidate_structure_list(self):
+        try:
+            self.candidate_structure_list.destroy()
+            self.candidate_structure_list_scrollbar.destroy()
+        except:
+            pass
+
         self.candidate_structure_list = Listbox(self.fm_select)
         self.candidate_structure_list.configure(width=10, height=20)
-        self.candidate_structure_list.pack(side=TOP)
+        self.candidate_structure_list.pack(side=LEFT, fill=Y)
+
+        self.candidate_structure_list_scrollbar = Scrollbar(self.fm_select, orient="vertical")
+        self.candidate_structure_list_scrollbar.config(command=self.candidate_structure_list.yview)
+        self.candidate_structure_list_scrollbar.pack(side=RIGHT, fill=Y)
+
         for u in list(self.tree.nodes):
             # print("adding entry", u)
             self.candidate_structure_list.insert(END, u)

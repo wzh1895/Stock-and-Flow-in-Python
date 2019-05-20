@@ -215,7 +215,7 @@ class Structure(object):
                     self.sfd.nodes[node]['value'] = [self.sfd.nodes[node]['value'][0]]
                 else:  # it's not a constant parameter
                     self.sfd.nodes[node]['value'] = list()  # for other variables, reset its value to empty list
-            print('Graph: reset value of', node, 'to', self.sfd.nodes[node]['value'])
+            # print('Graph: reset value of', node, 'to', self.sfd.nodes[node]['value'])
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
