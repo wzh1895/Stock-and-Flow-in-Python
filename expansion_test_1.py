@@ -32,7 +32,6 @@ class ExpansionTest(Frame):
         self.menubar = Menu(self.master)
         self.file_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='File', menu=self.file_menu)
-        # self.file_menu.add_command(label='Load reference', command=self.load_reference_mode)
 
         self.action_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Action', menu=self.action_menu)
@@ -44,63 +43,15 @@ class ExpansionTest(Frame):
 
         self.master.config(menu=self.menubar)
 
-        # self.lb_name = Label(self.master, text='System Dynamics Model', background="#fff")
-        # self.lb_name.pack(side=TOP)
         self.fm_controller1 = Frame(self.master)
         self.fm_controller1.pack(side=TOP)
-        # self.btn_load_model = Button(self.fm_controller1, text="Load model", command=self.load_model)
-        # self.btn_load_model.pack(side=LEFT)
-        # self.btn_run = Button(self.fm_controller1, text="Simulate", command=self.simulate)
-        # self.btn_run.pack(side=LEFT)
-        # self.variables_list = ttk.Combobox(self.fm_controller1)
         self.variables_in_model = ["Variable"]
-        # self.variables_list["values"] = self.variables_in_model
-        # self.variables_list.current(0)
-        # self.variables_list.bind("<<ComboboxSelected>>", self.select_variable)
-        # self.variables_list.pack(side=LEFT)
-        # self.sim_time = StringVar()
-        # self.sim_time.set("20")
-        # self.entry1 = Entry(self.fm_controller1, width=10, textvariable=self.sim_time)
-        # self.entry1.pack()
 
         self.fm_controller2 = Frame(self.master)
         self.fm_controller2.pack(side=TOP)
-        # self.btn_show_result = Button(self.fm_controller2, text="Show result",
-        #                               command=self.session_handler1.show_result)
-        # self.btn_show_result.pack(side=LEFT)
-        # self.btn_reset = Button(self.fm_controller2, text="Reset", command=self.session_handler1.reset)
-        # self.btn_reset.pack(side=LEFT)
-        # self.btn_clear_run = Button(self.fm_controller2, text="Clear a run", command=self.session_handler1.clear_a_run)
-        # self.btn_clear_run.pack(side=LEFT)
-        # self.btn_refresh = Button(self.fm_controller2, text="Refresh", command=self.session_handler1.refresh)
-        # self.btn_refresh.pack(side=LEFT)
-
-        # Suggestion
-
-        # self.reference_mode_path = './StockAndFlowInPython/case/tea_cup_model.csv'
-        # self.reference_mode_path = './StockAndFlowInPython/case/bank_account_model.csv'
-        # self.similarity_calculator1 = SimilarityCalculator()
 
         self.fm_suggestion = Frame(self.master)
         self.fm_suggestion.pack(side=TOP)
-        # self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
-        # self.btn_load_reference_mode.pack(side=LEFT)
-        # self.btn_calculate_similarity = Button(self.fm_suggestion, text="Calculate similarity", command=self.calculate_similarity)
-        # self.btn_calculate_similarity.pack(side=LEFT)
-        # self.btn_load_generic_structure = Button(self.fm_suggestion, text="Load closest structure", command=self.load_generic_structure)
-        # self.btn_load_generic_structure.pack(side=LEFT)
-        # self.lb_suggested_generic_stucture = Label(self.master, text="Reference mode pattern", background='#fff')
-        # self.lb_suggested_generic_stucture.pack(side=TOP)
-        # Overwriting
-        # self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
-
-        # Expansion
-        # self.fm_expansion = Frame(self.master)
-        # self.fm_expansion.pack(side=TOP)
-        # self.btn_start_expansion = Button(self.fm_expansion, text="Start expansion", command=self.expansion_test)
-        # self.btn_start_expansion.pack(side=LEFT)
-
-        # self.full_procedure()
 
         # Initialize concept CLDs (generic structures)
         self.concept_manager = ConceptManager()
@@ -118,23 +69,12 @@ class ExpansionTest(Frame):
         self.structure_manager.if_can_simulate[0] = True
 
         # Reference modes
-        # self.reference_mode_path = REFERENCE_MODE_PATH
-        # self.numerical_data = None
-        # self.time_series = dict()
         self.reference_modes = dict()
 
         # Initialize reference mode manager
         self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
 
         # self.reference_mode_manager.add_reference_mode()
-
-        # Load reference mode
-        # self.load_reference_mode()
-
-        # Display reference mode
-        # self.reference_modes_name_list = list(self.reference_modes.keys())
-        # self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
-        #                                                   self.reference_modes_name_list[0])
 
         # Main loop
         # self.main_loop()
@@ -165,40 +105,6 @@ class ExpansionTest(Frame):
     def add_reference_mode(self):
         self.reference_mode_manager.add_reference_mode()
 
-    # def simulate(self):
-    #     self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
-    #     self.variables_list['values'] = self.session_handler1.variables_in_model
-
-    # def load_model(self):
-    #     file_name_and_variables = self.session_handler1.file_load()
-    #     print(file_name_and_variables)
-    #     file_name = file_name_and_variables[0]
-    #     variables_in_model = file_name_and_variables[1]
-    #     print("variables in model:", variables_in_model)
-    #     print("file name:", file_name)
-    #     if file_name != '':
-    #         self.lb_name.config(text=file_name)
-    #         self.variables_list['values'] = variables_in_model
-
-    # def select_variable(self, *args):
-    #     print(self.variables_list.get())
-    #     self.session_handler1.selected_variable = self.variables_list.get()
-
-    # def calculate_similarity(self):
-    #     self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
-    #         who_compare=self.reference_mode1.time_series,
-    #         compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
-    #     self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
-    #     self.comparison_window1 = ComparisonWindow(self.comparison_figure)
-
-    # def load_generic_structure(self):
-    #     self.session_handler1.apply_generic_structure(self.suggested_generic_structure)
-    #     variables_in_model = list(self.session_handler1.model_structure.sfd.nodes)
-    #     print("variables in model:", variables_in_model)
-    #     print("structure name:", self.suggested_generic_structure)
-    #     self.lb_name.config(text=self.suggested_generic_structure)
-    #     self.variables_list['values'] = variables_in_model
-
     def update_candidate_structure_activity(self):
         if len(self.structure_manager.tree.nodes) > 5:  # only do this when there are more than 3 candidates
             # TODO: improve this control, not using ballpark number
@@ -228,7 +134,6 @@ class ExpansionTest(Frame):
                 else:
                     self.structure_manager.update_activity_elo(random_two_candidates[0], random_two_candidates[1])
             print(self.structure_manager.show_all_activity())
-
 
     def update_concept_clds_likelihood(self):
         random_two_clds = [None, None]
@@ -269,30 +174,6 @@ class ExpansionTest(Frame):
     def adjust_concept_cld_likelihood(self, ):
         """As a result of a higher similarity to (part of) the reference mode"""
         pass
-
-    # def get_reference_mode_file_name(self):
-    #     self.reference_mode_path = filedialog.askopenfilename()
-    #
-    # def add_reference_mode(self):
-    #     """
-    #     The logic is: file -> file in memory (numerical data) -> time series --selection--> reference mode
-    #     :return:
-    #     """
-    #     if self.reference_mode_path is None and len(self.time_series) == 0:  # either path not specified and no t-series
-    #         self.get_reference_mode_file_name()
-    #     self.numerical_data = pd.read_csv(self.reference_mode_path)
-    #     for column in self.numerical_data:
-    #         self.time_series[column] = self.numerical_data[column].tolist()
-    #     select_dialog = SelectReferenceModeWindow(self.time_series)
-    #     self.wait_window(select_dialog)  # important!
-    #     reference_mode_type = select_dialog.reference_mode_type
-    #     reference_mode_name = select_dialog.selected_reference_mode
-    #     if reference_mode_type is not None and reference_mode_name is not None:
-    #         self.reference_modes[reference_mode_name] = [reference_mode_type, self.time_series[reference_mode_name]]
-    #         print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
-    #
-    # def load_reference_mode(self):
-    #     self.add_reference_mode()
 
 
 class ReferenceModeManager(Toplevel):
@@ -351,9 +232,6 @@ class ReferenceModeManager(Toplevel):
         self.reference_mode_list_box.bind('<<ListboxSelect>>', self.show_reference_mode)
 
     def show_reference_mode(self, evt):
-        # self.reference_modes_name_list = list(self.reference_modes.keys())
-        # self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
-        #     self.reference_modes_name_list[0])
         try:
             self.reference_mode_graph.get_tk_widget().destroy()
         except AttributeError:
@@ -814,43 +692,6 @@ class SelectReferenceModeWindow(Toplevel):
         self.reference_mode_type = None
         self.selected_reference_mode = None
         self.destroy()
-
-
-class ReferenceMode(object):
-    """Class for Reference Mode"""
-    def __init__(self, filename):
-        self.case_numerical_data_filename = filename
-        self.case_numerical_data = pd.read_csv(self.case_numerical_data_filename)
-        self.time_series = np.array(self.case_numerical_data["stock0"].tolist()).reshape(-1, 1)
-        #self.time_series = np.array(self.case_numerical_data["balance"].tolist()).reshape(-1, 1)
-        #self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series, time_series_name="Accoutn balance")
-        self.reference_mode_window1 = ReferenceModeWindow(time_series=self.time_series,
-                                                          time_series_name="Tea-cup Temperature")
-
-
-class ComparisonWindow(object):
-    def __init__(self, comparison_figure):
-        self.top = Toplevel()
-        self.top.title("Comparison with Generic Behaviors")
-        self.top.geometry("%dx%d+560+550" % (500, 430))
-        self.comparison_graph = FigureCanvasTkAgg(comparison_figure, master=self.top)
-        self.comparison_graph.draw()
-        self.comparison_graph.get_tk_widget().pack(side=TOP)
-
-
-class ReferenceModeWindow(object):
-    def __init__(self, time_series, time_series_name, width=500, height=430, x=250, y=50):
-        self.top = Toplevel()
-        self.top.title("Reference Mode")
-        self.top.geometry("{}x{}+{}+{}".format(width, height, x, y))
-        self.reference_mode_figure = Figure(figsize=(5, 4))
-        self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
-        self.reference_mode_plot.plot(time_series, '*')
-        self.reference_mode_plot.set_xlabel("Time")
-        self.reference_mode_plot.set_ylabel(time_series_name)
-        self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.top)
-        self.reference_mode_graph.draw()
-        self.reference_mode_graph.get_tk_widget().pack(side=TOP)
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):
