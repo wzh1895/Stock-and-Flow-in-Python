@@ -3,7 +3,8 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, COOL_DOWN_TIMES
+from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
@@ -17,19 +18,29 @@ import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import random
 import copy
+import time
 
 
 class ExpansionTest(Frame):
     def __init__(self, master):
         super().__init__(master)
+        self.configure(width=200)
         self.pack(fill=BOTH, expand=1)
 
         self.session_handler1 = SessionHandler()
 
         self.menubar = Menu(self.master)
-        self.filemenu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='File', menu=self.filemenu)
-        self.filemenu.add_command(label='Load reference', command=self.load_reference_mode)
+        self.file_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='File', menu=self.file_menu)
+        # self.file_menu.add_command(label='Load reference', command=self.load_reference_mode)
+
+        self.action_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Action', menu=self.action_menu)
+        self.action_menu.add_command(label='Main loop', command=self.main_loop)
+
+        self.reference_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
+        self.reference_menu.add_command(label='Add reference mode', command=self.add_reference_mode)
 
         self.master.config(menu=self.menubar)
 
@@ -72,8 +83,8 @@ class ExpansionTest(Frame):
 
         self.fm_suggestion = Frame(self.master)
         self.fm_suggestion.pack(side=TOP)
-        self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
-        self.btn_load_reference_mode.pack(side=LEFT)
+        # self.btn_load_reference_mode = Button(self.fm_suggestion, text="Load reference Mode", command=self.load_reference_mode)
+        # self.btn_load_reference_mode.pack(side=LEFT)
         # self.btn_calculate_similarity = Button(self.fm_suggestion, text="Calculate similarity", command=self.calculate_similarity)
         # self.btn_calculate_similarity.pack(side=LEFT)
         # self.btn_load_generic_structure = Button(self.fm_suggestion, text="Load closest structure", command=self.load_generic_structure)
@@ -88,12 +99,6 @@ class ExpansionTest(Frame):
         # self.fm_expansion.pack(side=TOP)
         # self.btn_start_expansion = Button(self.fm_expansion, text="Start expansion", command=self.expansion_test)
         # self.btn_start_expansion.pack(side=LEFT)
-
-        # Reference modes
-        self.reference_mode_path = REFERENCE_MODE_PATH
-        self.numerical_data = None
-        self.time_series = dict()
-        self.reference_modes = dict()
 
         # self.full_procedure()
 
@@ -112,16 +117,29 @@ class ExpansionTest(Frame):
         self.structure_manager.add_structure(structure=root_structure)
         self.structure_manager.if_can_simulate[0] = True
 
+        # Reference modes
+        # self.reference_mode_path = REFERENCE_MODE_PATH
+        # self.numerical_data = None
+        # self.time_series = dict()
+        self.reference_modes = dict()
+
+        # Initialize reference mode manager
+        self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
+
+        # self.reference_mode_manager.add_reference_mode()
+
         # Load reference mode
-        self.load_reference_mode()
+        # self.load_reference_mode()
 
         # Display reference mode
-        self.reference_modes_name_list = list(self.reference_modes.keys())
-        self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
-                                                          self.reference_modes_name_list[0])
+        # self.reference_modes_name_list = list(self.reference_modes.keys())
+        # self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
+        #                                                   self.reference_modes_name_list[0])
 
         # Main loop
+        # self.main_loop()
 
+    def main_loop(self):
         # Specify round to iterate
         self.iteration_time = ITERATION_TIME
         i = 1
@@ -139,9 +157,13 @@ class ExpansionTest(Frame):
             self.update_candidate_structure_activity()
 
             # STEP3 cool down those not simulatable structures
-            for k in range(COOL_DOWN_TIMES):
-                self.structure_manager.cool_down()
+            if COOL_DOWN_SWITCH:
+                for k in range(COOL_DOWN_TIMES):
+                    self.structure_manager.cool_down()
             i += 1
+
+    def add_reference_mode(self):
+        self.reference_mode_manager.add_reference_mode()
 
     # def simulate(self):
     #     self.session_handler1.simulation_handler(simulation_time=int(self.entry1.get()))
@@ -248,6 +270,52 @@ class ExpansionTest(Frame):
         """As a result of a higher similarity to (part of) the reference mode"""
         pass
 
+    # def get_reference_mode_file_name(self):
+    #     self.reference_mode_path = filedialog.askopenfilename()
+    #
+    # def add_reference_mode(self):
+    #     """
+    #     The logic is: file -> file in memory (numerical data) -> time series --selection--> reference mode
+    #     :return:
+    #     """
+    #     if self.reference_mode_path is None and len(self.time_series) == 0:  # either path not specified and no t-series
+    #         self.get_reference_mode_file_name()
+    #     self.numerical_data = pd.read_csv(self.reference_mode_path)
+    #     for column in self.numerical_data:
+    #         self.time_series[column] = self.numerical_data[column].tolist()
+    #     select_dialog = SelectReferenceModeWindow(self.time_series)
+    #     self.wait_window(select_dialog)  # important!
+    #     reference_mode_type = select_dialog.reference_mode_type
+    #     reference_mode_name = select_dialog.selected_reference_mode
+    #     if reference_mode_type is not None and reference_mode_name is not None:
+    #         self.reference_modes[reference_mode_name] = [reference_mode_type, self.time_series[reference_mode_name]]
+    #         print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
+    #
+    # def load_reference_mode(self):
+    #     self.add_reference_mode()
+
+
+class ReferenceModeManager(Toplevel):
+    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=5, y=130):
+        super().__init__()
+        self.title("Reference Mode Manager")
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+
+        self.reference_mode_path = reference_mode_path
+        self.numerical_data = None
+        self.time_series = dict()
+        self.reference_modes = reference_modes
+
+        self.fm_select = Frame(self)
+        self.fm_select.pack(side=LEFT)
+        self.lb_select = Label(self.fm_select, text='Reference\nModes', font=7)
+        self.lb_select.pack(anchor='nw')
+
+        self.fm_display = Frame(self)
+        self.fm_display.pack(side=LEFT)
+
+        self.generate_reference_mode_list_box()
+
     def get_reference_mode_file_name(self):
         self.reference_mode_path = filedialog.askopenfilename()
 
@@ -268,9 +336,36 @@ class ExpansionTest(Frame):
         if reference_mode_type is not None and reference_mode_name is not None:
             self.reference_modes[reference_mode_name] = [reference_mode_type, self.time_series[reference_mode_name]]
             print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
+        self.generate_reference_mode_list_box()
 
-    def load_reference_mode(self):
-        self.add_reference_mode()
+    def generate_reference_mode_list_box(self):
+        try:
+            self.reference_mode_list_box.destroy()
+        except AttributeError:
+            pass
+        self.reference_mode_list_box = Listbox(self.fm_select)
+        self.reference_mode_list_box.pack(side=TOP)
+
+        for ref_mode in self.reference_modes.keys():
+            self.reference_mode_list_box.insert(END, ref_mode)
+        self.reference_mode_list_box.bind('<<ListboxSelect>>', self.show_reference_mode)
+
+    def show_reference_mode(self, evt):
+        # self.reference_modes_name_list = list(self.reference_modes.keys())
+        # self.reference_mode_window1 = ReferenceModeWindow(self.reference_modes[self.reference_modes_name_list[0]][1],
+        #     self.reference_modes_name_list[0])
+        try:
+            self.reference_mode_graph.get_tk_widget().destroy()
+        except AttributeError:
+            pass
+        self.reference_mode_figure = Figure(figsize=(5, 4))
+        self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
+        self.reference_mode_plot.plot(self.time_series[self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())], '*')
+        self.reference_mode_plot.set_xlabel("Time")
+        self.reference_mode_plot.set_ylabel(self.reference_mode_list_box.get(self.reference_mode_list_box.curselection()))
+        self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
+        self.reference_mode_graph.draw()
+        self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
 
 
 class StructureUtilities(object):
@@ -350,7 +445,7 @@ class StructureManager(object):
     def __init__(self):
         self.tree = nx.DiGraph()
         self.uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue", width=800, height=800, x=750, y=50, attr='activity')
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue", width=800, height=800, x=800, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
 
@@ -478,7 +573,7 @@ class StructureManager(object):
 
     def update_candidate_structure_window(self):
         # try:
-        #     self.candidate_structure_window.candidate_structure_list.destroy()
+        #     self.candidate_structure_window.candidate_structure_list_box.destroy()
         # except:
         #     pass
         self.display_tree()
@@ -568,7 +663,7 @@ class CandidateStructureWindow(Toplevel):
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
 
-        self.lb_select = Label(self.fm_select, text='Candidate\nSturctures', font=8)
+        self.lb_select = Label(self.fm_select, text='Candidate\nSturctures', font=7)
         self.lb_select.pack(anchor='nw')
 
         self.tree = tree
@@ -584,30 +679,30 @@ class CandidateStructureWindow(Toplevel):
 
     def generate_candidate_structure_list(self):
         try:
-            self.candidate_structure_list.destroy()
+            self.candidate_structure_list_box.destroy()
             self.candidate_structure_list_scrollbar.destroy()
-        except:
+        except AttributeError:
             pass
 
-        self.candidate_structure_list = Listbox(self.fm_select)
-        self.candidate_structure_list.configure(width=10, height=20)
-        self.candidate_structure_list.pack(side=LEFT, fill=Y)
+        self.candidate_structure_list_box = Listbox(self.fm_select)
+        self.candidate_structure_list_box.configure(width=10, height=20)
+        self.candidate_structure_list_box.pack(side=LEFT, fill=Y)
 
         self.candidate_structure_list_scrollbar = Scrollbar(self.fm_select, orient="vertical")
-        self.candidate_structure_list_scrollbar.config(command=self.candidate_structure_list.yview)
+        self.candidate_structure_list_scrollbar.config(command=self.candidate_structure_list_box.yview)
         self.candidate_structure_list_scrollbar.pack(side=RIGHT, fill=Y)
 
         for u in list(self.tree.nodes):
             # print("adding entry", u)
-            self.candidate_structure_list.insert(END, u)
-        self.candidate_structure_list.bind('<<ListboxSelect>>', self.display_candidate)
+            self.candidate_structure_list_box.insert(END, u)
+        self.candidate_structure_list_box.bind('<<ListboxSelect>>', self.display_candidate)
 
     def display_candidate(self, evt):
         self.display_candidate_structure()
         self.display_candidate_behaviour()
 
     def display_candidate_structure(self):
-        selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
+        selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
         self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
 
         try:
@@ -646,7 +741,7 @@ class CandidateStructureWindow(Toplevel):
         except:
             pass
 
-        selected_entry = self.candidate_structure_list.get(self.candidate_structure_list.curselection())
+        selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
         self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
 
         # self.selected_candidate_structure.simulation_handler(25)
@@ -667,6 +762,7 @@ class SelectReferenceModeWindow(Toplevel):
         self.time_series = time_series
         self.selected_reference_mode = None
         self.reference_mode_type = None
+
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
         self.time_series_list = Listbox(self.fm_select)
@@ -743,7 +839,7 @@ class ComparisonWindow(object):
 
 
 class ReferenceModeWindow(object):
-    def __init__(self, time_series, time_series_name, width=500, height=430, x=200, y=50):
+    def __init__(self, time_series, time_series_name, width=500, height=430, x=250, y=50):
         self.top = Toplevel()
         self.top.title("Reference Mode")
         self.top.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -774,12 +870,10 @@ class ConceptCLDsLikelihoodWindow(Toplevel):
     def create_likelihood_display(self):
         for item, llikelihood in self.concept_clds_likelihood.items():
             text = item + " : " + str(llikelihood)
-            print('text', text)
             self.labels.append(Label(self.fm_labels, text=text, font=6))
             self.labels[-1].pack(side=TOP, anchor='w')
 
     def update_likelihood_display(self):
-        print("Here!", self.concept_clds_likelihood)
         try:
             self.fm_labels.destroy()
         except:
