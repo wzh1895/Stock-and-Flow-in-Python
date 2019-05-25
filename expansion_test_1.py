@@ -3,8 +3,8 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from config import ITERATION_TIME, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH
+from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
@@ -30,16 +30,25 @@ class ExpansionTest(Frame):
         self.session_handler1 = SessionHandler()
 
         self.menubar = Menu(self.master)
+
         self.file_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='File', menu=self.file_menu)
-
-        self.action_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Action', menu=self.action_menu)
-        self.action_menu.add_command(label='Main loop', command=self.main_loop)
+        self.file_menu.add_command(label='Quit', command=self.quit)
 
         self.reference_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
         self.reference_menu.add_command(label='Add reference mode', command=self.add_reference_mode)
+
+        self.model_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Model', menu=self.model_menu)
+        self.model_menu.add_command(label='Add stock', command=self.add_stock)
+        self.model_menu.add_command(label='Add flow', command=self.add_flow)
+        self.model_menu.add_command(label='Add variable', command=self.add_variable)
+
+
+        self.action_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Action', menu=self.action_menu)
+        self.action_menu.add_command(label='Main loop', command=self.main_loop)
 
         self.master.config(menu=self.menubar)
 
@@ -70,33 +79,36 @@ class ExpansionTest(Frame):
 
         # Reference modes
         self.reference_modes = dict()
+        self.reference_modes_assignment = dict()
 
         # Initialize reference mode manager
         self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
 
-        # self.reference_mode_manager.add_reference_mode()
-
-        # Main loop
-        # self.main_loop()
+        # TODO test
+        self.reference_mode_manager.add_reference_mode()
+        self.main_loop()
 
     def main_loop(self):
         # Specify round to iterate
-        self.iteration_time = ITERATION_TIME
+        self.iteration_time = ITERATION_TIMES
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
 
-            # STEP1 adjust concept CLDs' likelihood
-            for j in range(3):
+            # STEP scan reference mode list and add
+
+
+            # STEP adjust concept CLDs' likelihood
+            for j in range(CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES):
                 self.update_concept_clds_likelihood()
 
-            # STEP2 generate new candidate structure
+            # STEP generate new candidate structure
             self.generate_candidate_structure()
 
-            # STEP3 adjust candidate structures' activity
+            # STEP adjust candidate structures' activity
             self.update_candidate_structure_activity()
 
-            # STEP3 cool down those not simulatable structures
+            # STEP cool down those not simulatable structures
             if COOL_DOWN_SWITCH:
                 for k in range(COOL_DOWN_TIMES):
                     self.structure_manager.cool_down()
@@ -160,7 +172,7 @@ class ExpansionTest(Frame):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
-        new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
+        new = StructureUtilities.new_expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
@@ -171,13 +183,18 @@ class ExpansionTest(Frame):
         # ComparisonWindow(comparison_figure)
         return distance
 
-    def adjust_concept_cld_likelihood(self, ):
-        """As a result of a higher similarity to (part of) the reference mode"""
+    def add_stock(self):
+        pass
+
+    def add_flow(self):
+        pass
+
+    def add_variable(self):
         pass
 
 
 class ReferenceModeManager(Toplevel):
-    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=5, y=130):
+    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=130):
         super().__init__()
         self.title("Reference Mode Manager")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -252,7 +269,8 @@ class StructureManager(object):
     def __init__(self):
         self.tree = nx.DiGraph()
         self.uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue", width=800, height=800, x=800, y=50, attr='activity')
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
+                                                 width=800, height=800, x=1000, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
 
@@ -621,6 +639,31 @@ class SelectReferenceModeWindow(Toplevel):
         self.reference_mode_type = None
         self.selected_reference_mode = None
         self.destroy()
+
+
+class AddElementWindow(Toplevel):
+    def __init__(self, element_type, width=200, height=300, x=200, y=200):
+        super().__init__()
+        self.title("Add "+element_type)
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+
+        self.name = None
+        self.value = None
+        self.flow_from = None
+        self.flow_to = None
+        self.element_x = None
+        self.element_y = None
+
+        if element_type == STOCK:
+            self.stock_ui()
+        elif element_type == FLOW:
+            pass
+        elif element_type == VARIABLE:
+            pass
+
+    def stock_ui(self):
+        self.label_name = Label(self, text="Name:")
+        self.label_name.pack(side=LEFT, anchor='w')
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):

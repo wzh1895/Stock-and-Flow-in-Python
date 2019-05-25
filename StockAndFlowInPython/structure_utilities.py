@@ -1,6 +1,7 @@
 import networkx as nx
 import copy
 import random
+from networkx.algorithms import chain_decomposition
 
 
 class StructureUtilities(object):
@@ -72,3 +73,27 @@ class StructureUtilities(object):
         # print("New structure edges:", new_base.model_structure.sfd.edges.data())
 
         return new_base
+
+    @staticmethod
+    def new_expand_structure(base_structure, target_structure):
+        new_base = copy.deepcopy(base_structure)
+        print("    Base_structure nodes: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
+        print("    Target_structure nodes: ", target_structure.model_structure.sfd.nodes(data='function', default='Not available'))
+        print("    Target_structure edges ", target_structure.model_structure.sfd.edges)
+
+        # Base
+
+        # get all elements in base structure
+        base_structure_elements = list(new_base.model_structure.sfd.nodes)
+        # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
+
+
+        return new_base
+
+    @staticmethod
+    def chains(structure):
+        structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
+        structure_chains = list()
+        for chain in structure_chains_generator:
+            structure_chains.append(chain)
+        print(structure_chains)

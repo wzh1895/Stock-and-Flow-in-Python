@@ -48,11 +48,24 @@ MULTIPLICATION = Functions.multiplication
 function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
 
 
+class UidManager(object):
+    def __init__(self):
+        self.uid = 0
+
+    def get_new_uid(self):
+        n = self.uid
+        self.uid += 1
+        return n
+
+    def current(self):
+        return self.uid
+
+
 class Structure(object):
     def __init__(self, structure_name='default'):
         self.sfd = nx.DiGraph()
         self.sfd.graph['structure_name'] = structure_name
-        self.uid = 0
+        self.uid_manager = UidManager()
         self.simulation_time = None
         self.maximum_steps = 1000
         self.dt = 0.25
@@ -63,14 +76,15 @@ class Structure(object):
                                          'first_order_negative': self.first_order_negative
                                          }
 
-    def uid_getter(self):
-        self.uid += 1
-        return self.uid
+    # def uid_getter(self):
+    #     self.uid += 1
+    #     return self.uid
 
     def add_element(self, element_name, element_type, flow_from=None, flow_to=None, x=0, y=0, function=None, value=None, points=None):
+        uid = self.uid_manager.get_new_uid()
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
-        self.sfd.add_node(element_name, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
+        self.sfd.add_node(element_name, uid=uid, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
         # print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
@@ -79,7 +93,7 @@ class Structure(object):
     def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
         for from_variable in function[1:]:
             # print('Graph: adding causality, from_var:', from_variable)
-            self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_getter(),
+            self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_manager.get_new_uid(),
                                angle=from_variable[1])
 
     def add_causality(self, from_element, to_element, uid=0, angle=0, polarity=None, display=True):  # add one causality
