@@ -38,12 +38,15 @@ class ExpansionTest(Frame):
         self.reference_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
         self.reference_menu.add_command(label='Add reference mode', command=self.add_reference_mode)
+        self.reference_menu.add_command(label='Bind ref to variable', command=self.add_reference_mode)
 
         self.model_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Model', menu=self.model_menu)
         self.model_menu.add_command(label='Add stock', command=self.add_stock)
         self.model_menu.add_command(label='Add flow', command=self.add_flow)
         self.model_menu.add_command(label='Add variable', command=self.add_variable)
+        #TODO
+        self.model_menu.add_command(label='Add connector', command=None)
 
 
         self.action_menu = Menu(self.menubar, tearoff=0)
@@ -183,6 +186,7 @@ class ExpansionTest(Frame):
         # ComparisonWindow(comparison_figure)
         return distance
 
+    #TODO
     def add_stock(self):
         add_dialog = AddElementWindow(STOCK)
         self.wait_window(add_dialog)  # important!
@@ -192,6 +196,7 @@ class ExpansionTest(Frame):
         y = int(add_dialog.element_y)
         print(element_name, value, x, y)
 
+    #TODO
     def add_flow(self):
         add_dialog = AddElementWindow(FLOW)
         self.wait_window(add_dialog)  # important!
@@ -203,6 +208,7 @@ class ExpansionTest(Frame):
         flow_from = add_dialog.flow_from
         print(element_name, value, x, y, flow_to, flow_from)
 
+    #TODO
     def add_variable(self):
         add_dialog = AddElementWindow(VARIABLE)
         self.wait_window(add_dialog)  # important!
