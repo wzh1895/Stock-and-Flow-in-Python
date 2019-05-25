@@ -17,8 +17,6 @@ import networkx as nx
 import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import random
-import copy
-import time
 
 
 class ExpansionTest(Frame):
@@ -109,20 +107,25 @@ class ExpansionTest(Frame):
             self.generate_candidate_structure()
 
             # STEP adjust candidate structures' activity
-            self.update_candidate_structure_activity()
+            self.update_candidate_structure_activity_by_behavior()
 
             # STEP cool down those not simulatable structures
             if COOL_DOWN_SWITCH:
                 for k in range(COOL_DOWN_TIMES):
                     self.structure_manager.cool_down()
+
+            # STEP sort candidate structures by activity
+            # TODO: control this not only by number
+            if i > 4:  # get enough candidate structures to sort
+                self.structure_manager.sort_by_activity()
             i += 1
 
     def add_reference_mode(self):
         self.reference_mode_manager.add_reference_mode()
 
-    def update_candidate_structure_activity(self):
-        if len(self.structure_manager.tree.nodes) > 5:  # only do this when there are more than 3 candidates
-            # TODO: improve this control, not using ballpark number
+    def update_candidate_structure_activity_by_behavior(self):
+        if len(self.structure_manager.tree.nodes) > 10:  # only do this when there are more than 3 candidates
+            # TODO: improve this control, not only by number
             # Get 2 random candidates
             random_two_candidates = [None, None]
             while random_two_candidates[0] == random_two_candidates[1]:
@@ -148,7 +151,7 @@ class ExpansionTest(Frame):
                     self.structure_manager.update_activity_elo(random_two_candidates[1], random_two_candidates[0])
                 else:
                     self.structure_manager.update_activity_elo(random_two_candidates[0], random_two_candidates[1])
-            print(self.structure_manager.show_all_activity())
+            # print("All nodes' activity:", self.structure_manager.show_all_activity())
 
     def update_concept_clds_likelihood(self):
         random_two_clds = [None, None]
@@ -175,7 +178,8 @@ class ExpansionTest(Frame):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
-        new = StructureUtilities.new_expand_structure(base_structure=base, target_structure=target)
+        # new = StructureUtilities.new_expand_structure(base_structure=base, target_structure=target)
+        new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
@@ -299,6 +303,16 @@ class StructureManager(object):
                                                  width=800, height=800, x=1000, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
+
+    def sort_by_activity(self):
+        # sort all candidate structures by activity
+        sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
+        # print('sorted:', sorted_tree)
+        string=''
+        for i in range(3):
+            string += str(sorted_tree[i][0]) + '[{}] '.format(sorted_tree[i][1])
+        self.candidate_structure_window.label_top_three_0.configure(text=string)
+        self.candidate_structure_window.label_top_three_0.update()
 
     def show_all_activity(self):
         all_activity = nx.get_node_attributes(self.tree, 'activity')
@@ -510,8 +524,8 @@ class CandidateStructureWindow(Toplevel):
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
 
-        self.lb_select = Label(self.fm_select, text='Candidate\nSturctures', font=7)
-        self.lb_select.pack(anchor='nw')
+        self.label_select = Label(self.fm_select, text='Candidate\nSturctures', font=6)
+        self.label_select.pack(anchor='nw')
 
         self.tree = tree
 
@@ -522,7 +536,16 @@ class CandidateStructureWindow(Toplevel):
         self.fm_display_behaviour = Frame(self)
         self.fm_display_behaviour.configure(width=500)
         self.fm_display_behaviour.pack(side=LEFT)
+
         self.generate_candidate_structure_list()
+
+        self.fm_logging = Frame(self)
+        self.fm_logging.pack(side=BOTTOM)
+
+        self.label_top_three_0 = Label(self.fm_select, text='', font=6)
+        self.label_top_three_0.pack(side=BOTTOM, anchor='nw')
+        self.label_top_three_1 = Label(self.fm_select, text='Top 3 \nCandidates:', font=6)
+        self.label_top_three_1.pack(side=BOTTOM, anchor='nw')
 
     def generate_candidate_structure_list(self):
         try:
