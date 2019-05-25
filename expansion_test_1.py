@@ -4,7 +4,7 @@ from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
@@ -107,12 +107,16 @@ class ExpansionTest(Frame):
             self.generate_candidate_structure()
 
             # STEP adjust candidate structures' activity
-            self.update_candidate_structure_activity_by_behavior()
+            for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):
+                self.update_candidate_structure_activity_by_behavior()
 
             # STEP cool down those not simulatable structures
             if COOL_DOWN_SWITCH:
                 for k in range(COOL_DOWN_TIMES):
                     self.structure_manager.cool_down()
+
+            # STEP purge zero activity structures
+            self.structure_manager.purge_low_activity_structures()
 
             # STEP sort candidate structures by activity
             # TODO: control this not only by number
@@ -422,8 +426,8 @@ class StructureManager(object):
         k = 4
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
-        self.tree.nodes[winner]['activity'] = round(r_winner) if r_winner > 0 else 1
-        self.tree.nodes[loser]['activity'] = round(r_loser) if r_loser > 0 else 1
+        self.tree.nodes[winner]['activity'] = round(r_winner) if r_winner > 0 else 0
+        self.tree.nodes[loser]['activity'] = round(r_loser) if r_loser > 0 else 0
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
@@ -439,6 +443,21 @@ class StructureManager(object):
     def update_candidate_structure_window(self):
         self.display_tree()
         self.candidate_structure_window.generate_candidate_structure_list()
+
+    def purge_low_activity_structures(self):
+        elements = list(self.tree.nodes)
+        for element in elements:
+            if self.tree.nodes[element]['activity'] <= 0:
+                #TODO in the future, consider when edge has its attributes
+                in_edges_to_element = self.tree.in_edges(element)
+                print("In edges to 0 act ele:", in_edges_to_element)
+                out_edges_from_element = self.tree.out_edges(element)
+                print("Out edges from 0 act ele:", out_edges_from_element)
+                for in_edge in in_edges_to_element:
+                    for out_edge in out_edges_from_element:
+                        self.tree.add_edge(in_edge[0], out_edge[1])
+                self.tree.remove_node(element)
+                print("Low activity structure {} is purged.".format(element))
 
 
 class ConceptManager(object):
