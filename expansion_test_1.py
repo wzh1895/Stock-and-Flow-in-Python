@@ -184,13 +184,33 @@ class ExpansionTest(Frame):
         return distance
 
     def add_stock(self):
-        pass
+        add_dialog = AddElementWindow(STOCK)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        print(element_name, value, x, y)
 
     def add_flow(self):
-        pass
+        add_dialog = AddElementWindow(FLOW)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        flow_to = add_dialog.flow_to
+        flow_from = add_dialog.flow_from
+        print(element_name, value, x, y, flow_to, flow_from)
 
     def add_variable(self):
-        pass
+        add_dialog = AddElementWindow(VARIABLE)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        print(element_name, value, x, y)
 
 
 class ReferenceModeManager(Toplevel):
@@ -397,10 +417,6 @@ class StructureManager(object):
         self.tree_window.update_graph_network()
 
     def update_candidate_structure_window(self):
-        # try:
-        #     self.candidate_structure_window.candidate_structure_list_box.destroy()
-        # except:
-        #     pass
         self.display_tree()
         self.candidate_structure_window.generate_candidate_structure_list()
 
@@ -642,7 +658,7 @@ class SelectReferenceModeWindow(Toplevel):
 
 
 class AddElementWindow(Toplevel):
-    def __init__(self, element_type, width=200, height=300, x=200, y=200):
+    def __init__(self, element_type, width=200, height=350, x=200, y=200):
         super().__init__()
         self.title("Add "+element_type)
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -654,16 +670,57 @@ class AddElementWindow(Toplevel):
         self.element_x = None
         self.element_y = None
 
-        if element_type == STOCK:
-            self.stock_ui()
-        elif element_type == FLOW:
-            pass
-        elif element_type == VARIABLE:
-            pass
-
-    def stock_ui(self):
         self.label_name = Label(self, text="Name:")
-        self.label_name.pack(side=LEFT, anchor='w')
+        self.label_name.pack(side=TOP, anchor='w')
+        self.entry_name = Entry(self)
+        self.entry_name.pack(side=TOP)
+
+        self.label_value = Label(self, text="Value:")
+        self.label_value.pack(side=TOP, anchor='w')
+        self.entry_value = Entry(self)
+        self.entry_value.pack(side=TOP)
+
+        self.label_x = Label(self, text="x:")
+        self.label_x.pack(side=TOP, anchor='w')
+        self.entry_x = Entry(self)
+        self.entry_x.pack(side=TOP)
+
+        self.label_y = Label(self, text="y:")
+        self.label_y.pack(side=TOP, anchor='w')
+        self.entry_y = Entry(self)
+        self.entry_y.pack(side=TOP)
+
+        if element_type == FLOW:
+            self.label_flow_to = Label(self, text="Flow to:")
+            self.label_flow_to.pack(side=TOP, anchor='w')
+            self.entry_flow_to = Entry(self)
+            self.entry_flow_to.pack(side=TOP)
+
+            self.label_flow_from = Label(self, text="Flow from:")
+            self.label_flow_from.pack(side=TOP, anchor='w')
+            self.entry_flow_from = Entry(self)
+            self.entry_flow_from.pack(side=TOP)
+
+        self.fm_buttons = Frame(self)
+        self.fm_buttons.pack(side=TOP, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+
+    def confirm(self):
+        self.name = self.entry_name.get()
+        self.value = self.entry_value.get()
+        self.element_x = self.entry_x.get()
+        self.element_y = self.entry_y.get()
+        self.destroy()
+
+    def cancel(self):
+        self.name = None
+        self.value = None
+        self.element_x = None
+        self.element_y = None
+        self.destroy()
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):
