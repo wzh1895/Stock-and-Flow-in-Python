@@ -460,8 +460,14 @@ class StructureManager(object):
         k = 8
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
-        self.tree.nodes[winner]['activity'] = round(r_winner) if r_winner > 1 else 1
-        self.tree.nodes[loser]['activity'] = round(r_loser) if r_loser > 1 else 1
+        def normalize(r):
+            if r > 50:
+                r = 50
+            elif r < 1:
+                r = 1
+            return r
+        self.tree.nodes[winner]['activity'] = round(normalize(r_winner))
+        self.tree.nodes[loser]['activity'] = round(normalize(r_loser))
 
     def generate_distribution_weighted(self):
         """Generate a list, containing multiple uids of each structure with weighted distribution"""
@@ -474,14 +480,12 @@ class StructureManager(object):
     def display_tree(self):
         tree_node_color = list()
         if len(self.sorted_tree) > 3:  # when the sorted tree is generated
-            # max_activity = self.sorted_tree[0][1]
-            # for s_uid, activity in self.sorted_tree:
-            #     tree_node_color.append(str(activity / max_activity))  # use gray level
-            tree_node_color.append('orangered')
-            tree_node_color.append('coral')
-            tree_node_color.append('salmon')
-            for i in range(3, len(self.sorted_tree)+1):
-                tree_node_color.append('skyblue')
+            top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
+            for element in self.tree.nodes:
+                if element in top_three:
+                    tree_node_color.append('orangered')
+                else:
+                    tree_node_color.append('skyblue')
         else:
             tree_node_color = 'skyblue'
         print("HERE", tree_node_color)
@@ -572,10 +576,14 @@ class ConceptManager(object):
         k = 16
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
-        # self.concept_clds[winner].model_structure.sfd.graph['likelihood'] = r_winner
-        # self.concept_clds[loser].model_structure.sfd.graph['likelihood'] = r_loser
-        self.concept_clds_likelihood[winner] = round(r_winner) if r_winner > 0 else 1
-        self.concept_clds_likelihood[loser] = round(r_loser) if r_loser > 0 else 1
+        def normalize(r):
+            if r > 50:
+                r = 50
+            elif r < 1:
+                r = 1
+            return r
+        self.concept_clds_likelihood[winner] = round(normalize(r_winner))
+        self.concept_clds_likelihood[loser] = round(normalize(r_loser))
 
         self.concept_clds_likelihood_window.update_likelihood_display()
 
