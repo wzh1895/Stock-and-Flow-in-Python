@@ -139,7 +139,7 @@ class ExpansionTest(Frame):
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
 
     def update_candidate_structure_activity_by_behavior(self):
-        if len(self.structure_manager.tree.nodes) > 10:  # only do this when there are more than 3 candidates
+        if len(self.structure_manager.tree.nodes) > 3:  # only do this when there are more than 3 candidates
             # TODO: improve this control, not only by number
             # Get 2 random candidates
             random_two_candidates = [None, None]
@@ -151,22 +151,28 @@ class ExpansionTest(Frame):
                     random_two_candidates = self.structure_manager.random_pair_even()
             print("Two candidate structures chosen for comparison: ", random_two_candidates)
             # Calculate their similarity to reference mode
-            random_two_candidates_distance = {random_two_candidates[0]: self.behavioral_distance(
-             self.structure_manager.tree.nodes[random_two_candidates[0]]['structure'].model_structure.sfd.node['stock0']['value'],
-             self.reference_modes['stock0'][1]
-            ),
-                                                random_two_candidates[1]: self.behavioral_distance(
-             self.structure_manager.tree.nodes[random_two_candidates[1]]['structure'].model_structure.sfd.node['stock0']['value'],
-             self.reference_modes['stock0'][1]
+            candidate_0_distance = 0
+            candidate_1_distance = 0
+            s_uid_0 = random_two_candidates[0]
+            s_uid_1 = random_two_candidates[1]
+            for reference_mode_name, reference_mode_property in self.reference_modes.items():
+                uid = self.reference_modes_binding[reference_mode_name]
+                candidate_0_distance += self.behavioral_distance(
+             self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)['value'],
+             reference_mode_property[1]
             )
-            }
-            print(random_two_candidates_distance)
+                candidate_1_distance += self.behavioral_distance(
+             self.structure_manager.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)['value'],
+             reference_mode_property[1]
+            )
+
+            print(candidate_0_distance, candidate_1_distance)
             # Update their activity
-            if random_two_candidates_distance[random_two_candidates[0]] != random_two_candidates_distance[random_two_candidates[1]]:
-                if random_two_candidates_distance[random_two_candidates[0]] > random_two_candidates_distance[random_two_candidates[1]]:
-                    self.structure_manager.update_activity_elo(random_two_candidates[1], random_two_candidates[0])
+            if candidate_0_distance != candidate_1_distance:
+                if candidate_0_distance > candidate_1_distance:
+                    self.structure_manager.update_activity_elo(s_uid_1, s_uid_0)
                 else:
-                    self.structure_manager.update_activity_elo(random_two_candidates[0], random_two_candidates[1])
+                    self.structure_manager.update_activity_elo(s_uid_0, s_uid_1)
             # print("All nodes' activity:", self.structure_manager.show_all_activity())
 
     def update_concept_clds_likelihood(self):

@@ -65,6 +65,7 @@ class Structure(object):
         self.sfd = nx.DiGraph()
         self.sfd.graph['structure_name'] = structure_name
         self.uid_manager = UidManager()
+        self.uid_element_name = dict()
         self.simulation_time = None
         self.maximum_steps = 1000
         self.dt = 0.25
@@ -88,6 +89,7 @@ class Structure(object):
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
             self.add_function_dependencies(element_name, function)
+        self.uid_element_name[uid] = element_name
         return uid
 
     def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
@@ -98,6 +100,9 @@ class Structure(object):
 
     def add_causality(self, from_element, to_element, uid=0, angle=0, polarity=None, display=True):  # add one causality
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
+
+    def get_element_by_uid(self, uid):
+        return self.sfd.nodes[self.uid_element_name[uid]]
 
     def print_elements(self):
         print('Graph: All elements in this SFD:')
