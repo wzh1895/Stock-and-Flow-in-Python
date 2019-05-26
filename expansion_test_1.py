@@ -577,7 +577,7 @@ class CandidateStructureWindow(Toplevel):
             pass
 
         self.candidate_structure_list_box = Listbox(self.fm_select)
-        self.candidate_structure_list_box.configure(width=10, height=20)
+        self.candidate_structure_list_box.configure(width=15, height=20)
         self.candidate_structure_list_box.pack(side=LEFT, fill=Y)
 
         self.candidate_structure_list_scrollbar = Scrollbar(self.fm_select, orient="vertical")

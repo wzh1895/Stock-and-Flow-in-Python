@@ -53,9 +53,8 @@ class UidManager(object):
         self.uid = 0
 
     def get_new_uid(self):
-        n = self.uid
         self.uid += 1
-        return n
+        return self.uid
 
     def current(self):
         return self.uid
@@ -89,6 +88,7 @@ class Structure(object):
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
             self.add_function_dependencies(element_name, function)
+        return uid
 
     def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
         for from_variable in function[1:]:
@@ -233,8 +233,9 @@ class Structure(object):
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
-        self.add_element(name, element_type=STOCK, x=x, y=y, value=equation)
+        uid = self.add_element(name, element_type=STOCK, x=x, y=y, value=equation)
         # print('Graph: added stock:', name, 'to graph.')
+        return uid
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
         # Decide if the 'equation' is a function or a constant number
@@ -245,9 +246,10 @@ class Structure(object):
         else:
             function = equation  # it's a function
             value = list()
-        self.add_element(name, element_type=FLOW, flow_from=flow_from, flow_to=flow_to, x=x, y=y, function=function, value=value, points=points)
+        uid = self.add_element(name, element_type=FLOW, flow_from=flow_from, flow_to=flow_to, x=x, y=y, function=function, value=value, points=points)
         self.create_stock_flow_connection(name, structure_name, flow_from=flow_from, flow_to=flow_to)
         # print('Graph: added flow:', name, 'to graph.')
+        return uid
 
     def create_stock_flow_connection(self, name, structure_name, flow_from=None, flow_to=None):
         """
@@ -270,16 +272,17 @@ class Structure(object):
         # Decide if this aux is a parameter or variable
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number, it's a parameter
-            self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
+            uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable, has its own function
-            self.add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
+            uid = self.add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
             # Then it is assumed to take information from other variables, therefore causal links should be created.
             # Already implemented in structure's add_element function, not needed here.
             # for info_source_var in equation[1]:
             #     if info_source_var in self.structures[structure_name].sfd.nodes:  # if this info_source is a var
             #         self.structures[structure_name].add_causality(info_source_var, name)
         # print('Graph: added aux', name, 'to graph.')
+        return uid
 
     def replace_equation(self, name, new_equation, structure_name='default'):
         """

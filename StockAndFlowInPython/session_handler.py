@@ -350,10 +350,11 @@ class SessionHandler(object):
             x = pos[0]
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
-        self.model_structure.add_stock(name=name, equation=[initial_value], x=x, y=y)
+        uid = self.model_structure.add_stock(name=name, equation=[initial_value], x=x, y=y)
         # TODO: fix this line
         # self.refresh()
         time.sleep(SLEEP_TIME)
+        return uid
 
     def wrap_equation(self, equation):
         """
@@ -428,7 +429,7 @@ class SessionHandler(object):
 
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
-        self.model_structure.add_flow(name=name,
+        uid = self.model_structure.add_flow(name=name,
                                       equation=equation,
                                       flow_from=flow_from,
                                       flow_to=flow_to,
@@ -437,6 +438,7 @@ class SessionHandler(object):
                                       points=points)
         self.refresh()
         time.sleep(SLEEP_TIME)
+        return uid
 
     def build_aux(self, name, equation, x=0, y=0):
         """
@@ -464,12 +466,13 @@ class SessionHandler(object):
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
-        self.model_structure.add_aux(name=name,
+        uid = self.model_structure.add_aux(name=name,
                                      equation=equation,
                                      x=x,
                                      y=y)
         self.refresh()
         time.sleep(SLEEP_TIME)
+        return uid
 
     def generate_location(self, sfd_window, linked_vars):
         """
