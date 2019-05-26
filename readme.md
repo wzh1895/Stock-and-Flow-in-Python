@@ -5,7 +5,7 @@ This project contains utilities for System Dynamics in Python.
 It contains the following functions:
 
 - Display and simulate simple System Dynamics model using a graph-based engine.
-- [Similarity Calculation](StockAndFlowInPython/similarity_calculation/readme.md): compare behaviors and quantify the similarity.
+- [Similarity Calculation](StockAndFlowInPython/behaviour_utilities/readme.md): compare behaviors and quantify the similarity.
 - Suggestion of possible generic structure for a given reference mode, based on similarity calculation.
 - [Stmx Generator](StockAndFlowInPython/stmx_generator/readme.md): store a model in a .stmx file, which can be used by Stella.
 

@@ -3,7 +3,7 @@ from tkinter import ttk
 from StockAndFlowInPython.session_handler import SessionHandler
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import SimilarityCalculator
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
 import pandas as pd
@@ -95,7 +95,7 @@ class ControllerBar(Frame):
     def calculate_similarity(self):
         self.suggested_generic_structure, self.comparison_figure = SimilarityCalculator.categorize_behavior(
             who_compare=self.reference_mode1.time_series,
-            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
+            compare_with='./StockAndFlowInPython/behaviour_utilities/basic_behaviors.csv')
         self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
         self.comparison_window1 = ComparisonWindow(self.comparison_figure)
 

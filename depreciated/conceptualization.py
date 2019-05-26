@@ -5,7 +5,7 @@ Main function of the program
 from matplotlib.figure import Figure
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.similarity_calculation.similarity_calc import similarity_calc
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 import numpy as np
 import pandas as pd

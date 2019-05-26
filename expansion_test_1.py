@@ -6,11 +6,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
     COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
-from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
-from StockAndFlowInPython.structure_utilities import StructureUtilities
+from StockAndFlowInPython.structure_utilities.structure_utilities import expand_structure, new_expand_structure
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -133,10 +133,11 @@ class ExpansionTest(Frame):
             # Get 2 random candidates
             random_two_candidates = [None, None]
             while random_two_candidates[0] == random_two_candidates[1]:
-                random_two_candidates = self.structure_manager.random_pair()
+                # Here we don't use the weighted random pair, to give those less active more opportunity
+                random_two_candidates = self.structure_manager.random_pair_even()
                 while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and self.structure_manager.if_can_simulate[random_two_candidates[1]]):
                     # we have to get two simulatable structures to compare their behaviors
-                    random_two_candidates = self.structure_manager.random_pair()
+                    random_two_candidates = self.structure_manager.random_pair_weighted()
             print("Two candidate structures chosen for comparison: ", random_two_candidates)
             # Calculate their similarity to reference mode
             random_two_candidates_distance = {random_two_candidates[0]: self.behavioral_distance(
@@ -182,14 +183,14 @@ class ExpansionTest(Frame):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
-        # new = StructureUtilities.new_expand_structure(base_structure=base, target_structure=target)
-        new = StructureUtilities.expand_structure(base_structure=base, target_structure=target)
+        # new = new_expand_structure(base_structure=base, target_structure=target)
+        new = expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def behavioral_distance(self, who_compare, compare_with):
         print("    Expansion: Calculating similarity...")
-        distance, comparison_figure = SimilarityCalculator.similarity_calc(np.array(who_compare).reshape(-1, 1),
+        distance, comparison_figure = similarity_calc(np.array(who_compare).reshape(-1, 1),
                                                                            np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
@@ -403,15 +404,17 @@ class StructureManager(object):
 
     def random_single(self):
         """Return one structure"""
-        random_structure_uid = random.choice(self.generate_distribution())
+        random_structure_uid = random.choice(self.generate_distribution_weighted())
         print('    No. {} is chosen as base_structure;'.format(random_structure_uid))
         return self.tree.nodes[random_structure_uid]['structure']
 
-    def random_pair(self):
+    def random_pair_weighted(self):
         """Return a pair of structures for competition"""
-        random_structures_uid = random.choices(self.generate_distribution(), k=2)
-        # return self.tree.nodes[random_structures_uid[0]]['structure'], \
-        #        self.tree.nodes[random_structures_uid[1]]['structure']
+        random_structures_uid = random.choices(self.generate_distribution_weighted(), k=2)
+        return random_structures_uid
+
+    def random_pair_even(self):
+        random_structures_uid = random.choices(list(self.tree.nodes), k=2)
         return random_structures_uid
 
     def update_activity_elo(self, winner, loser):
@@ -423,14 +426,14 @@ class StructureManager(object):
         gain_winner = 1
         gain_loser = 0
         # maximum activity one can get or lose in a round of comparison
-        k = 4
+        k = 8
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
-        self.tree.nodes[winner]['activity'] = round(r_winner) if r_winner > 0 else 0
-        self.tree.nodes[loser]['activity'] = round(r_loser) if r_loser > 0 else 0
+        self.tree.nodes[winner]['activity'] = round(r_winner) if r_winner > 1 else 1
+        self.tree.nodes[loser]['activity'] = round(r_loser) if r_loser > 1 else 1
 
-    def generate_distribution(self):
-        """Generate a list, containing multiple uids of each structure"""
+    def generate_distribution_weighted(self):
+        """Generate a list, containing multiple uids of each structure with weighted distribution"""
         distribution_list = list()
         for u in list(self.tree.nodes):
             for i in range(self.tree.nodes[u]['activity']):
@@ -772,7 +775,7 @@ class AddElementWindow(Toplevel):
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):
-    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=200, height=150, x=5, y=200):
+    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=200, x=5, y=200):
         super().__init__()
         self.title(window_title)
         self.width = width

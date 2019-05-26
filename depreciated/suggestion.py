@@ -2,7 +2,7 @@ from tkinter import *
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from controller_bar import ControllerBar
-from StockAndFlowInPython.similarity_calculation.similarity_calc import SimilarityCalculator
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import SimilarityCalculator
 import pandas as pd
 import numpy as np
 
@@ -34,7 +34,7 @@ class SuggestionPanel(ControllerBar):
     def calculate_similarity(self):
         self.suggested_generic_structure, self.comparison_figure = self.similarity_calculator1.categorize_behavior(
             who_compare=self.reference_mode1.time_series,
-            compare_with='./StockAndFlowInPython/similarity_calculation/basic_behaviors.csv')
+            compare_with='./StockAndFlowInPython/behaviour_utilities/basic_behaviors.csv')
         self.lb_suggested_generic_stucture.config(text="Reference mode pattern: "+self.suggested_generic_structure)
         self.comparison_window1 = ComparisonWindow(self.comparison_figure)
 
