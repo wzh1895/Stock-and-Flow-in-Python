@@ -35,8 +35,8 @@ class ExpansionTest(Frame):
 
         self.reference_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
-        self.reference_menu.add_command(label='Add reference mode', command=self.add_reference_mode)
-        self.reference_menu.add_command(label='Bind ref to variable', command=self.add_reference_mode)
+        self.reference_menu.add_command(label='Add reference mode', command=self.load_reference_mode_from_file)
+        self.reference_menu.add_command(label='Bind ref to variable', command=self.load_reference_mode_from_file)
 
         self.model_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Model', menu=self.model_menu)
@@ -45,7 +45,6 @@ class ExpansionTest(Frame):
         self.model_menu.add_command(label='Add variable', command=self.add_variable)
         #TODO
         self.model_menu.add_command(label='Add connector', command=None)
-
 
         self.action_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Action', menu=self.action_menu)
@@ -72,32 +71,28 @@ class ExpansionTest(Frame):
 
         # Initialize structure manager
         self.structure_manager = StructureManager()
-        root_structure = SessionHandler()
-        root_structure.build_stock(name='stock0', initial_value=50, x=100, y=100)
-        root_structure.simulation_handler(25)
-        self.structure_manager.add_structure(structure=root_structure)
-        self.structure_manager.if_can_simulate[0] = True
 
         # Reference modes
         self.reference_modes = dict()
-        self.reference_modes_assignment = dict()
+        self.reference_modes_binding = dict()  # reference_mode_name : uid
 
         # Initialize reference mode manager
         self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
 
         # TODO test
-        self.reference_mode_manager.add_reference_mode()
+        self.reference_mode_manager.load_reference_mode_from_file()
         self.main_loop()
 
     def main_loop(self):
+
+        # Build element for each reference mode in root structure
+        self.build_element_for_reference_modes()
+
         # Specify round to iterate
         self.iteration_time = ITERATION_TIMES
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
-
-            # STEP scan reference mode list and add
-
 
             # STEP adjust concept CLDs' likelihood
             for j in range(CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES):
@@ -124,8 +119,24 @@ class ExpansionTest(Frame):
                 self.structure_manager.sort_by_activity()
             i += 1
 
-    def add_reference_mode(self):
-        self.reference_mode_manager.add_reference_mode()
+    def load_reference_mode_from_file(self):
+        self.reference_mode_manager.load_reference_mode_from_file()
+
+    def build_element_for_reference_modes(self):
+        structure = SessionHandler()
+        for reference_mode_name, reference_mode_properties in self.reference_modes.items():
+            if reference_mode_properties[0] == STOCK:
+                uid = structure.build_stock(name=reference_mode_name, initial_value=reference_mode_properties[1][0],
+                                            x=100,
+                                            y=100)
+            elif reference_mode_properties[0] == FLOW:
+                uid = structure.build_flow(name=reference_mode_name, equation=0, x=100, y=100)
+            elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
+                uid = structure.build_aux(name=reference_mode_name, equation=0, x=100, y=100)
+            self.reference_modes_binding[reference_mode_name] = uid
+        structure.simulation_handler(25)
+        self.structure_manager.add_structure(structure=structure)
+        self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
 
     def update_candidate_structure_activity_by_behavior(self):
         if len(self.structure_manager.tree.nodes) > 10:  # only do this when there are more than 3 candidates
@@ -137,7 +148,7 @@ class ExpansionTest(Frame):
                 random_two_candidates = self.structure_manager.random_pair_even()
                 while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and self.structure_manager.if_can_simulate[random_two_candidates[1]]):
                     # we have to get two simulatable structures to compare their behaviors
-                    random_two_candidates = self.structure_manager.random_pair_weighted()
+                    random_two_candidates = self.structure_manager.random_pair_even()
             print("Two candidate structures chosen for comparison: ", random_two_candidates)
             # Calculate their similarity to reference mode
             random_two_candidates_distance = {random_two_candidates[0]: self.behavioral_distance(
@@ -252,7 +263,7 @@ class ReferenceModeManager(Toplevel):
     def get_reference_mode_file_name(self):
         self.reference_mode_path = filedialog.askopenfilename()
 
-    def add_reference_mode(self):
+    def load_reference_mode_from_file(self):
         """
         The logic is: file -> file in memory (numerical data) -> time series --selection--> reference mode
         :return:
@@ -303,7 +314,7 @@ class StructureManager(object):
 
     def __init__(self):
         self.tree = nx.DiGraph()
-        self.uid = 0
+        self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
                                                  width=800, height=800, x=1000, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
@@ -323,14 +334,17 @@ class StructureManager(object):
         all_activity = nx.get_node_attributes(self.tree, 'activity')
         return all_activity
 
-    def generate_uid(self):
+    def get_new_candidate_structure_uid(self):
         """Get unique id for structure"""
-        self.uid += 1
-        return self.uid - 1
+        self.candidate_structure_uid += 1
+        return self.candidate_structure_uid
+
+    def get_current_candidate_structure_uid(self):
+        return self.candidate_structure_uid
 
     def add_structure(self, structure):
         """Add a structure, usually as starting point"""
-        self.tree.add_node(self.generate_uid(), structure=structure, activity=INITIAL_ACTIVITY)
+        self.tree.add_node(self.get_new_candidate_structure_uid(), structure=structure, activity=INITIAL_ACTIVITY)
         self.update_candidate_structure_window()
 
     def get_uid_by_structure(self, structure):
@@ -369,7 +383,7 @@ class StructureManager(object):
                 return
 
         # add a new node
-        new_uid = self.generate_uid()
+        new_uid = self.get_new_candidate_structure_uid()
         print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
         new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']//ACTIVITY_DEMOMINATOR
         self.tree.add_node(new_uid,
