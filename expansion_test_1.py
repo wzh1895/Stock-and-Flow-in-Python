@@ -43,7 +43,7 @@ class ExpansionTest(Frame):
         self.model_menu.add_command(label='Add stock', command=self.add_stock)
         self.model_menu.add_command(label='Add flow', command=self.add_flow)
         self.model_menu.add_command(label='Add variable', command=self.add_variable)
-        #TODO
+        # TODO
         self.model_menu.add_command(label='Add connector', command=None)
 
         self.action_menu = Menu(self.menubar, tearoff=0)
@@ -139,14 +139,14 @@ class ExpansionTest(Frame):
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
 
     def update_candidate_structure_activity_by_behavior(self):
-        if len(self.structure_manager.tree.nodes) > 3:  # only do this when there are more than 3 candidates
-            # TODO: improve this control, not only by number
+        if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
             # Get 2 random candidates
             random_two_candidates = [None, None]
             while random_two_candidates[0] == random_two_candidates[1]:
                 # Here we don't use the weighted random pair, to give those less active more opportunity
                 random_two_candidates = self.structure_manager.random_pair_even()
-                while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and self.structure_manager.if_can_simulate[random_two_candidates[1]]):
+                while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and
+                           self.structure_manager.if_can_simulate[random_two_candidates[1]]):
                     # we have to get two simulatable structures to compare their behaviors
                     random_two_candidates = self.structure_manager.random_pair_even()
             print("Two candidate structures chosen for comparison: ", random_two_candidates)
@@ -158,13 +158,15 @@ class ExpansionTest(Frame):
             for reference_mode_name, reference_mode_property in self.reference_modes.items():
                 uid = self.reference_modes_binding[reference_mode_name]
                 candidate_0_distance += self.behavioral_distance(
-             self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)['value'],
-             reference_mode_property[1]
-            )
+                    self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
+                        'value'],
+                    reference_mode_property[1]
+                )
                 candidate_1_distance += self.behavioral_distance(
-             self.structure_manager.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)['value'],
-             reference_mode_property[1]
-            )
+                    self.structure_manager.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)[
+                        'value'],
+                    reference_mode_property[1]
+                )
 
             print(candidate_0_distance, candidate_1_distance)
             # Update their activity
@@ -195,7 +197,6 @@ class ExpansionTest(Frame):
             self.concept_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
         print(self.concept_manager.concept_clds_likelihood)
 
-
     def generate_candidate_structure(self):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
@@ -208,11 +209,11 @@ class ExpansionTest(Frame):
     def behavioral_distance(self, who_compare, compare_with):
         print("    Expansion: Calculating similarity...")
         distance, comparison_figure = similarity_calc(np.array(who_compare).reshape(-1, 1),
-                                                                           np.array(compare_with).reshape(-1, 1))
+                                                      np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
 
-    #TODO
+    # TODO
     def add_stock(self):
         add_dialog = AddElementWindow(STOCK)
         self.wait_window(add_dialog)  # important!
@@ -222,7 +223,7 @@ class ExpansionTest(Frame):
         y = int(add_dialog.element_y)
         print(element_name, value, x, y)
 
-    #TODO
+    # TODO
     def add_flow(self):
         add_dialog = AddElementWindow(FLOW)
         self.wait_window(add_dialog)  # important!
@@ -234,7 +235,7 @@ class ExpansionTest(Frame):
         flow_from = add_dialog.flow_from
         print(element_name, value, x, y, flow_to, flow_from)
 
-    #TODO
+    # TODO
     def add_variable(self):
         add_dialog = AddElementWindow(VARIABLE)
         self.wait_window(add_dialog)  # important!
@@ -307,9 +308,11 @@ class ReferenceModeManager(Toplevel):
             pass
         self.reference_mode_figure = Figure(figsize=(5, 4))
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
-        self.reference_mode_plot.plot(self.time_series[self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())], '*')
+        self.reference_mode_plot.plot(
+            self.time_series[self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())], '*')
         self.reference_mode_plot.set_xlabel("Time")
-        self.reference_mode_plot.set_ylabel(self.reference_mode_list_box.get(self.reference_mode_list_box.curselection()))
+        self.reference_mode_plot.set_ylabel(
+            self.reference_mode_list_box.get(self.reference_mode_list_box.curselection()))
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
         self.reference_mode_graph.draw()
         self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
@@ -325,14 +328,17 @@ class StructureManager(object):
                                                  width=800, height=800, x=1000, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
+        self.those_can_simulate = list()
+        self.those_cannot_simulate = list()
+        self.sorted_tree = list()
 
     def sort_by_activity(self):
         # sort all candidate structures by activity
-        sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
-        # print('sorted:', sorted_tree)
-        string=''
+        self.sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
+        # print('sorted:', self.sorted_tree)
+        string = ''
         for i in range(3):
-            string += str(sorted_tree[i][0]) + '[{}] '.format(sorted_tree[i][1])
+            string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
         self.candidate_structure_window.label_top_three_0.configure(text=string)
         self.candidate_structure_window.label_top_three_0.update()
 
@@ -358,7 +364,8 @@ class StructureManager(object):
             if self.tree.nodes[u]['structure'] == structure:
                 return u
         print(
-            '    StructureManager: Can not find uid for given structure {}.'.format(structure.sfd.graph['structure_name']))
+            '    StructureManager: Can not find uid for given structure {}.'.format(
+                structure.sfd.graph['structure_name']))
 
     def derive_structure(self, base_structure, new_structure):
         """Derive a new structure from an existing one"""
@@ -381,7 +388,7 @@ class StructureManager(object):
                                     # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
                                     )
             if GM.is_isomorphic():
-            # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
+                # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
                 self.tree.nodes[neighbour]['activity'] += 1
                 # print(self.tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
                 # print(new_structure.model_structure.sfd.nodes(data=True))
@@ -391,7 +398,7 @@ class StructureManager(object):
         # add a new node
         new_uid = self.get_new_candidate_structure_uid()
         print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
-        new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity']//ACTIVITY_DEMOMINATOR
+        new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
         self.tree.add_node(new_uid,
                            structure=new_structure,
                            activity=new_activity
@@ -408,8 +415,10 @@ class StructureManager(object):
         try:
             new_structure.simulation_handler(25)
             self.if_can_simulate[new_uid] = True
+            self.those_can_simulate.append(new_uid)
         except KeyError:
             self.if_can_simulate[new_uid] = False
+            self.those_cannot_simulate.append(new_uid)
 
         print("Simulatable structures:", self.if_can_simulate)
 
@@ -418,8 +427,10 @@ class StructureManager(object):
     def cool_down(self):
         """Cool down those not simulatable structures"""
         # for u in self.tree.nodes:
-        for u in [structure for structure in self.if_can_simulate.keys() if self.if_can_simulate[structure] is False]:
-            self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1 if self.tree.nodes[u]['activity'] > 1 else 1
+        # for u in [structure for structure in self.if_can_simulate.keys() if self.if_can_simulate[structure] is False]:
+        for u in self.those_cannot_simulate:
+            self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1 if self.tree.nodes[u][
+                                                                                       'activity'] > 1 else 1
         self.update_candidate_structure_window()
 
     def random_single(self):
@@ -461,7 +472,20 @@ class StructureManager(object):
         return distribution_list
 
     def display_tree(self):
-        self.tree_window.update_graph_network()
+        tree_node_color = list()
+        if len(self.sorted_tree) > 3:  # when the sorted tree is generated
+            # max_activity = self.sorted_tree[0][1]
+            # for s_uid, activity in self.sorted_tree:
+            #     tree_node_color.append(str(activity / max_activity))  # use gray level
+            tree_node_color.append('orangered')
+            tree_node_color.append('coral')
+            tree_node_color.append('salmon')
+            for i in range(3, len(self.sorted_tree)+1):
+                tree_node_color.append('skyblue')
+        else:
+            tree_node_color = 'skyblue'
+        print("HERE", tree_node_color)
+        self.tree_window.update_graph_network(node_color=tree_node_color)
 
     def update_candidate_structure_window(self):
         self.display_tree()
@@ -471,7 +495,7 @@ class StructureManager(object):
         elements = list(self.tree.nodes)
         for element in elements:
             if self.tree.nodes[element]['activity'] <= 0:
-                #TODO in the future, consider when edge has its attributes
+                # TODO in the future, consider when edge has its attributes
                 in_edges_to_element = self.tree.in_edges(element)
                 print("In edges to 0 act ele:", in_edges_to_element)
                 out_edges_from_element = self.tree.out_edges(element)
@@ -494,9 +518,9 @@ class ConceptManager(object):
         self.add_concept_cld(name='first_order_positive')
         self.add_concept_cld(name='first_order_negative')
 
-        self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(concept_clds_likelihood=self.concept_clds_likelihood)
+        self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
+            concept_clds_likelihood=self.concept_clds_likelihood)
         self.concept_clds_likelihood_window.create_likelihood_display()
-
 
     def add_concept_cld(self, name, likelihood=INITIAL_LIKELIHOOD):
         a = SessionHandler()
@@ -639,7 +663,7 @@ class CandidateStructureWindow(Toplevel):
         nx.draw(self.selected_candidate_structure.model_structure.sfd,
                 labels=custom_node_attrs,
                 font_size=6
-                #with_labels=True
+                # with_labels=True
                 )
         self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
@@ -731,7 +755,7 @@ class SelectReferenceModeWindow(Toplevel):
 class AddElementWindow(Toplevel):
     def __init__(self, element_type, width=200, height=350, x=200, y=200):
         super().__init__()
-        self.title("Add "+element_type)
+        self.title("Add " + element_type)
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
 
         self.name = None

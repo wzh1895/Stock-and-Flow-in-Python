@@ -644,10 +644,9 @@ class NewGraphNetworkWindow(Toplevel):
         self.geometry("+{}+{}".format(x, y))
         self.graph_network = graph_network
         self.attr = attr
-        self.node_color = node_color
-        self.update_graph_network()
+        self.update_graph_network(node_color)
 
-    def update_graph_network(self):
+    def update_graph_network(self, node_color):
         try:
             self.graph_network_canvas.get_tk_widget().destroy()
         except :
@@ -660,7 +659,8 @@ class NewGraphNetworkWindow(Toplevel):
         nx.draw(self.graph_network,
                 labels=node_attr_mapping,
                 font_size=8,
-                node_color=self.node_color
+                node_color=node_color,
+                font_color='black',
                 #with_labels=True
                 )
         self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)

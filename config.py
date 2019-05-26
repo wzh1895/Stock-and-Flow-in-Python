@@ -1,4 +1,4 @@
-ITERATION_TIMES = 10
+ITERATION_TIMES = 40
 ACTIVITY_DEMOMINATOR = 3
 INITIAL_LIKELIHOOD = 50
 INITIAL_ACTIVITY = 50
@@ -11,3 +11,6 @@ COOL_DOWN_TIMES = 1
 
 #REFERENCE_MODE_PATH = './StockAndFlowInPython/case/linear_decrease.csv'
 REFERENCE_MODE_PATH = './StockAndFlowInPython/case/tea_cup_model.csv'
+
+
+colors = {}
