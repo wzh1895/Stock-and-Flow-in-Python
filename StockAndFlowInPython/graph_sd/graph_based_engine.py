@@ -60,11 +60,34 @@ class UidManager(object):
         return self.uid
 
 
+class NameManager(object):
+    def __init__(self):
+        self.stock_id = 0
+        self.flow_id = 0
+        self.variable_id = 0
+        self.parameter_id = 0
+
+    def get_new_name(self, element_type):
+        if element_type == STOCK:
+            self.stock_id += 1
+            return 'stock'+str(self.stock_id)
+        elif element_type == FLOW:
+            self.flow_id += 1
+            return 'flow'+str(self.flow_id)
+        elif element_type == VARIABLE:
+            self.variable_id += 1
+            return 'variable'+str(self.variable_id)
+        elif element_type == PARAMETER:
+            self.parameter_id += 1
+            return 'parameter'+str(self.parameter_id)
+
+
 class Structure(object):
     def __init__(self, structure_name='default'):
         self.sfd = nx.DiGraph()
         self.sfd.graph['structure_name'] = structure_name
         self.uid_manager = UidManager()
+        self.name_manager = NameManager()
         self.uid_element_name = dict()
         self.simulation_time = None
         self.maximum_steps = 1000
@@ -76,9 +99,6 @@ class Structure(object):
                                          'first_order_negative': self.first_order_negative
                                          }
 
-    # def uid_getter(self):
-    #     self.uid += 1
-    #     return self.uid
 
     def add_element(self, element_name, element_type, flow_from=None, flow_to=None, x=0, y=0, function=None, value=None, points=None):
         uid = self.uid_manager.get_new_uid()
@@ -89,6 +109,7 @@ class Structure(object):
         # automatically add dependencies, if a function is used for this variable
         if function is not None and type(function) is not str:
             self.add_function_dependencies(element_name, function)
+        # bind uid with element's name
         self.uid_element_name[uid] = element_name
         return uid
 
@@ -252,11 +273,15 @@ class Structure(object):
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
+        # name is overwritten by auto-generated name
+        name = self.name_manager.get_new_name(element_type=STOCK)
         uid = self.add_element(name, element_type=STOCK, x=x, y=y, value=equation)
         # print('Graph: added stock:', name, 'to graph.')
         return uid
 
     def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
+        # name is overwritten by auto-generated name
+        name = self.name_manager.get_new_name(element_type=FLOW)
         # Decide if the 'equation' is a function or a constant number
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number
@@ -270,7 +295,7 @@ class Structure(object):
         # print('Graph: added flow:', name, 'to graph.')
         return uid
 
-    def create_stock_flow_connection(self, name, structure_name, flow_from=None, flow_to=None):
+    def create_stock_flow_connection(self, name, flow_from=None, flow_to=None):
         """
         Connect stock and flow.
         :param name: The flow's name
@@ -288,12 +313,17 @@ class Structure(object):
             self.add_causality(name, flow_to, display=False)
 
     def add_aux(self, name, equation, x=0, y=0, structure_name='default'):
+
         # Decide if this aux is a parameter or variable
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number, it's a parameter
+            # name is overwritten by auto-generated name
+            name = self.name_manager.get_new_name(element_type=PARAMETER)
             uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable, has its own function
+            # name is overwritten by auto-generated name
+            name = self.name_manager.get_new_name(element_type=VARIABLE)
             uid = self.add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
             # Then it is assumed to take information from other variables, therefore causal links should be created.
             # Already implemented in structure's add_element function, not needed here.

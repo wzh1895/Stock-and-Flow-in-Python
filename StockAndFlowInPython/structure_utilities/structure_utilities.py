@@ -89,8 +89,9 @@ def new_expand_structure(base_structure, target_structure):
     start_with_element_base_type = new_base[start_with_element_base]['element_type']
     if start_with_element_base_type == STOCK:
         # only flows can influence it. it need to find a flow from target structure.
+        target_structure_flows = target_structure.model_structure.all_flows()
+        start_with_flow_target = random.choice(target_structure_flows)
 
-        pass
     elif start_with_element_base_type == FLOW:
         pass
     elif start_with_element_base_type == VARIABLE:
