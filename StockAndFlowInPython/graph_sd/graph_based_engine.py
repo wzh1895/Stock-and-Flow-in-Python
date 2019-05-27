@@ -132,7 +132,21 @@ class Structure(object):
         for node, attributes in self.sfd.nodes.data():
             if attributes['element_type'] == FLOW:
                 flows.append(node)
-        return  flows
+        return flows
+
+    def all_variables(self):
+        variables = list()
+        for node, attributes in self.sfd.nodes.data():
+            if attributes['element_type'] == VARIABLE:
+                variables.append(node)
+        return variables
+
+    def all_parameters(self):
+        parameters = list()
+        for node, attributes in self.sfd.nodes.data():
+            if attributes['element_type'] == PARAMETER:
+                parameters.append(node)
+        return parameters
 
     def get_coordinate(self, name):
         """
