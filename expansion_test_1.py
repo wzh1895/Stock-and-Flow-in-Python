@@ -384,7 +384,8 @@ class StructureManager(object):
         for neighbour in self.tree.neighbors(self.get_uid_by_structure(base_structure)):
             GM = iso.DiGraphMatcher(self.tree.nodes[neighbour]['structure'].model_structure.sfd,
                                     new_structure.model_structure.sfd,
-                                    node_match=iso.categorical_node_match(attr=['function'], default=[None])
+                                    node_match=iso.categorical_node_match(attr=['function', 'flow_from', 'flow_to'],
+                                                                          default=[None, None, None])
                                     # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
                                     )
             if GM.is_isomorphic():
@@ -488,7 +489,7 @@ class StructureManager(object):
                     tree_node_color.append('skyblue')
         else:
             tree_node_color = 'skyblue'
-        print("HERE", tree_node_color)
+        # print("HERE", tree_node_color)
         self.tree_window.update_graph_network(node_color=tree_node_color)
 
     def update_candidate_structure_window(self):

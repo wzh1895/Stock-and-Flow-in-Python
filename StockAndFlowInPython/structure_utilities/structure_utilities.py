@@ -54,7 +54,7 @@ def expand_structure(base_structure, target_structure):
 
     # extract the part of structure containing this in_edge in target_structure
     subgraph_from_target = target_structure.model_structure.sfd.edge_subgraph([chosen_in_edge_in_target])
-    # print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data='function')))
+    print("    Subgraph from target_structure:{} ".format(subgraph_from_target.nodes(data='function')))
 
     new_base.model_structure.sfd = nx.compose(new_base.model_structure.sfd, subgraph_from_target)
 
@@ -67,8 +67,8 @@ def expand_structure(base_structure, target_structure):
             print("Found a missing edge: ", in_edge)
             new_base.model_structure.sfd.add_edge(*in_edge)
 
-    # print("New structure nodes:", new_base.model_structure.sfd.nodes.data('function'))
-    # print("New structure edges:", new_base.model_structure.sfd.edges.data())
+    print("New structure nodes:", new_base.model_structure.sfd.nodes.data('function'))
+    print("New structure edges:", new_base.model_structure.sfd.edges.data())
 
     return new_base
 
