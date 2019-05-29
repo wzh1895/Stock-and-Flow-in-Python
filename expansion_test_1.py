@@ -18,8 +18,61 @@ import matplotlib.pyplot as plt
 import random
 
 
-class ExpansionController(object):
-    def __init__(self):
+class ExpansionPanel(Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.configure(width=600)
+        self.pack(fill=BOTH, expand=1)
+
+        # Menu
+
+        self.menubar = Menu(self.master)
+
+        self.file_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='File', menu=self.file_menu)
+        self.file_menu.add_command(label='Quit', command=self.quit)
+
+        self.reference_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
+        self.reference_menu.add_command(label='Add reference mode', command=self.load_reference_mode_from_file)
+
+        self.model_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Model', menu=self.model_menu)
+        self.model_menu.add_command(label='Add stock', command=self.add_stock)
+        self.model_menu.add_command(label='Add flow', command=self.add_flow)
+        self.model_menu.add_command(label='Add variable', command=self.add_variable)
+        # TODO
+        self.model_menu.add_command(label='Add connector', command=None)
+
+        self.action_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Action', menu=self.action_menu)
+        self.action_menu.add_command(label='Expansion loop', command=self.expansion_loop)
+
+        self.master.config(menu=self.menubar)
+
+        # Control bar
+
+        self.control_bar = LabelFrame(self.master, text='Expansion Control', font=5)
+        self.control_bar.pack(side=TOP, anchor='w', fill=BOTH)
+
+        self.btn_add_reference_mode = Button(self.control_bar, text='Add reference', command=self.load_reference_mode_from_file)
+        self.btn_add_reference_mode.pack(side=LEFT)
+
+        self.btn_start_expansion = Button(self.control_bar, text='Start', command=self.expansion_loop)
+        self.btn_start_expansion.pack(side=LEFT)
+
+        # Concept CLDs
+        self.concept_cld_board = LabelFrame(self.master, text='Concept CLDs', font=5)
+        self.concept_cld_board.pack(side=TOP, anchor='w', fill=BOTH)
+
+        # Bulletin board
+
+        self.bulletin_board = LabelFrame(self.master, text='Information', font=5)
+        self.bulletin_board.pack(side=TOP, anchor='w', fill=BOTH)
+
+        self.lb_iteration_round = Label(self.bulletin_board, text='Iter', font=10)
+        self.lb_iteration_round.pack(side=LEFT)
+
         # Initialize concept CLDs (generic structures)
         self.concept_manager = ConceptManager()
         self.concept_manager.generate_distribution()
@@ -38,10 +91,10 @@ class ExpansionController(object):
         self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
 
         # TODO test
-        self.reference_mode_manager.load_reference_mode_from_file()
-        self.main_loop()
+        self.load_reference_mode_from_file()
+        self.expansion_loop()
 
-    def main_loop(self):
+    def expansion_loop(self):
         # Build element for each reference mode in root structure
         self.build_element_for_reference_modes()
 
@@ -50,6 +103,8 @@ class ExpansionController(object):
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
+            self.lb_iteration_round.configure(text='Iter '+str(i))
+            self.lb_iteration_round.update()
 
             # STEP adjust concept CLDs' likelihood
             for j in range(CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES):
@@ -75,6 +130,38 @@ class ExpansionController(object):
             if i > 4:  # get enough candidate structures to sort
                 self.structure_manager.sort_by_activity()
             i += 1
+
+    # TODO
+    def add_stock(self):
+        add_dialog = AddElementWindow(STOCK)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        print(element_name, value, x, y)
+
+    # TODO
+    def add_flow(self):
+        add_dialog = AddElementWindow(FLOW)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        flow_to = add_dialog.flow_to
+        flow_from = add_dialog.flow_from
+        print(element_name, value, x, y, flow_to, flow_from)
+
+    # TODO
+    def add_variable(self):
+        add_dialog = AddElementWindow(VARIABLE)
+        self.wait_window(add_dialog)  # important!
+        element_name = add_dialog.name
+        value = float(add_dialog.value)
+        x = int(add_dialog.element_x)
+        y = int(add_dialog.element_y)
+        print(element_name, value, x, y)
 
     def load_reference_mode_from_file(self):
         self.reference_mode_manager.load_reference_mode_from_file()
@@ -182,81 +269,6 @@ class ExpansionController(object):
                                                       np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
-
-
-class ExpansionPanel(Frame):
-    def __init__(self, master):
-        super().__init__(master)
-        self.configure(width=600)
-        self.pack(fill=BOTH, expand=1)
-
-        self.expansion_controller = ExpansionController()
-
-        self.menubar = Menu(self.master)
-
-        self.file_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='Quit', command=self.quit)
-
-        self.reference_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
-        self.reference_menu.add_command(label='Add reference mode', command=self.expansion_controller.load_reference_mode_from_file)
-
-        self.model_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Model', menu=self.model_menu)
-        self.model_menu.add_command(label='Add stock', command=self.add_stock)
-        self.model_menu.add_command(label='Add flow', command=self.add_flow)
-        self.model_menu.add_command(label='Add variable', command=self.add_variable)
-        # TODO
-        self.model_menu.add_command(label='Add connector', command=None)
-
-        self.action_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Action', menu=self.action_menu)
-        self.action_menu.add_command(label='Main loop', command=self.expansion_controller.main_loop)
-
-        self.master.config(menu=self.menubar)
-
-        self.fm_controller1 = Frame(self.master)
-        self.fm_controller1.pack(side=TOP)
-        self.variables_in_model = ["Variable"]
-
-        self.fm_controller2 = Frame(self.master)
-        self.fm_controller2.pack(side=TOP)
-
-        self.fm_suggestion = Frame(self.master)
-        self.fm_suggestion.pack(side=TOP)
-
-    # TODO
-    def add_stock(self):
-        add_dialog = AddElementWindow(STOCK)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        print(element_name, value, x, y)
-
-    # TODO
-    def add_flow(self):
-        add_dialog = AddElementWindow(FLOW)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        flow_to = add_dialog.flow_to
-        flow_from = add_dialog.flow_from
-        print(element_name, value, x, y, flow_to, flow_from)
-
-    # TODO
-    def add_variable(self):
-        add_dialog = AddElementWindow(VARIABLE)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        print(element_name, value, x, y)
 
 
 class ReferenceModeManager(Toplevel):
@@ -682,7 +694,7 @@ class CandidateStructureWindow(Toplevel):
                          labels=custom_node_labels,
                          font_size=6,
                          edge_color=custom_edge_colors)
-
+        plt.axis('off')  # turn off axis for structure display
         self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
 
