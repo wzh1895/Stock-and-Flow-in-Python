@@ -18,49 +18,8 @@ import matplotlib.pyplot as plt
 import random
 
 
-class ExpansionTest(Frame):
-    def __init__(self, master):
-        super().__init__(master)
-        self.configure(width=600)
-        self.pack(fill=BOTH, expand=1)
-
-        self.session_handler1 = SessionHandler()
-
-        self.menubar = Menu(self.master)
-
-        self.file_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='Quit', command=self.quit)
-
-        self.reference_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
-        self.reference_menu.add_command(label='Add reference mode', command=self.load_reference_mode_from_file)
-        self.reference_menu.add_command(label='Bind ref to variable', command=self.load_reference_mode_from_file)
-
-        self.model_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Model', menu=self.model_menu)
-        self.model_menu.add_command(label='Add stock', command=self.add_stock)
-        self.model_menu.add_command(label='Add flow', command=self.add_flow)
-        self.model_menu.add_command(label='Add variable', command=self.add_variable)
-        # TODO
-        self.model_menu.add_command(label='Add connector', command=None)
-
-        self.action_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Action', menu=self.action_menu)
-        self.action_menu.add_command(label='Main loop', command=self.main_loop)
-
-        self.master.config(menu=self.menubar)
-
-        self.fm_controller1 = Frame(self.master)
-        self.fm_controller1.pack(side=TOP)
-        self.variables_in_model = ["Variable"]
-
-        self.fm_controller2 = Frame(self.master)
-        self.fm_controller2.pack(side=TOP)
-
-        self.fm_suggestion = Frame(self.master)
-        self.fm_suggestion.pack(side=TOP)
-
+class ExpansionController(object):
+    def __init__(self):
         # Initialize concept CLDs (generic structures)
         self.concept_manager = ConceptManager()
         self.concept_manager.generate_distribution()
@@ -83,7 +42,6 @@ class ExpansionTest(Frame):
         self.main_loop()
 
     def main_loop(self):
-
         # Build element for each reference mode in root structure
         self.build_element_for_reference_modes()
 
@@ -224,6 +182,49 @@ class ExpansionTest(Frame):
                                                       np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
+
+
+class ExpansionPanel(Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.configure(width=600)
+        self.pack(fill=BOTH, expand=1)
+
+        self.expansion_controller = ExpansionController()
+
+        self.menubar = Menu(self.master)
+
+        self.file_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='File', menu=self.file_menu)
+        self.file_menu.add_command(label='Quit', command=self.quit)
+
+        self.reference_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
+        self.reference_menu.add_command(label='Add reference mode', command=self.expansion_controller.load_reference_mode_from_file)
+
+        self.model_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Model', menu=self.model_menu)
+        self.model_menu.add_command(label='Add stock', command=self.add_stock)
+        self.model_menu.add_command(label='Add flow', command=self.add_flow)
+        self.model_menu.add_command(label='Add variable', command=self.add_variable)
+        # TODO
+        self.model_menu.add_command(label='Add connector', command=None)
+
+        self.action_menu = Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label='Action', menu=self.action_menu)
+        self.action_menu.add_command(label='Main loop', command=self.expansion_controller.main_loop)
+
+        self.master.config(menu=self.menubar)
+
+        self.fm_controller1 = Frame(self.master)
+        self.fm_controller1.pack(side=TOP)
+        self.variables_in_model = ["Variable"]
+
+        self.fm_controller2 = Frame(self.master)
+        self.fm_controller2.pack(side=TOP)
+
+        self.fm_suggestion = Frame(self.master)
+        self.fm_suggestion.pack(side=TOP)
 
     # TODO
     def add_stock(self):
@@ -870,9 +871,9 @@ class ConceptCLDsLikelihoodWindow(Toplevel):
 def main():
     root = Tk()
     root.geometry("+5+50")
-    root.wm_title("Expansion Test")
+    root.wm_title("Expansion Panel")
     root.configure(background='#fff')
-    ExpansionTest(root)
+    ExpansionPanel(root)
     root.mainloop()
 
 
