@@ -8,8 +8,7 @@ from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, IN
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
-    PARAMETER, CONNECTOR, ALIAS, \
-    MULTIPLICATION, LINEAR
+    PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR
 from StockAndFlowInPython.structure_utilities.structure_utilities import expand_structure, new_expand_structure
 import pandas as pd
 import numpy as np
@@ -548,18 +547,9 @@ class ConceptManager(object):
         self.concept_clds[name] = a
         self.concept_clds_likelihood[name] = likelihood
 
-    # def get_concept_cld_by_name(self, name):
-    #     for concept_cld in self.concept_clds:
-    #         if concept_cld.model_structure.sfd.graph['structure_name'] == name:
-    #             return concept_cld
-
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
         distribution_list = list()
-        # for concept_cld in self.concept_clds.keys():
-        #     for i in range(self.concept_clds[concept_cld].model_structure.sfd.graph['likelihood']):
-        #         distribution_list.append(self.concept_clds[concept_cld].model_structure.sfd.graph['structure_name'])
-        # print('Concept CLD distribution list:', distribution_list)
         for concept_cld in self.concept_clds_likelihood.keys():
             for i in range(self.concept_clds_likelihood[concept_cld]):
                 distribution_list.append(concept_cld)
@@ -574,13 +564,10 @@ class ConceptManager(object):
     def random_pair(self):
         """Return a pair of structures for competition"""
         random_two = random.choices(self.generate_distribution(), k=2)
-        # return self.concept_clds[random_two[0]], self.concept_clds[random_two[1]]
         return random_two
 
     def update_likelihood_elo(self, winner, loser):
         """Update winner and loser's activity using Elo Rating System"""
-        # r_winner = self.concept_clds[winner].model_structure.sfd.graph['likelihood']
-        # r_loser = self.concept_clds[loser].model_structure.sfd.graph['likelihood']
         r_winner = self.concept_clds_likelihood[winner]
         r_loser = self.concept_clds_likelihood[loser]
         e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
@@ -672,7 +659,7 @@ class CandidateStructureWindow(Toplevel):
 
         node_attrs_function = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'function')
         node_attrs_value = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'value')
-        custom_node_attrs = dict()
+        custom_node_labels = dict()
         for node, attr in node_attrs_function.items():
             # when the element only has a value but no function
             if attr is None:
@@ -680,13 +667,21 @@ class CandidateStructureWindow(Toplevel):
             # when the element has a function
             else:
                 attr = [attr[0]] + [factor[0] for factor in attr[1:]]
-            custom_node_attrs[node] = "{}={}".format(node, attr)
+            custom_node_labels[node] = "{}={}".format(node, attr)
 
-        nx.draw(self.selected_candidate_structure.model_structure.sfd,
-                labels=custom_node_attrs,
-                font_size=6
-                # with_labels=True
-                )
+        edge_attrs_color = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')
+        custom_edge_colors = list()
+        for edge, attr in edge_attrs_color.items():
+            color = 'k'
+            if attr is 'b':
+                color = 'r'
+            custom_edge_colors.append(color)
+
+        nx.draw_networkx(G=self.selected_candidate_structure.model_structure.sfd,
+                         labels=custom_node_labels,
+                         font_size=6,
+                         edge_color=custom_edge_colors)
+
         self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
 

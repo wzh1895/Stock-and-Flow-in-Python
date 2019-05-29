@@ -313,10 +313,10 @@ class Structure(object):
         # If the flow influences a stock, create the causal link
         if flow_from is not None:  # Just set up
             self.sfd.nodes[name]['flow_from'] = flow_from
-            self.add_causality(name, flow_from, display=False)
+            self.add_causality(name, flow_from, display=False, polarity='negative')
         if flow_to is not None:  # Just set up
             self.sfd.nodes[name]['flow_to'] = flow_to
-            self.add_causality(name, flow_to, display=False)
+            self.add_causality(name, flow_to, display=False, polarity='positive')
 
     def add_aux(self, name=None, equation=None, x=0, y=0):
         # Decide if this aux is a parameter or variable
