@@ -61,10 +61,6 @@ class ExpansionPanel(Frame):
         self.btn_start_expansion = Button(self.control_bar, text='Start', command=self.expansion_loop)
         self.btn_start_expansion.pack(side=LEFT)
 
-        # Concept CLDs
-        self.concept_cld_board = LabelFrame(self.master, text='Concept CLDs', font=5)
-        self.concept_cld_board.pack(side=TOP, anchor='w', fill=BOTH)
-
         # Bulletin board
 
         self.bulletin_board = LabelFrame(self.master, text='Information', font=5)
@@ -272,7 +268,7 @@ class ExpansionPanel(Frame):
 
 
 class ReferenceModeManager(Toplevel):
-    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=130):
+    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=230):
         super().__init__()
         self.title("Reference Mode Manager")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -350,7 +346,7 @@ class StructureManager(object):
         self.tree = nx.DiGraph()
         self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
-                                                 width=800, height=800, x=1000, y=50, attr='activity')
+                                                 width=600, height=600, x=1000, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
         self.those_can_simulate = list()
@@ -686,8 +682,8 @@ class CandidateStructureWindow(Toplevel):
         custom_edge_colors = list()
         for edge, attr in edge_attrs_color.items():
             color = 'k'
-            if attr is 'b':
-                color = 'r'
+            if attr is 'negative':
+                color = 'b'
             custom_edge_colors.append(color)
 
         nx.draw_networkx(G=self.selected_candidate_structure.model_structure.sfd,
@@ -723,7 +719,7 @@ class CandidateStructureWindow(Toplevel):
 
 
 class SelectReferenceModeWindow(Toplevel):
-    def __init__(self, time_series, width=600, height=400, x=5, y=130):
+    def __init__(self, time_series, width=600, height=400, x=5, y=230):
         super().__init__()
         self.title("Select Reference Mode...")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -851,7 +847,7 @@ class AddElementWindow(Toplevel):
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):
-    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=200, x=5, y=200):
+    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=200, x=5, y=230):
         super().__init__()
         self.title(window_title)
         self.width = width
