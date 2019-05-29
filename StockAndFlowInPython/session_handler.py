@@ -343,7 +343,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("\n==>Building stock: {}\n".format(name))
+        print("==>Building stock: {}".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             # TODO: fix this line
             pos = self.generate_location(self.sfd_window1, [])
@@ -378,7 +378,7 @@ class SessionHandler(object):
         :param flow_to: Inflow to ...
         :return:
         """
-        print("\n==>Building flow: {}\n".format(name if name is not None else 'new'))
+        print("==>Building flow: {}".format(name if name is not None else 'new'))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
@@ -387,7 +387,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name+angle instead of a number
                     linked_vars.append(linked_var[0])  # add the name to 'linked_vars'
-        print(name, 'is linked to', linked_vars)
+        print('   ', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
@@ -449,7 +449,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("\n==>Building aux: {}\n".format(name))
+        print("==>Building aux: {}".format(name))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
@@ -458,7 +458,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name instead of a number
                     linked_vars.append(linked_var[0])
-        print(name, 'is linked to', linked_vars)
+        print('   ', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
