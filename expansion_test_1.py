@@ -181,13 +181,26 @@ class ExpansionTest(Frame):
         random_two_clds = [None, None]
         while random_two_clds[0] == random_two_clds[1]:  # The two cannot be the same
             random_two_clds = self.concept_manager.random_pair()
+        cld_0 = random_two_clds[0]
+        cld_1 = random_two_clds[1]
         # print(random_two_clds)
-        random_two_clds_distance = {random_two_clds[0]: self.behavioral_distance(
-            self.concept_manager.concept_clds[random_two_clds[0]].model_structure.sfd.node['stock0']['value'],
-            self.reference_modes['stock0'][1]),
-            random_two_clds[1]: self.behavioral_distance(
-                self.concept_manager.concept_clds[random_two_clds[1]].model_structure.sfd.node['stock0']['value'],
-                self.reference_modes['stock0'][1])
+        # TODO this part is important: assessment of a concept CLD's likelihood.
+
+        # randomly choose a reference mode
+        chosen_reference_mode = random.choice(list(self.reference_modes.keys()))
+        chosen_reference_mode_type = self.reference_modes[chosen_reference_mode][0]
+
+        # randomly choose element from clds
+        chosen_element_from_cld_0 = random.choice(self.concept_manager.concept_clds[cld_0].model_structure.all_certain_type(chosen_reference_mode_type))
+        chosen_element_from_cld_1 = random.choice(self.concept_manager.concept_clds[cld_1].model_structure.all_certain_type(chosen_reference_mode_type))
+
+        random_two_clds_distance = {
+            cld_0: self.behavioral_distance(
+                self.concept_manager.concept_clds[cld_0].model_structure.sfd.node[chosen_element_from_cld_0]['value'],
+                self.reference_modes[chosen_reference_mode][1]),
+            cld_1: self.behavioral_distance(
+                self.concept_manager.concept_clds[cld_1].model_structure.sfd.node[chosen_element_from_cld_1]['value'],
+                self.reference_modes[chosen_reference_mode][1])
         }
         # print(random_two_clds_distance)
         # a larger distance -> a lower likelihood
@@ -202,7 +215,7 @@ class ExpansionTest(Frame):
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
         # new = new_expand_structure(base_structure=base, target_structure=target)
-        new = expand_structure(base_structure=base, target_structure=target)
+        new = new_expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
@@ -437,7 +450,7 @@ class StructureManager(object):
     def random_single(self):
         """Return one structure"""
         random_structure_uid = random.choice(self.generate_distribution_weighted())
-        print('    No. {} is chosen as base_structure;'.format(random_structure_uid))
+        print('    No.{} is chosen as base_structure;'.format(random_structure_uid))
         return self.tree.nodes[random_structure_uid]['structure']
 
     def random_pair_weighted(self):
@@ -520,8 +533,8 @@ class ConceptManager(object):
         self.concept_clds_likelihood = dict()
         self.add_concept_cld(name='basic_stock_inflow')
         self.add_concept_cld(name='basic_stock_outflow')
-        self.add_concept_cld(name='first_order_positive')
-        self.add_concept_cld(name='first_order_negative')
+        #self.add_concept_cld(name='first_order_positive')
+        #self.add_concept_cld(name='first_order_negative')
 
         self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
             concept_clds_likelihood=self.concept_clds_likelihood)
@@ -691,7 +704,9 @@ class CandidateStructureWindow(Toplevel):
 
         # self.selected_candidate_structure.simulation_handler(25)
 
-        result_figure = self.selected_candidate_structure.model_structure.draw_results(names=['stock0'], rtn=True)
+        result_figure = self.selected_candidate_structure.model_structure.draw_results(
+            # names=['stock0'],
+            rtn=True)
         self.simulation_result_canvas = FigureCanvasTkAgg(figure=result_figure, master=self.fm_display_behaviour)
         self.simulation_result_canvas.get_tk_widget().pack(side=LEFT)
 
