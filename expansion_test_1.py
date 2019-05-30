@@ -84,7 +84,8 @@ class ExpansionPanel(Frame):
         self.reference_modes_binding = dict()  # reference_mode_name : uid
 
         # Initialize reference mode manager
-        self.reference_mode_manager = ReferenceModeManager(self.reference_modes)
+        self.reference_mode_manager = ReferenceModeManager(reference_modes=self.reference_modes,
+                                                           reference_modes_binding=self.reference_modes_binding)
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -254,8 +255,8 @@ class ExpansionPanel(Frame):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
         target = self.concept_manager.random_single()
-        # new = new_expand_structure(base_structure=base, target_structure=target)
         new = new_expand_structure(base_structure=base, target_structure=target)
+        # new = expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
@@ -268,7 +269,7 @@ class ExpansionPanel(Frame):
 
 
 class ReferenceModeManager(Toplevel):
-    def __init__(self, reference_modes, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=230):
+    def __init__(self, reference_modes, reference_modes_binding, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=230):
         super().__init__()
         self.title("Reference Mode Manager")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -315,7 +316,7 @@ class ReferenceModeManager(Toplevel):
             self.reference_mode_list_box.destroy()
         except AttributeError:
             pass
-        self.reference_mode_list_box = Listbox(self.fm_select)
+        self.reference_mode_list_box = Listbox(self.fm_select, width=15)
         self.reference_mode_list_box.pack(side=TOP)
 
         for ref_mode in self.reference_modes.keys():
@@ -338,6 +339,12 @@ class ReferenceModeManager(Toplevel):
         self.reference_mode_graph.draw()
         self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
 
+    def add_binding(self):
+        pass
+
+    def remove_binding(self):
+        pass
+
 
 class StructureManager(object):
     """The class containing and managing all variants of structures"""
@@ -346,8 +353,8 @@ class StructureManager(object):
         self.tree = nx.DiGraph()
         self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
-                                                 width=600, height=600, x=1000, y=50, attr='activity')
-        self.candidate_structure_window = CandidateStructureWindow(self.tree)
+                                                 width=550, height=550, x=1000, y=50, attr='activity')
+        self.candidate_structure_window = CandidateStructureManager(self.tree)
         self.if_can_simulate = dict()
         self.those_can_simulate = list()
         self.those_cannot_simulate = list()
@@ -533,75 +540,10 @@ class StructureManager(object):
                 print("Low activity structure {} is purged.".format(element))
 
 
-class ConceptManager(object):
-    """The class containing and managing all concept CLDs"""
-
-    def __init__(self):
-        self.concept_clds = dict()
-        self.concept_clds_likelihood = dict()
-        self.add_concept_cld(name='basic_stock_inflow')
-        self.add_concept_cld(name='basic_stock_outflow')
-        #self.add_concept_cld(name='first_order_positive')
-        #self.add_concept_cld(name='first_order_negative')
-
-        self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
-            concept_clds_likelihood=self.concept_clds_likelihood)
-        self.concept_clds_likelihood_window.create_likelihood_display()
-
-    def add_concept_cld(self, name, likelihood=INITIAL_LIKELIHOOD):
-        a = SessionHandler()
-        a.model_structure.set_predefined_structure[name]()
-        a.model_structure.simulate(simulation_time=25)
-        # a.model_structure.sfd.graph['likelihood'] = likelihood
-        self.concept_clds[name] = a
-        self.concept_clds_likelihood[name] = likelihood
-
-    def generate_distribution(self):
-        """Generate a list, containing multiple uids of each structure"""
-        distribution_list = list()
-        for concept_cld in self.concept_clds_likelihood.keys():
-            for i in range(self.concept_clds_likelihood[concept_cld]):
-                distribution_list.append(concept_cld)
-        return distribution_list
-
-    def random_single(self):
-        """Return one structure"""
-        random_concept_cld_name = random.choice(self.generate_distribution())
-        print('    {} is chosen as target_structure;'.format(random_concept_cld_name))
-        return self.concept_clds[random_concept_cld_name]
-
-    def random_pair(self):
-        """Return a pair of structures for competition"""
-        random_two = random.choices(self.generate_distribution(), k=2)
-        return random_two
-
-    def update_likelihood_elo(self, winner, loser):
-        """Update winner and loser's activity using Elo Rating System"""
-        r_winner = self.concept_clds_likelihood[winner]
-        r_loser = self.concept_clds_likelihood[loser]
-        e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
-        e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
-        gain_winner = 1
-        gain_loser = 0
-        k = 16
-        r_winner = r_winner + k * (gain_winner - e_winner)
-        r_loser = r_loser + k * (gain_loser - e_loser)
-        def normalize(r):
-            if r > 50:
-                r = 50
-            elif r < 1:
-                r = 1
-            return r
-        self.concept_clds_likelihood[winner] = round(normalize(r_winner))
-        self.concept_clds_likelihood[loser] = round(normalize(r_loser))
-
-        self.concept_clds_likelihood_window.update_likelihood_display()
-
-
-class CandidateStructureWindow(Toplevel):
+class CandidateStructureManager(Toplevel):
     def __init__(self, tree, width=1200, height=400, x=5, y=700):
         super().__init__()
-        self.title("Display Candidate Structure")
+        self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
 
         self.selected_candidate_structure = None
@@ -716,6 +658,74 @@ class CandidateStructureWindow(Toplevel):
 
         # Display result
         self.update()
+
+
+class ConceptManager(object):
+    """The class containing and managing all concept CLDs"""
+
+    def __init__(self):
+        self.concept_clds = dict()
+        self.concept_clds_likelihood = dict()
+        self.add_concept_cld(name='basic_stock_inflow')
+        self.add_concept_cld(name='basic_stock_outflow')
+        #self.add_concept_cld(name='first_order_positive')
+        #self.add_concept_cld(name='first_order_negative')
+
+        self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
+            concept_clds_likelihood=self.concept_clds_likelihood)
+        self.concept_clds_likelihood_window.create_likelihood_display()
+
+    def add_concept_cld(self, name, likelihood=INITIAL_LIKELIHOOD):
+        a = SessionHandler()
+        a.model_structure.set_predefined_structure[name]()
+        a.model_structure.simulate(simulation_time=25)
+        # a.model_structure.sfd.graph['likelihood'] = likelihood
+        self.concept_clds[name] = a
+        self.concept_clds_likelihood[name] = likelihood
+
+    def generate_distribution(self):
+        """Generate a list, containing multiple uids of each structure"""
+        distribution_list = list()
+        for concept_cld in self.concept_clds_likelihood.keys():
+            for i in range(self.concept_clds_likelihood[concept_cld]):
+                distribution_list.append(concept_cld)
+        return distribution_list
+
+    def random_single(self):
+        """Return one structure"""
+        random_concept_cld_name = random.choice(self.generate_distribution())
+        print('    {} is chosen as target_structure;'.format(random_concept_cld_name))
+        return self.concept_clds[random_concept_cld_name]
+
+    def random_pair(self):
+        """Return a pair of structures for competition"""
+        random_two = random.choices(self.generate_distribution(), k=2)
+
+        return random_two
+
+    def update_likelihood_elo(self, winner, loser):
+        """Update winner and loser's activity using Elo Rating System"""
+        r_winner = self.concept_clds_likelihood[winner]
+        r_loser = self.concept_clds_likelihood[loser]
+        e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
+        e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
+        gain_winner = 1
+        gain_loser = 0
+        k = 16
+        r_winner = r_winner + k * (gain_winner - e_winner)
+        r_loser = r_loser + k * (gain_loser - e_loser)
+        def normalize(r):
+            if r > 50:
+                r = 50
+            elif r < 1:
+                r = 1
+            return r
+        self.concept_clds_likelihood[winner] = round(normalize(r_winner))
+        self.concept_clds_likelihood[loser] = round(normalize(r_loser))
+
+        self.concept_clds_likelihood_window.update_likelihood_display()
+
+
 
 
 class SelectReferenceModeWindow(Toplevel):
