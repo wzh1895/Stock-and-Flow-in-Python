@@ -278,6 +278,7 @@ class ReferenceModeManager(Toplevel):
         self.numerical_data = None
         self.time_series = dict()
         self.reference_modes = reference_modes
+        self.reference_modes_binding = reference_modes_binding
 
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
@@ -286,6 +287,9 @@ class ReferenceModeManager(Toplevel):
 
         self.fm_display = Frame(self)
         self.fm_display.pack(side=LEFT)
+
+        self.btn_remove = Button(self.fm_select, text='Remove', command=self.remove_reference_mode)
+        self.btn_remove.pack(side=BOTTOM)
 
         self.generate_reference_mode_list_box()
 
@@ -323,7 +327,7 @@ class ReferenceModeManager(Toplevel):
             self.reference_mode_list_box.insert(END, ref_mode)
         self.reference_mode_list_box.bind('<<ListboxSelect>>', self.show_reference_mode)
 
-    def show_reference_mode(self, evt):
+    def show_reference_mode(self, evt=None):
         try:
             self.reference_mode_graph.get_tk_widget().destroy()
         except AttributeError:
@@ -339,11 +343,15 @@ class ReferenceModeManager(Toplevel):
         self.reference_mode_graph.draw()
         self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
 
-    def add_binding(self):
-        pass
+    def remove_reference_mode(self):
+        # get selected ref mode
+        selected_reference_mode = self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())
 
-    def remove_binding(self):
-        pass
+        # remove this reference mode from 1. ref mode list 2. binding list
+        self.reference_modes.pop(selected_reference_mode)
+        self.reference_modes_binding.pop(selected_reference_mode)
+        self.generate_reference_mode_list_box()
+        self.show_reference_mode()
 
 
 class StructureManager(object):
@@ -354,7 +362,7 @@ class StructureManager(object):
         self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
                                                  width=550, height=550, x=1000, y=50, attr='activity')
-        self.candidate_structure_window = CandidateStructureManager(self.tree)
+        self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
         self.those_can_simulate = list()
         self.those_cannot_simulate = list()
@@ -540,20 +548,26 @@ class StructureManager(object):
                 print("Low activity structure {} is purged.".format(element))
 
 
-class CandidateStructureManager(Toplevel):
-    def __init__(self, tree, width=1200, height=400, x=5, y=700):
+class CandidateStructureWindow(Toplevel):
+    def __init__(self, tree, width=1200, height=500, x=5, y=700):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
 
+        self.tree = tree
         self.selected_candidate_structure = None
+
+        self.fm_actions = Frame(self)
+        self.fm_actions.pack(side=TOP, fill=BOTH)
+
+        self.btn_accept = Button(self.fm_actions, text='Accept and keep', command=self.accept_a_structure)
+        self.btn_accept.pack(side=LEFT)
+
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
 
         self.label_select = Label(self.fm_select, text='Candidate\nSturctures', font=6)
         self.label_select.pack(anchor='nw')
-
-        self.tree = tree
 
         self.fm_display_structure = Frame(self)
         self.fm_display_structure.configure(width=500)
@@ -572,6 +586,18 @@ class CandidateStructureManager(Toplevel):
         self.label_top_three_0.pack(side=BOTTOM, anchor='nw')
         self.label_top_three_1 = Label(self.fm_select, text='Top 3 \nCandidates:', font=6)
         self.label_top_three_1.pack(side=BOTTOM, anchor='nw')
+
+    def accept_a_structure(self):
+        # get the selected structure (entry) from listbox
+        selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
+
+        # remove all other nodes from the tree
+        elements = list(self.tree.nodes)
+        elements.remove(selected_entry)
+        self.tree.remove_nodes_from(elements)
+
+        # regenerate list box
+        self.generate_candidate_structure_list()
 
     def generate_candidate_structure_list(self):
         try:
@@ -724,8 +750,6 @@ class ConceptManager(object):
         self.concept_clds_likelihood[loser] = round(normalize(r_loser))
 
         self.concept_clds_likelihood_window.update_likelihood_display()
-
-
 
 
 class SelectReferenceModeWindow(Toplevel):
