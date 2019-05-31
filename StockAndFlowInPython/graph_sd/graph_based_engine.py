@@ -122,6 +122,9 @@ class Structure(object):
     def get_element_by_uid(self, uid):
         return self.sfd.nodes[self.uid_element_name[uid]]
 
+    def get_element_name_by_uid(self, uid):
+        return self.uid_element_name[uid]
+
     def print_elements(self):
         print('Graph: All elements in this SFD:')
         print(self.sfd.nodes.data())

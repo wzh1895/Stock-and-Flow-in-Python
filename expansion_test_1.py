@@ -55,9 +55,6 @@ class ExpansionPanel(Frame):
         self.control_bar = LabelFrame(self.master, text='Expansion Control', font=5)
         self.control_bar.pack(side=TOP, anchor='w', fill=BOTH)
 
-        self.btn_add_reference_mode = Button(self.control_bar, text='Add reference', command=self.load_reference_mode_from_file)
-        self.btn_add_reference_mode.pack(side=LEFT)
-
         self.btn_start_expansion = Button(self.control_bar, text='Start', command=self.expansion_loop)
         self.btn_start_expansion.pack(side=LEFT)
 
@@ -76,8 +73,11 @@ class ExpansionPanel(Frame):
         # Initialize builder rack
         self.possibility_rack = list()
 
+        # Initial expansion tree
+        self.expansion_tree = nx.DiGraph()
+
         # Initialize structure manager
-        self.structure_manager = StructureManager()
+        self.structure_manager = StructureManager(tree=self.expansion_tree)
 
         # Reference modes
         self.reference_modes = dict()
@@ -87,16 +87,24 @@ class ExpansionPanel(Frame):
         self.reference_mode_manager = ReferenceModeManager(reference_modes=self.reference_modes,
                                                            reference_modes_binding=self.reference_modes_binding)
 
+        # Initialize binding manager
+        self.binding_manager = BindingManager(reference_modes=self.reference_modes,
+                                              reference_modes_binding=self.reference_modes_binding,
+                                              tree=self.expansion_tree)
+
         # TODO test
         self.load_reference_mode_from_file()
-        self.expansion_loop()
 
-    def expansion_loop(self):
         # Build element for each reference mode in root structure
         self.build_element_for_reference_modes()
+        self.binding_manager.update_combobox()
 
         # Specify round to iterate
         self.iteration_time = ITERATION_TIMES
+
+        self.expansion_loop()
+
+    def expansion_loop(self):
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
@@ -126,6 +134,9 @@ class ExpansionPanel(Frame):
             # TODO: control this not only by number
             if i > 4:  # get enough candidate structures to sort
                 self.structure_manager.sort_by_activity()
+
+            # global display updates needed
+            self.binding_manager.update_combobox()
             i += 1
 
     # TODO
@@ -175,6 +186,7 @@ class ExpansionPanel(Frame):
             elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
                 uid = structure.build_aux(name=reference_mode_name, equation=0, x=100, y=100)
             self.reference_modes_binding[reference_mode_name] = uid
+            self.binding_manager.generate_binding_list_box()
         structure.simulation_handler(25)
         self.structure_manager.add_structure(structure=structure)
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
@@ -281,20 +293,20 @@ class ReferenceModeManager(Toplevel):
         self.reference_modes_binding = reference_modes_binding
 
         self.fm_select = Frame(self)
-        self.fm_select.pack(side=LEFT)
+        self.fm_select.pack(side=LEFT, fill=Y)
         self.lb_select = Label(self.fm_select, text='Reference\nModes', font=7)
         self.lb_select.pack(anchor='nw')
 
         self.fm_display = Frame(self)
         self.fm_display.pack(side=LEFT)
 
+        self.btn_add = Button(self.fm_select, text='Add', command=self.load_reference_mode_from_file)
+        self.btn_add.pack(side=BOTTOM)
+
         self.btn_remove = Button(self.fm_select, text='Remove', command=self.remove_reference_mode)
         self.btn_remove.pack(side=BOTTOM)
 
         self.generate_reference_mode_list_box()
-
-    def get_reference_mode_file_name(self):
-        self.reference_mode_path = filedialog.askopenfilename()
 
     def load_reference_mode_from_file(self):
         """
@@ -315,13 +327,16 @@ class ReferenceModeManager(Toplevel):
             print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
         self.generate_reference_mode_list_box()
 
+    def get_reference_mode_file_name(self):
+        self.reference_mode_path = filedialog.askopenfilename()
+
     def generate_reference_mode_list_box(self):
         try:
             self.reference_mode_list_box.destroy()
         except AttributeError:
             pass
-        self.reference_mode_list_box = Listbox(self.fm_select, width=15)
-        self.reference_mode_list_box.pack(side=TOP)
+        self.reference_mode_list_box = Listbox(self.fm_select, width=15, height=20)
+        self.reference_mode_list_box.pack(side=TOP, fill=Y)
 
         for ref_mode in self.reference_modes.keys():
             self.reference_mode_list_box.insert(END, ref_mode)
@@ -354,11 +369,163 @@ class ReferenceModeManager(Toplevel):
         self.show_reference_mode()
 
 
+class BindingManager(Toplevel):
+        def __init__(self, reference_modes, reference_modes_binding, tree, width=600, height=400, x=500, y=430):
+            super().__init__()
+            self.title("Binding Manager")
+            self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+            self.reference_modes = reference_modes
+            self.reference_modes_binding = reference_modes_binding
+            self.tree = tree
+
+            self.selected_structure = 0
+            self.selected_variable = None
+            self.selected_reference_mode = None
+
+            self.fm_actions = Frame(self)
+            self.fm_actions.pack(side=TOP, fill=X)
+
+            # TODO using Tkinter it is not possible to do this refresh. Going to be replaced by signal-slot in future.
+            self.btn_refresh = Button(self.fm_actions, text='Refresh', command=self.update_combobox)
+            self.btn_refresh.pack(side=LEFT)
+
+            self.btn_add_binding = Button(self.fm_actions, text='Add binding', command=self.add_binding)
+            self.btn_add_binding.pack(side=LEFT)
+
+            self.btn_remove_binding = Button(self.fm_actions, text='Remove binding', command=self.remove_binding)
+            self.btn_remove_binding.pack(side=LEFT)
+
+            # Left hand side
+
+            self.fm_list = LabelFrame(self, text='Bindings')
+            self.fm_list.pack(side=LEFT, fill=Y)
+
+            self.generate_binding_list_box()
+
+            self.fm_display_and_browse = Frame(self)
+            self.fm_display_and_browse.pack(side=RIGHT, fill=BOTH, expand=True)
+
+            # Right hand side
+
+            self.fm_display_details = LabelFrame(self.fm_display_and_browse, text='Binding Details')
+            self.fm_display_details.pack(side=TOP, fill=BOTH)
+
+            self.lb_binding_details = Label(self.fm_display_details, text='Select a binding to view details')
+            self.lb_binding_details.pack(side=TOP, anchor='w')
+
+            self.fm_browse_element = LabelFrame(self.fm_display_and_browse, text='Browse structure element')
+            self.fm_browse_element.pack(side=TOP, fill=BOTH)
+
+            self.structure_list = ttk.Combobox(self.fm_browse_element)
+            self.structure_list["values"] = ['structure']
+            self.structure_list.current(0)
+            self.structure_list.bind("<<ComboboxSelected>>", self.select_structure)
+            self.structure_list.pack(side=LEFT)
+
+            self.variable_list = ttk.Combobox(self.fm_browse_element)
+            self.variable_list["values"] = ['variable']
+            self.variable_list.current(0)
+            self.variable_list.bind("<<ComboboxSelected>>", self.select_variable)
+            self.variable_list.pack(side=LEFT)
+
+            self.fm_browse_reference_mode = LabelFrame(self.fm_display_and_browse, text='Browse reference mode')
+            self.fm_browse_reference_mode.pack(side=TOP, fill=BOTH)
+
+            self.reference_mode_list = ttk.Combobox(self.fm_browse_reference_mode)
+            self.reference_mode_list["values"] = ['reference mode']
+            self.reference_mode_list.current(0)
+            self.reference_mode_list.bind("<<ComboboxSelected>>", self.select_reference_mode)
+            self.reference_mode_list.pack(side=LEFT)
+
+        def add_binding(self):
+            if self.selected_reference_mode is not None:
+                if self.selected_variable is not None:
+                    # print("Here!", self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes(data=True))
+                    self.reference_modes_binding[self.selected_reference_mode] = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes[self.selected_variable]['uid']
+                    self.generate_binding_list_box()
+                else:
+                    print("Please select a variable.")
+            else:
+                print("Please select a reference mode.")
+
+        def remove_binding(self):
+            selected_ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
+            bound_element_name = self.get_binding_element_name_by_ref_name(selected_ref_name)
+            self.reference_modes_binding.pop(selected_ref_name)
+            print("Removed binding between ref mode '{}' and variable '{}'".format(selected_ref_name, bound_element_name))
+            self.generate_binding_list_box()
+
+        def get_binding_element_name_by_ref_name(self, ref_name=None):
+            if ref_name is None:
+                ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
+            selected_binding_element_uid = self.reference_modes_binding[ref_name]
+            selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
+                get_element_name_by_uid(selected_binding_element_uid)
+            return selected_binding_element_name
+
+
+        def select_structure(self, *args):
+            self.selected_structure = self.structure_list.get()
+            # print("structure {} is selected.".format(self.selected_structure))
+            self.update_combobox()
+
+        def select_variable(self, *args):
+            self.selected_variable = self.variable_list.get()
+            self.update_combobox()
+
+        def select_reference_mode(self, *args):
+            self.selected_reference_mode = self.reference_mode_list.get()
+            self.update_combobox()
+
+        def generate_binding_list_box(self):
+            try:
+                self.binding_list_box.destroy()
+            except AttributeError:
+                pass
+            self.binding_list_box = Listbox(self.fm_list, width=15)
+            self.binding_list_box.pack(side=LEFT, fill=Y)
+
+            for ref_mode in self.reference_modes_binding.keys():
+                self.binding_list_box.insert(END, ref_mode)
+            self.binding_list_box.bind('<<ListboxSelect>>', self.show_binding_details)
+
+        def show_binding_details(self, evt):
+            self.update_combobox()
+            selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
+            selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
+            selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.\
+                get_element_name_by_uid(selected_binding_element_uid)
+            detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
+                                                   selected_binding_element_uid,
+                                                   selected_binding_element_name)
+            self.lb_binding_details.configure(text=detail_text)
+            self.lb_binding_details.update()
+
+        def update_combobox(self):
+            # print('updating combobox')
+            try:
+                structures = list(self.tree.nodes)
+            except:
+                structures = ['structure']
+            self.structure_list["values"] = structures
+
+            # This int() is very important, because what get() from combobox is 'str.
+            try:
+                variables_in_selected_structure = list(self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes)
+            except KeyError:
+                # print("key error")
+                variables_in_selected_structure = ['variable']
+            self.variable_list["values"] = variables_in_selected_structure
+
+            reference_mode_names = list(self.reference_modes.keys())
+            self.reference_mode_list["values"] = reference_mode_names
+
+
 class StructureManager(object):
     """The class containing and managing all variants of structures"""
 
-    def __init__(self):
-        self.tree = nx.DiGraph()
+    def __init__(self, tree):
+        self.tree = tree
         self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
                                                  width=550, height=550, x=1000, y=50, attr='activity')
@@ -549,7 +716,7 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, width=1200, height=500, x=5, y=700):
+    def __init__(self, tree, width=1300, height=500, x=5, y=700):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -598,6 +765,9 @@ class CandidateStructureWindow(Toplevel):
 
         # regenerate list box
         self.generate_candidate_structure_list()
+
+        # update tree display
+        # TODO this needs mechanism like 'signal and slot', but Tkinter does not have. Will do in Qt.
 
     def generate_candidate_structure_list(self):
         try:
