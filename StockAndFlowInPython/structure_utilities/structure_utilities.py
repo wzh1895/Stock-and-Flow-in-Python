@@ -2,7 +2,8 @@ import networkx as nx
 import copy
 import random
 from networkx.algorithms import chain_decomposition
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER
+from StockAndFlowInPython.session_handler import SessionHandler
 
 
 def calculate_structural_similarity(who_compare, compare_with):
@@ -10,7 +11,12 @@ def calculate_structural_similarity(who_compare, compare_with):
 
 
 def expand_structure(base_structure, target_structure):
-    new_base = copy.deepcopy(base_structure)
+    # new_base = copy.deepcopy(base_structure)
+    new_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                              uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                              name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                              uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_structure)
     print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
 
     # Base
@@ -75,8 +81,14 @@ def expand_structure(base_structure, target_structure):
 
 
 def new_expand_structure(base_structure, target_structure):
-    new_base = copy.deepcopy(base_structure)
+    # new_base = copy.deepcopy(base_structure)
     # print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
+    # new_base = copy.deepcopy(base_structure)
+    new_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                              uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                              name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                              uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_structure)
     print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
     # Base

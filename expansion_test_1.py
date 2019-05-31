@@ -21,7 +21,7 @@ import random
 class ExpansionPanel(Frame):
     def __init__(self, master):
         super().__init__(master)
-        self.configure(width=600)
+        self.configure(width=300)
         self.pack(fill=BOTH, expand=1)
 
         # Menu
@@ -67,8 +67,8 @@ class ExpansionPanel(Frame):
         self.lb_iteration_round.pack(side=LEFT)
 
         # Initialize concept CLDs (generic structures)
-        self.concept_manager = ConceptManager()
-        self.concept_manager.generate_distribution()
+        self.concept_cld_manager = ConceptCLDManager()
+        # self.concept_cld_manager.generate_distribution()
 
         # Initialize builder rack
         self.possibility_rack = list()
@@ -105,6 +105,9 @@ class ExpansionPanel(Frame):
         self.expansion_loop()
 
     def expansion_loop(self):
+        self.concept_cld_manager.reset_all_likelihood()
+        self.concept_cld_manager.generate_distribution()
+
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
@@ -233,7 +236,7 @@ class ExpansionPanel(Frame):
     def update_concept_clds_likelihood(self):
         random_two_clds = [None, None]
         while random_two_clds[0] == random_two_clds[1]:  # The two cannot be the same
-            random_two_clds = self.concept_manager.random_pair()
+            random_two_clds = self.concept_cld_manager.random_pair()
         cld_0 = random_two_clds[0]
         cld_1 = random_two_clds[1]
         # print(random_two_clds)
@@ -244,29 +247,29 @@ class ExpansionPanel(Frame):
         chosen_reference_mode_type = self.reference_modes[chosen_reference_mode][0]
 
         # randomly choose element from clds
-        chosen_element_from_cld_0 = random.choice(self.concept_manager.concept_clds[cld_0].model_structure.all_certain_type(chosen_reference_mode_type))
-        chosen_element_from_cld_1 = random.choice(self.concept_manager.concept_clds[cld_1].model_structure.all_certain_type(chosen_reference_mode_type))
+        chosen_element_from_cld_0 = random.choice(self.concept_cld_manager.concept_clds[cld_0].model_structure.all_certain_type(chosen_reference_mode_type))
+        chosen_element_from_cld_1 = random.choice(self.concept_cld_manager.concept_clds[cld_1].model_structure.all_certain_type(chosen_reference_mode_type))
 
         random_two_clds_distance = {
             cld_0: self.behavioral_distance(
-                self.concept_manager.concept_clds[cld_0].model_structure.sfd.node[chosen_element_from_cld_0]['value'],
+                self.concept_cld_manager.concept_clds[cld_0].model_structure.sfd.node[chosen_element_from_cld_0]['value'],
                 self.reference_modes[chosen_reference_mode][1]),
             cld_1: self.behavioral_distance(
-                self.concept_manager.concept_clds[cld_1].model_structure.sfd.node[chosen_element_from_cld_1]['value'],
+                self.concept_cld_manager.concept_clds[cld_1].model_structure.sfd.node[chosen_element_from_cld_1]['value'],
                 self.reference_modes[chosen_reference_mode][1])
         }
         # print(random_two_clds_distance)
         # a larger distance -> a lower likelihood
         if random_two_clds_distance[random_two_clds[0]] < random_two_clds_distance[random_two_clds[1]]:
-            self.concept_manager.update_likelihood_elo(random_two_clds[0], random_two_clds[1])
+            self.concept_cld_manager.update_likelihood_elo(random_two_clds[0], random_two_clds[1])
         else:
-            self.concept_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
-        print(self.concept_manager.concept_clds_likelihood)
+            self.concept_cld_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
+        print(self.concept_cld_manager.concept_clds_likelihood)
 
     def generate_candidate_structure(self):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
-        target = self.concept_manager.random_single()
+        target = self.concept_cld_manager.random_single()
         new = new_expand_structure(base_structure=base, target_structure=target)
         # new = expand_structure(base_structure=base, target_structure=target)
         # print('    Generated new candidate structure:', new)
@@ -281,7 +284,7 @@ class ExpansionPanel(Frame):
 
 
 class ReferenceModeManager(Toplevel):
-    def __init__(self, reference_modes, reference_modes_binding, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=300, y=230):
+    def __init__(self, reference_modes, reference_modes_binding, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=5, y=200):
         super().__init__()
         self.title("Reference Mode Manager")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -300,11 +303,11 @@ class ReferenceModeManager(Toplevel):
         self.fm_display = Frame(self)
         self.fm_display.pack(side=LEFT)
 
-        self.btn_add = Button(self.fm_select, text='Add', command=self.load_reference_mode_from_file)
-        self.btn_add.pack(side=BOTTOM)
-
         self.btn_remove = Button(self.fm_select, text='Remove', command=self.remove_reference_mode)
         self.btn_remove.pack(side=BOTTOM)
+
+        self.btn_add = Button(self.fm_select, text='Add', command=self.load_reference_mode_from_file)
+        self.btn_add.pack(side=BOTTOM)
 
         self.generate_reference_mode_list_box()
 
@@ -370,7 +373,7 @@ class ReferenceModeManager(Toplevel):
 
 
 class BindingManager(Toplevel):
-        def __init__(self, reference_modes, reference_modes_binding, tree, width=600, height=400, x=500, y=430):
+        def __init__(self, reference_modes, reference_modes_binding, tree, width=600, height=400, x=650, y=200):
             super().__init__()
             self.title("Binding Manager")
             self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -528,7 +531,7 @@ class StructureManager(object):
         self.tree = tree
         self.candidate_structure_uid = 0
         self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
-                                                 width=550, height=550, x=1000, y=50, attr='activity')
+                                                 width=550, height=550, x=1100, y=50, attr='activity')
         self.candidate_structure_window = CandidateStructureWindow(self.tree)
         self.if_can_simulate = dict()
         self.those_can_simulate = list()
@@ -716,7 +719,7 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, width=1300, height=500, x=5, y=700):
+    def __init__(self, tree, width=1200, height=400, x=5, y=700):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -737,11 +740,11 @@ class CandidateStructureWindow(Toplevel):
         self.label_select.pack(anchor='nw')
 
         self.fm_display_structure = Frame(self)
-        self.fm_display_structure.configure(width=500)
+        # self.fm_display_structure.configure(width=500)
         self.fm_display_structure.pack(side=LEFT)
 
         self.fm_display_behaviour = Frame(self)
-        self.fm_display_behaviour.configure(width=500)
+        # self.fm_display_behaviour.configure(width=500)
         self.fm_display_behaviour.pack(side=LEFT)
 
         self.generate_candidate_structure_list()
@@ -819,9 +822,9 @@ class CandidateStructureWindow(Toplevel):
         edge_attrs_color = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')
         custom_edge_colors = list()
         for edge, attr in edge_attrs_color.items():
-            color = 'k'
+            color = 'k'  # black
             if attr is 'negative':
-                color = 'b'
+                color = 'b'  # blue
             custom_edge_colors.append(color)
 
         nx.draw_networkx(G=self.selected_candidate_structure.model_structure.sfd,
@@ -856,12 +859,12 @@ class CandidateStructureWindow(Toplevel):
         self.update()
 
 
-class ConceptManager(object):
+class ConceptCLDManager(object):
     """The class containing and managing all concept CLDs"""
 
     def __init__(self):
-        self.concept_clds = dict()
-        self.concept_clds_likelihood = dict()
+        self.concept_clds = dict()  # name:structure
+        self.concept_clds_likelihood = dict()   # name:likelihood
         self.add_concept_cld(name='basic_stock_inflow')
         self.add_concept_cld(name='basic_stock_outflow')
         #self.add_concept_cld(name='first_order_positive')
@@ -878,6 +881,10 @@ class ConceptManager(object):
         # a.model_structure.sfd.graph['likelihood'] = likelihood
         self.concept_clds[name] = a
         self.concept_clds_likelihood[name] = likelihood
+
+    def reset_all_likelihood(self):
+        for cld in self.concept_clds_likelihood.keys():
+            self.concept_clds_likelihood[cld] == INITIAL_LIKELIHOOD
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
@@ -907,7 +914,7 @@ class ConceptManager(object):
         e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
         gain_loser = 0
-        k = 16
+        k = 4   # maximum points one can gain or lose in one round
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
         def normalize(r):
@@ -923,7 +930,7 @@ class ConceptManager(object):
 
 
 class SelectReferenceModeWindow(Toplevel):
-    def __init__(self, time_series, width=600, height=400, x=5, y=230):
+    def __init__(self, time_series, width=600, height=400, x=300, y=200):
         super().__init__()
         self.title("Select Reference Mode...")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -1051,7 +1058,7 @@ class AddElementWindow(Toplevel):
 
 
 class ConceptCLDsLikelihoodWindow(Toplevel):
-    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=200, x=5, y=230):
+    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=90, x=350, y=50):
         super().__init__()
         self.title(window_title)
         self.width = width

@@ -83,11 +83,18 @@ class NameManager(object):
 
 
 class Structure(object):
-    def __init__(self):
-        self.sfd = nx.DiGraph()
-        self.uid_manager = UidManager()
-        self.name_manager = NameManager()
-        self.uid_element_name = dict()
+    def __init__(self, sfd=None, uid_manager=None, name_manager=None, uid_element_name=None):
+        if sfd is None:
+            self.sfd = nx.DiGraph()
+            self.uid_manager = UidManager()
+            self.name_manager = NameManager()
+            self.uid_element_name = dict()
+        else:
+            self.sfd = sfd
+            self.uid_manager = uid_manager
+            self.name_manager = name_manager
+            self.uid_element_name = uid_element_name
+
         self.simulation_time = None
         self.maximum_steps = 1000
         self.dt = 0.25

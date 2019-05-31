@@ -20,9 +20,12 @@ def name_handler(name):
 
 
 class SessionHandler(object):
-    def __init__(self):
+    def __init__(self, model_structure=None):
         # backends
-        self.model_structure = Structure()
+        if model_structure is None:
+            self.model_structure = Structure()
+        else:
+            self.model_structure = model_structure
         self.filename = ''
         self.model = None
         self.variables_in_model = None
