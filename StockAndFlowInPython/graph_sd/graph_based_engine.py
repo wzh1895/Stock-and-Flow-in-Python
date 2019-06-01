@@ -202,7 +202,7 @@ class Structure(object):
         """
         if self.sfd.nodes[name]['element_type'] == STOCK:
             # if the node is a stock
-            return self.sfd.nodes[name]['value'][-1]  # just return its value, update afterward.
+            return self.sfd.nodes[name]['value'][-1]  # just return its latest value, update afterward.
         elif self.sfd.nodes[name]['function'] is None:
             # if the node does not have a function and not a stock, then it's constant
             # if this node is a constant, still extend its value list by its last value
@@ -250,7 +250,10 @@ class Structure(object):
                             direction_factor = 1
                         else:
                             print("Graph: Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
-                        affected_stocks[successor] = flows_dt[flow] * direction_factor
+                        if successor in affected_stocks.keys():  # this stock may have been added by other flows
+                            affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        else:
+                            affected_stocks[successor] = flows_dt[flow] * direction_factor
                     else:  # otherwise update this flow's value on top of results of previous calculation (f2 = f1 + f0)
                         if self.sfd.nodes[flow]['flow_from'] == successor:  # if flow influences this stock negatively
                             direction_factor = -1
@@ -258,8 +261,10 @@ class Structure(object):
                             direction_factor = 1
                         else:
                             print("Graph: Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
-                        affected_stocks[successor] = flows_dt[flow] * direction_factor
-                        affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        if successor in affected_stocks.keys():  # this stock may have been added by other flows
+                            affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        else:
+                            affected_stocks[successor] = flows_dt[flow] * direction_factor
 
         # updating affected stocks values
         for stock in affected_stocks.keys():
@@ -478,14 +483,14 @@ class Structure(object):
 
     # Set the model to one stock + one outflow
     def basic_stock_outflow(self):
-        self.sfd.graph['structure_name'] = 'basic_stock_outflow'
+        self.sfd.graph['structure_name'] = 'basic_stock_outflow '
         self.add_elements_batch([
             # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
             [STOCK,     'stock0',    [100],                                                    None,       None,       289,    145,    None],
             [FLOW,      'flow0',     [4],                                                    'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
         ])
 
-    # Set the model to one stock + one outflow
+    # Set the model to one stock + one inflow
     def basic_stock_inflow(self):
         self.sfd.graph['structure_name'] = 'basic_stock_inflow'
         self.add_elements_batch([
@@ -642,8 +647,9 @@ class Structure(object):
 def main():
     structure0 = Structure()
     structure0.first_order_negative()
-    structure0.simulate(simulation_time=80)
+    structure0.simulate(simulation_time=10)
     structure0.draw_graphs_with_curve()
+    structure0.draw_results()
     structure0.all_stocks()
 
 
