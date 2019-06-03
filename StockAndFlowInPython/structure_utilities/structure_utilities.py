@@ -135,13 +135,13 @@ def new_expand_structure(base_structure, target_structure):
             # Not just copy-paste the equation; but to modify its parameters to constants
             # equation = chosen_var_in_target['function']
 
-            new_equation = chosen_var_in_target['function']
+            equation = chosen_var_in_target['function']
             print('\nFunctions:')
-            print(new_equation[0] == ADDITION)
-            print(new_equation[0] == SUBTRACT)
-            print(new_equation[0] == MULTIPLICATION)
-            print(new_equation[0] == DIVISION)
-            print(new_equation[0] == LINEAR)
+            print(equation[0] == ADDITION)
+            print(equation[0] == SUBTRACT)
+            print(equation[0] == MULTIPLICATION)
+            print(equation[0] == DIVISION)
+            print(equation[0] == LINEAR)
 
 
         x = chosen_var_in_target['pos'][0]
