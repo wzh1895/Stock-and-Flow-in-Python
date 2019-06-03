@@ -32,10 +32,6 @@ class SessionHandler(object):
         self.selected_variable = None
         self.simulation_time = 75
 
-        # front ends
-
-        # self.simulation_result1 = SimulationResult()
-
     def file_load(self):
         self.filename = filedialog.askopenfilename()
         if self.filename != '':
@@ -470,12 +466,15 @@ class SessionHandler(object):
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
         uid = self.model_structure.add_aux(name=name,
-                                     equation=equation,
-                                     x=x,
-                                     y=y)
+                                           equation=equation,
+                                           x=x,
+                                           y=y)
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
+
+    def build_connector(self, from_var, to_var, polarity):
+        self.model_structure.add_causality(from_element=from_var, to_element=to_var, polarity=polarity)
 
     def generate_location(self, sfd_window, linked_vars):
         """

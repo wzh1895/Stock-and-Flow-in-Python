@@ -297,17 +297,20 @@ class ReferenceModeManager(Toplevel):
 
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT, fill=Y)
-        self.lb_select = Label(self.fm_select, text='Reference\nModes', font=7)
+        self.lb_select = Label(self.fm_select, text='Reference Modes', font=7)
         self.lb_select.pack(anchor='nw')
 
         self.fm_display = Frame(self)
         self.fm_display.pack(side=LEFT)
 
-        self.btn_remove = Button(self.fm_select, text='Remove', command=self.remove_reference_mode)
-        self.btn_remove.pack(side=BOTTOM)
+        self.fm_add_remove = Frame(self.fm_select)
+        self.fm_add_remove.pack(side=BOTTOM)
 
-        self.btn_add = Button(self.fm_select, text='Add', command=self.load_reference_mode_from_file)
-        self.btn_add.pack(side=BOTTOM)
+        self.btn_remove = Button(self.fm_add_remove, text='Remove', command=self.remove_reference_mode)
+        self.btn_remove.pack(side=RIGHT)
+
+        self.btn_add = Button(self.fm_add_remove, text='Add', command=self.load_reference_mode_from_file)
+        self.btn_add.pack(side=RIGHT)
 
         self.generate_reference_mode_list_box()
 
@@ -619,6 +622,10 @@ class StructureManager(object):
         # build a link from the old structure to the new structure
         self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
         # simulate this new structure
+
+        new_structure.simulation_handler(25)
+
+        # TODO decide if this part still needs to be kept, for all candidate structures are supposed to be simulatable.
         try:
             new_structure.simulation_handler(25)
             self.if_can_simulate[new_uid] = True
@@ -816,7 +823,7 @@ class CandidateStructureWindow(Toplevel):
                 attr = node_attrs_value[node][0]
             # when the element has a function
             else:
-                attr = [attr[0]] + [factor[0] for factor in attr[1:]]
+                attr = [attr[0]] + [factor for factor in attr[1:]]
             custom_node_labels[node] = "{}={}".format(node, attr)
 
         edge_attrs_color = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')

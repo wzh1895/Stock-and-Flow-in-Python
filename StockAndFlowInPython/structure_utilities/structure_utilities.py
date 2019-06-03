@@ -87,31 +87,32 @@ def new_expand_structure(base_structure, target_structure):
                                     name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
                                     uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
     new_base = SessionHandler(model_structure=new_model_structure)
-    print("    Base_structure: ", new_base.model_structure.sfd.nodes(data=True))
-
-    # Base
+    print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
     # get all elements in base structure
     base_structure_elements = list(new_base.model_structure.sfd.nodes)
     # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
     start_with_element_base = random.choice(base_structure_elements)
     print("    **** {} in base structure is chosen to start with".format(start_with_element_base))
-    print("    **** Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
+    # print("    **** Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
 
     def import_flow_from_target():
         all_flows_in_target = target_structure.model_structure.all_certain_type(FLOW)
         chosen_flow_name_in_target = random.choice(all_flows_in_target)
         print("    **** {} in target_structure is chosen to start with".format(chosen_flow_name_in_target))
         chosen_flow_in_target = target_structure.model_structure.sfd.nodes[chosen_flow_name_in_target]
-        print("    **** Details: ", chosen_flow_in_target)
+        # print("    **** Details: ", chosen_flow_in_target)
 
-        # build this flow to new_base
+        x = chosen_flow_in_target['pos'][0]
+        y = chosen_flow_in_target['pos'][1]
+
         if chosen_flow_in_target['function'] is None:  # the chosen flow is a constant one
             equation = chosen_flow_in_target['value'][0]
         else:  # it has an equation
-            equation = chosen_flow_in_target['function']
-        x = chosen_flow_in_target['pos'][0]
-        y = chosen_flow_in_target['pos'][1]
+            # set this equation to 0: we don't put equation directly in flow. Instead, we build this equation elsewhere,
+            # then replace flow by it (or 'linear' flow from it).
+            equation = 0
+
         flow_from = None
         flow_to = None
         if chosen_flow_in_target['flow_from'] is None and chosen_flow_in_target['flow_to'] is not None:
@@ -128,27 +129,49 @@ def new_expand_structure(base_structure, target_structure):
             target_structure.model_structure.all_certain_type([FLOW, VARIABLE, PARAMETER]))
         print("    **** {} in target_structure is chosen to start with".format(chosen_var_name_in_target))
         chosen_var_in_target = target_structure.model_structure.sfd.nodes[chosen_var_name_in_target]
-        print("    **** Details: ", chosen_var_in_target)
-        if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter
-            equation = chosen_var_in_target['value'][0]
-        else:  # it has a function as equation
-            # Not just copy-paste the equation; but to modify its parameters to constants
-            # equation = chosen_var_in_target['function']
-
-            equation = chosen_var_in_target['function']
-            print('\nFunctions:')
-            print(equation[0] == ADDITION)
-            print(equation[0] == SUBTRACT)
-            print(equation[0] == MULTIPLICATION)
-            print(equation[0] == DIVISION)
-            print(equation[0] == LINEAR)
-
+        # print("    **** Details: ", chosen_var_in_target)
 
         x = chosen_var_in_target['pos'][0]
         y = chosen_var_in_target['pos'][1]
 
-        # build this variable into new_base
-        new_base.build_aux(equation=equation, x=x, y=y)
+        if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter
+            equation = chosen_var_in_target['value'][0]
+        else:  # it has a function as equation
+            # Not just copy-paste the equation; but to modify its parameters to constants
+
+            equation = copy.deepcopy(chosen_var_in_target['function'])
+
+            if equation[0] == ADDITION:
+                equation[1] = start_with_element_base
+                equation[2] = 0
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+            elif equation[0] == SUBTRACT:
+                equation[1] = start_with_element_base
+                equation[2] = 0
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+            elif equation[0] == MULTIPLICATION:
+                equation[1] = start_with_element_base
+                equation[2] = 1
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+            elif equation[0] == DIVISION:
+                equation[1] = start_with_element_base
+                equation[2] = 1
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+            elif equation[0] == LINEAR:
+                equation[1] = start_with_element_base
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+
+        print("    Equation for this new var:", equation)
 
     # TODO this mechanism need to be changed
     start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']

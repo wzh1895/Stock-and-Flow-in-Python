@@ -183,7 +183,7 @@ class Structure(object):
             for node, attributes in self.sfd.nodes.data():
                 if attributes['element_type'] == ele_tp:
                     elements.append(node)
-        print(elements, "Found for", element_types)
+        # print(elements, "Found for", element_types)
         return elements
 
     def get_coordinate(self, name):
@@ -199,39 +199,61 @@ class Structure(object):
         Core function for simulation, based on recursion
         :param name: Name of the element to calculate
         """
-        if self.sfd.nodes[name]['element_type'] == STOCK:
+        if type(name) == int or type(name) == float:
+            # if the name is actually a constant:
+            return name
+
+        elif self.sfd.nodes[name]['element_type'] == STOCK:
             # if the node is a stock
             return self.sfd.nodes[name]['value'][-1]  # just return its latest value, update afterward.
         elif self.sfd.nodes[name]['function'] is None:
             # if the node does not have a function and not a stock, then it's constant
             # if this node is a constant, still extend its value list by its last value
-            self.sfd.nodes[name]['value'].append(self.sfd.nodes[name]['value'][-1])
+
+            # However, if this variable is participating in more than 1 calculation, its value could be extended twice.
+            # use 'visited' to fix this problem.
+            if name not in self.visited:
+                self.sfd.nodes[name]['value'].append(self.sfd.nodes[name]['value'][-1])
+                self.visited.append(name)
             return self.sfd.nodes[name]['value'][-1]  # use its latest value
         else:  # it's not a constant value but a function  #
             # params = self.sfd.nodes[name]['function'][1:]  # extract all parameters needed by this function
-            params = [param[0] for param in self.sfd.nodes[name]['function'][1:]]  # take the name but not the angle
+            params = [param for param in self.sfd.nodes[name]['function'][1:]]  # take the name but not the angle
             for j in range(len(params)):  # use recursion to find the values of params, then -
                 params[j] = self.calculate(params[j])  # replace the param's name with its value.
             new_value = self.sfd.nodes[name]['function'][0](*params)  # calculate the new value for this step
-            self.sfd.nodes[name]['value'].append(new_value)  # add this new value to this node's value list
+
+            # However, if this variable is participating in mor than 1 calculation, its value could be extended twice.
+            # use 'visited' to solve this problem.
+            if name not in self.visited:
+                self.sfd.nodes[name]['value'].append(new_value)  # add this new value to this node's value list
+                self.visited.append(name)
             return new_value  # return the new value to where it was called
 
     def step(self, dt=0.25):
         """
         Core function for simulation. Calculating all flows and adjust stocks accordingly based on recursion.
         """
+        # have a dictionary for flows and their values in this dt, to be added to /subtracted from stocks afterward.
         flows_dt = dict()
-        # have a dictionary of flows and their values in this dt, to be added to /subtracted from stocks afterward.
 
         # find all flows in the model
-        for element in self.sfd.nodes:  # loop through all elements in this SFD,
-            if self.sfd.nodes[element]['element_type'] == FLOW:  # if this element is a FLOW --
-                flows_dt[element] = 0  # make a position for it in the dict of flows_dt, initializing it with 0
+        for element in self.all_certain_type(FLOW):  # loop through all elements in this SFD,
+            flows_dt[element] = 0  # make a position for it in the dict of flows_dt, initializing it with 0
+
+        # have a list for all visited (calculated) variables (F/V/P) in this model
+        self.visited = list()
 
         # calculate flows
         for flow in flows_dt.keys():
             flows_dt[flow] = dt * self.calculate(flow)
         # print('All flows dt:', flows_dt)
+
+        # calculate all not visited variables and parameters in this model, in order to update their value list
+        # because all flows and stocks must be visited, only V and P are considered.
+        for element in self.all_certain_type([VARIABLE, PARAMETER]):
+            if element not in self.visited:
+                self.calculate(element)
 
         # calculating changes in stocks
         # have a dictionary of affected stocks and their changes, for one flow could affect 2 stocks.
@@ -463,9 +485,9 @@ class Structure(object):
         self.add_elements_batch([
             # 0type,    1name/uid,  2value/equation/angle                         3flow_from,      4flow_to,        5x,     6y,     7pts,
             [STOCK,     'stock0',   [100],                                        None,       None,       289,    145,    None],
-            [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [FLOW,      'flow0',    [DIVISION, 'gap0',   'at0'],      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'goal0',    [20],                                         None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0',     [SUBTRACT, ['goal0', 353], ['stock0', 246]],  None,       None,       213,    212,    None],
+            [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],    None,       None,       213,    212,    None],
             [PARAMETER, 'at0',      [5],                                          None,       None,       123,    77,    None],
             # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
             # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
@@ -480,7 +502,7 @@ class Structure(object):
         self.add_elements_batch([
             # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
             [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [FLOW,      'flow0',     [MULTIPLICATION, 'stock0', 'fraction0'],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
         ])
 
