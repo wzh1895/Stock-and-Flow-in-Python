@@ -14,36 +14,31 @@ ALIAS = 'alias'
 
 
 # Define functions
-class Functions(object):
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def linear(x, a=1, b=0):
-        return a * float(x) + b
-
-    @staticmethod
-    def addition(x, y):
-        return float(x) + float(y)
-
-    @staticmethod
-    def subtract(x, y):
-        return float(x) - float(y)
-
-    @staticmethod
-    def division(x, y):
-        return float(x) / float(y)
-
-    @staticmethod
-    def multiplication(x, y):
-        return float(x) * float(y)
+def linear(x, a=1, b=0):
+    return a * float(x) + b
 
 
-LINEAR = Functions.linear
-SUBTRACT = Functions.subtract
-DIVISION = Functions.division
-ADDITION = Functions.addition
-MULTIPLICATION = Functions.multiplication
+def addition(x, y):
+    return float(x) + float(y)
+
+
+def subtract(x, y):
+    return float(x) - float(y)
+
+
+def division(x, y):
+    return float(x) / float(y)
+
+
+def multiplication(x, y):
+    return float(x) * float(y)
+
+
+LINEAR = linear
+SUBTRACT = subtract
+DIVISION = division
+ADDITION = addition
+MULTIPLICATION = multiplication
 
 function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
 
@@ -111,10 +106,13 @@ class Structure(object):
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, uid=uid, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
         # print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
-        # automatically add dependencies, if a function is used for this variable
-        if function is not None and type(function) is not str:
-            self.add_function_dependencies(element_name, function)
+
+        # # automatically add dependencies, if a function is used for this variable
+        # if function is not None and type(function) is not str:
+        #     self.add_function_dependencies(element_name, function)
+
         self.uid_element_name[uid] = element_name
+
         return uid
 
     def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
@@ -127,6 +125,7 @@ class Structure(object):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
     def get_element_by_uid(self, uid):
+        print("Uid_Element_Name, ", self.uid_element_name)
         return self.sfd.nodes[self.uid_element_name[uid]]
 
     def get_element_name_by_uid(self, uid):
@@ -156,14 +155,6 @@ class Structure(object):
                 stocks.append(node)
         return stocks
 
-    # TODO depreciate
-    def all_flows(self):
-        flows = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == FLOW:
-                flows.append(node)
-        return flows
-
     # TODO decpreciate
     def all_variables(self):
         variables = list()
@@ -181,10 +172,18 @@ class Structure(object):
         return parameters
 
     def all_certain_type(self, element_type):
+        # able to handle both single type and multiple types
         elements = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == element_type:
-                elements.append(node)
+        if type(element_type) != list:
+            element_types = [element_type]
+        else:
+            element_types = element_type
+
+        for ele_tp in element_types:
+            for node, attributes in self.sfd.nodes.data():
+                if attributes['element_type'] == ele_tp:
+                    elements.append(node)
+        print(elements, "Found for", element_types)
         return elements
 
     def get_coordinate(self, name):
@@ -337,9 +336,13 @@ class Structure(object):
         # Decide if this aux is a parameter or variable
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number, it's a parameter
+            if name is None:
+                name = self.name_manager.get_new_name(element_type=PARAMETER)
             uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable, has its own function
+            if name is None:
+                name = self.name_manager.get_new_name(element_type=VARIABLE)
             uid = self.add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
             # Then it is assumed to take information from other variables, therefore causal links should be created.
             # Already implemented in structure's add_element function, not needed here.

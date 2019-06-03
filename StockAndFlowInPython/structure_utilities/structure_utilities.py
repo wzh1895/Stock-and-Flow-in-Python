@@ -2,14 +2,11 @@ import networkx as nx
 import copy
 import random
 from networkx.algorithms import chain_decomposition
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, ADDITION, SUBTRACT, MULTIPLICATION, DIVISION, LINEAR
 from StockAndFlowInPython.session_handler import SessionHandler
 
 
-def calculate_structural_similarity(who_compare, compare_with):
-    return
-
-
+"""
 def expand_structure(base_structure, target_structure):
     # new_base = copy.deepcopy(base_structure)
     new_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
@@ -78,18 +75,19 @@ def expand_structure(base_structure, target_structure):
     print("New structure edges:", new_base.model_structure.sfd.edges.data())
 
     return new_base
+"""
 
 
 def new_expand_structure(base_structure, target_structure):
     # new_base = copy.deepcopy(base_structure)
     # print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
     # new_base = copy.deepcopy(base_structure)
-    new_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
-                              uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
-                              name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
-                              uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
-    new_base = SessionHandler(model_structure=new_structure)
-    print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+    new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                                    uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                                    name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                                    uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_model_structure)
+    print("    Base_structure: ", new_base.model_structure.sfd.nodes(data=True))
 
     # Base
 
@@ -97,17 +95,15 @@ def new_expand_structure(base_structure, target_structure):
     base_structure_elements = list(new_base.model_structure.sfd.nodes)
     # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
     start_with_element_base = random.choice(base_structure_elements)
-    print("    {} in base_structure is chosen to start with".format(start_with_element_base))
-    # print("    Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
+    print("    **** {} in base structure is chosen to start with".format(start_with_element_base))
+    print("    **** Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
 
-    start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
-    if start_with_element_base_type == STOCK:
-        # only flows can influence it. we need to find a flow from target structure.
-        all_flows_in_target = target_structure.model_structure.all_flows()
+    def import_flow_from_target():
+        all_flows_in_target = target_structure.model_structure.all_certain_type(FLOW)
         chosen_flow_name_in_target = random.choice(all_flows_in_target)
-        print("    {} in target_structure is chosen to start with".format(chosen_flow_name_in_target))
-        # print("    Details: ", target_structure.model_structure.sfd.nodes[chosen_flow_name_in_target])
+        print("    **** {} in target_structure is chosen to start with".format(chosen_flow_name_in_target))
         chosen_flow_in_target = target_structure.model_structure.sfd.nodes[chosen_flow_name_in_target]
+        print("    **** Details: ", chosen_flow_in_target)
 
         # build this flow to new_base
         if chosen_flow_in_target['function'] is None:  # the chosen flow is a constant one
@@ -124,22 +120,52 @@ def new_expand_structure(base_structure, target_structure):
         elif chosen_flow_in_target['flow_from'] is not None and chosen_flow_in_target['flow_to'] is None:
             flow_from = start_with_element_base
             flow_to = None
-        #TODO there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
+        # TODO there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
         new_base.build_flow(equation=equation, x=x, y=y, flow_from=flow_from, flow_to=flow_to)
 
-    elif start_with_element_base_type == FLOW:
-        pass
-    elif start_with_element_base_type == VARIABLE:
-        pass
-    elif start_with_element_base_type == PARAMETER:
-        pass
+    def import_flow_var_param_from_target():
+        chosen_var_name_in_target = random.choice(
+            target_structure.model_structure.all_certain_type([FLOW, VARIABLE, PARAMETER]))
+        print("    **** {} in target_structure is chosen to start with".format(chosen_var_name_in_target))
+        chosen_var_in_target = target_structure.model_structure.sfd.nodes[chosen_var_name_in_target]
+        print("    **** Details: ", chosen_var_in_target)
+        if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter
+            equation = chosen_var_in_target['value'][0]
+        else:  # it has a function as equation
+            # Not just copy-paste the equation; but to modify its parameters to constants
+            # equation = chosen_var_in_target['function']
+
+            new_equation = chosen_var_in_target['function']
+            print('\nFunctions:')
+            print(new_equation[0] == ADDITION)
+            print(new_equation[0] == SUBTRACT)
+            print(new_equation[0] == MULTIPLICATION)
+            print(new_equation[0] == DIVISION)
+            print(new_equation[0] == LINEAR)
+
+
+        x = chosen_var_in_target['pos'][0]
+        y = chosen_var_in_target['pos'][1]
+
+        # build this variable into new_base
+        new_base.build_aux(equation=equation, x=x, y=y)
+
+    # TODO this mechanism need to be changed
+    start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
+    if start_with_element_base_type == STOCK:
+        # only flows can influence it. we need to find a flow from target structure.
+        import_flow_from_target()
+
+    elif start_with_element_base_type in [FLOW, VARIABLE, PARAMETER]:
+        # import a {flow, variable, parameter} from target structure
+        import_flow_var_param_from_target()
 
     return new_base
 
 
-def chains(structure):
-    structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
-    structure_chains = list()
-    for chain in structure_chains_generator:
-        structure_chains.append(chain)
-    print(structure_chains)
+# def chains(structure):
+#     structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
+#     structure_chains = list()
+#     for chain in structure_chains_generator:
+#         structure_chains.append(chain)
+#     print(structure_chains)

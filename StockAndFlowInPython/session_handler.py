@@ -433,17 +433,17 @@ class SessionHandler(object):
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
         uid = self.model_structure.add_flow(name=name,
-                                      equation=equation,
-                                      flow_from=flow_from,
-                                      flow_to=flow_to,
-                                      x=x,
-                                      y=y,
-                                      points=points)
+                                            equation=equation,
+                                            flow_from=flow_from,
+                                            flow_to=flow_to,
+                                            x=x,
+                                            y=y,
+                                            points=points)
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
 
-    def build_aux(self, name, equation, x=0, y=0):
+    def build_aux(self, name=None, equation=None, x=0, y=0):
         """
         Build an auxiliary variable in the way a modeler will do.
         :param name: The variable's name
@@ -639,7 +639,8 @@ class GraphNetworkWindow(object):
 
 
 class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red", width=500, height=430, x=650, y=250, attr=None):
+    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red",
+                 width=500, height=430, x=650, y=250, attr=None):
         super().__init__()
         self.title(window_title)
         self.width = width

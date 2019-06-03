@@ -7,9 +7,9 @@ from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, IN
     COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, VARIABLE, \
-    PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR
-from StockAndFlowInPython.structure_utilities.structure_utilities import expand_structure, new_expand_structure
+from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
+    PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACT, DIVISION, ADDITION
+from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -684,7 +684,7 @@ class StructureManager(object):
                 distribution_list.append(u)
         return distribution_list
 
-    def display_tree(self):
+    def update_tree_display(self):
         tree_node_color = list()
         if len(self.sorted_tree) > 3:  # when the sorted tree is generated
             top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
@@ -699,7 +699,7 @@ class StructureManager(object):
         self.tree_window.update_graph_network(node_color=tree_node_color)
 
     def update_candidate_structure_window(self):
-        self.display_tree()
+        self.update_tree_display()
         self.candidate_structure_window.generate_candidate_structure_list()
 
     def purge_low_activity_structures(self):
@@ -867,8 +867,8 @@ class ConceptCLDManager(object):
         self.concept_clds_likelihood = dict()   # name:likelihood
         self.add_concept_cld(name='basic_stock_inflow')
         self.add_concept_cld(name='basic_stock_outflow')
-        #self.add_concept_cld(name='first_order_positive')
-        #self.add_concept_cld(name='first_order_negative')
+        self.add_concept_cld(name='first_order_positive')
+        self.add_concept_cld(name='first_order_negative')
 
         self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
             concept_clds_likelihood=self.concept_clds_likelihood)
