@@ -9,13 +9,14 @@ from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, Grap
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACT, DIVISION, ADDITION
-from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure
+from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link
 import pandas as pd
 import numpy as np
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
 import matplotlib.pyplot as plt
 import random
+import time
 
 
 class ExpansionPanel(Frame):
@@ -58,20 +59,25 @@ class ExpansionPanel(Frame):
         self.btn_start_expansion = Button(self.control_bar, text='Start', command=self.expansion_loop)
         self.btn_start_expansion.pack(side=LEFT)
 
-        # Bulletin board
+        # self.btn_pause_expansion = Button(self.control_bar, text='Pause', command=self.pause_expansion)
+        # self.btn_pause_expansion.pack(side=LEFT)
+        #
+        # self.btn_resume_expansion = Button(self.control_bar, text='Resume', command=self.resume_expansion)
+        # self.btn_resume_expansion.pack(side=LEFT)
 
+        # Bulletin board
         self.bulletin_board = LabelFrame(self.master, text='Information', font=5)
         self.bulletin_board.pack(side=TOP, anchor='w', fill=BOTH)
 
         self.lb_iteration_round = Label(self.bulletin_board, text='Iter', font=10)
         self.lb_iteration_round.pack(side=LEFT)
 
+        # # Pause_resume control flag
+        # self.if_loop_paused = True
+
         # Initialize concept CLDs (generic structures)
         self.concept_cld_manager = ConceptCLDManager()
         # self.concept_cld_manager.generate_distribution()
-
-        # Initialize builder rack
-        self.possibility_rack = list()
 
         # Initial expansion tree
         self.expansion_tree = nx.DiGraph()
@@ -91,6 +97,10 @@ class ExpansionPanel(Frame):
         self.binding_manager = BindingManager(reference_modes=self.reference_modes,
                                               reference_modes_binding=self.reference_modes_binding,
                                               tree=self.expansion_tree)
+
+        # TODO this task list will be the predecessor of 'Code Rack'
+        # Initialize task list
+        self.task_list = [1]
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -118,8 +128,14 @@ class ExpansionPanel(Frame):
             for j in range(CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES):
                 self.update_concept_clds_likelihood()
 
-            # STEP generate new candidate structure
-            self.generate_candidate_structure()
+            # STEP structural modification
+            chosen_task = random.choice(self.task_list)
+            if chosen_task == 1:
+                self.generate_candidate_structure()
+                self.task_list.append(random.choice([1, 2]))
+            elif chosen_task == 2:
+                self.modify_function_in_candidate_structure()
+                self.task_list.append(random.choice([1, 2]))
 
             # STEP adjust candidate structures' activity
             for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):
@@ -130,7 +146,7 @@ class ExpansionPanel(Frame):
                 for k in range(COOL_DOWN_TIMES):
                     self.structure_manager.cool_down()
 
-            # STEP purge zero activity structures
+            # STEP purge low activity structures
             self.structure_manager.purge_low_activity_structures()
 
             # STEP sort candidate structures by activity
@@ -141,6 +157,15 @@ class ExpansionPanel(Frame):
             # global display updates needed
             self.binding_manager.update_combobox()
             i += 1
+
+            # while self.if_loop_paused:
+            #     time.sleep(0.1)
+
+    # def pause_expansion(self):
+    #     self.if_running_loop = False
+    #
+    # def resume_expansion(self):
+    #     self.if_running_loop = True
 
     # TODO
     def add_stock(self):
@@ -193,6 +218,20 @@ class ExpansionPanel(Frame):
         structure.simulation_handler(25)
         self.structure_manager.add_structure(structure=structure)
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
+
+    def generate_candidate_structure(self):
+        """Generate a new candidate structure"""
+        base = self.structure_manager.random_single()
+        target = self.concept_cld_manager.random_single()
+        new = new_expand_structure(base_structure=base, target_structure=target)
+        # new = expand_structure(base_structure=base, target_structure=target)
+        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
+
+    def modify_function_in_candidate_structure(self):
+        """Create a new causal link in an existing candidate structure"""
+        base = self.structure_manager.random_single()
+        new = create_causal_link(base_structure=base)
+        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def update_candidate_structure_activity_by_behavior(self):
         if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
@@ -265,15 +304,6 @@ class ExpansionPanel(Frame):
         else:
             self.concept_cld_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
         print(self.concept_cld_manager.concept_clds_likelihood)
-
-    def generate_candidate_structure(self):
-        """Generate a new candidate structure"""
-        base = self.structure_manager.random_single()
-        target = self.concept_cld_manager.random_single()
-        new = new_expand_structure(base_structure=base, target_structure=target)
-        # new = expand_structure(base_structure=base, target_structure=target)
-        # print('    Generated new candidate structure:', new)
-        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def behavioral_distance(self, who_compare, compare_with):
         print("    Expansion: Calculating similarity...")
@@ -546,6 +576,7 @@ class StructureManager(object):
         self.sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
         # print('sorted:', self.sorted_tree)
         string = ''
+        print("here,", self.sorted_tree)
         for i in range(3):
             string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
         self.candidate_structure_window.label_top_three_0.configure(text=string)
@@ -639,10 +670,9 @@ class StructureManager(object):
         self.update_candidate_structure_window()
 
     def cool_down(self):
-        """Cool down those not simulatable structures"""
-        # for u in self.tree.nodes:
-        # for u in [structure for structure in self.if_can_simulate.keys() if self.if_can_simulate[structure] is False]:
-        for u in self.those_cannot_simulate:
+        """Cool down structures"""
+        for u in self.tree.nodes:  # no matter it is simulatable or not
+        # for u in self.those_cannot_simulate:
             self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1 if self.tree.nodes[u][
                                                                                        'activity'] > 1 else 1
         self.update_candidate_structure_window()
@@ -674,6 +704,7 @@ class StructureManager(object):
         k = 8
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
+
         def normalize(r):
             if r > 50:
                 r = 50

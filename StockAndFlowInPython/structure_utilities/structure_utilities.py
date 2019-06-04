@@ -79,6 +79,7 @@ def expand_structure(base_structure, target_structure):
 
 
 def new_expand_structure(base_structure, target_structure):
+    print("    **** Building new structure...")
     # new_base = copy.deepcopy(base_structure)
     # print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
     # new_base = copy.deepcopy(base_structure)
@@ -87,7 +88,7 @@ def new_expand_structure(base_structure, target_structure):
                                     name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
                                     uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
     new_base = SessionHandler(model_structure=new_model_structure)
-    print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+    print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
     # get all elements in base structure
     base_structure_elements = list(new_base.model_structure.sfd.nodes)
@@ -181,7 +182,7 @@ def new_expand_structure(base_structure, target_structure):
                 element_name = new_base.model_structure.get_element_name_by_uid(uid)
                 new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
 
-        print("    Equation for this new var:", equation)
+        print("    ****Equation for this new var:", equation)
 
     # TODO this mechanism need to be changed
     start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
@@ -195,6 +196,70 @@ def new_expand_structure(base_structure, target_structure):
 
     return new_base
 
+
+def create_causal_link(base_structure):
+    print("    **** Creating new causal link...")
+    # create a new base structure to modify
+    new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                                    uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                                    name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                                    uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_model_structure)
+    print("    ****Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+
+    try:
+        chosen_var_name_in_base = random.choice(new_base.model_structure.all_certain_type([FLOW, VARIABLE, PARAMETER]))
+    except IndexError:
+        print("    ****There is still no F/V/P in base structure. Will return base structure as it is.")
+        return new_base
+
+    print("    **** {} in target_structure is chosen to start with".format(chosen_var_name_in_base))
+    chosen_var_in_base = new_base.model_structure.sfd.nodes[chosen_var_name_in_base]
+    # print("    **** Details: ", chosen_var_in_base['function'])
+
+    if chosen_var_in_base['function'] is None:
+        # this equation is not a function but a constant
+        pass
+    else:
+        # this equation is a function
+        # we need to find the parameter (constant) factor and replace it by an existing S/F/V/P, but not itself or in a short-circuit loop
+        function_name = chosen_var_in_base['function'][0]
+        arguments = chosen_var_in_base['function'][1:]  # make a copy of the arguments
+        print("    Function is {} with arguments {}".format(function_name, arguments))
+        chosen_source_in_base = random.choice(list(new_base.model_structure.sfd.nodes).remove(chosen_var_name_in_base))  # not itself
+        for i in range(len(arguments)):
+            # TODO what implemented here is only 'close the loop', but we need also to consider 'hit the boundary'
+            if type(arguments[i]) is int or float:  # if this argument is a constant
+                if chosen_source_in_base in arguments:  # not same as the other argument (if there are two)
+                    print("    The chosen source is already in the arguments, skip this loop.")
+                    break
+                else:
+                    arguments[i] = chosen_source_in_base
+                    if function_name == ADDITION:
+                        new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
+                                                 polarity='positive')
+                    elif function_name == MULTIPLICATION:
+                        new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
+                                                 polarity='positive')
+                    elif function_name == SUBTRACT:
+                        new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
+                                                 polarity='positive' if i == 0 else 'negative'
+                                                 # y=a-b, a: positive, b: negative
+                                                 )
+                    elif function_name == DIVISION:
+                        new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
+                                                 polarity='positive' if i == 0 else 'negative'
+                                                 # y=a / b, a: positive, b: negative
+                                                 )
+                    elif function_name == LINEAR:
+                        pass  # a linear function should not be modified
+
+            else:  # this argument is str (a variable's name)
+                pass
+        new_function = [function_name] + arguments
+        chosen_var_in_base['function'] = new_function  # replace with the changed function
+
+    return base_structure
 
 # def chains(structure):
 #     structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
