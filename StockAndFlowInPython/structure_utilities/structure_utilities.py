@@ -147,24 +147,34 @@ def new_expand_structure(base_structure, target_structure):
                 uid = new_base.build_aux(equation=equation, x=x, y=y)
                 element_name = new_base.model_structure.get_element_name_by_uid(uid)
                 new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
-            elif equation[0] == SUBTRACT:
-                equation[1] = start_with_element_base
-                equation[2] = 0
-                uid = new_base.build_aux(equation=equation, x=x, y=y)
-                element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+
             elif equation[0] == MULTIPLICATION:
                 equation[1] = start_with_element_base
                 equation[2] = 1
                 uid = new_base.build_aux(equation=equation, x=x, y=y)
                 element_name = new_base.model_structure.get_element_name_by_uid(uid)
                 new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
-            elif equation[0] == DIVISION:
-                equation[1] = start_with_element_base
-                equation[2] = 1
+
+            elif equation[0] == SUBTRACT:
+                factor = random.choice([1, 2])
+                equation[factor] = start_with_element_base
+                equation[3-factor] = 0
                 uid = new_base.build_aux(equation=equation, x=x, y=y)
                 element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                         polarity='positive' if factor == 1 else 'negative'
+                                         )
+
+            elif equation[0] == DIVISION:
+                factor = random.choice([1, 2])
+                equation[factor] = start_with_element_base
+                equation[3-factor] = 1
+                uid = new_base.build_aux(equation=equation, x=x, y=y)
+                element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                         polarity='positive' if factor == 1 else 'negative'
+                                         )
+
             elif equation[0] == LINEAR:
                 equation[1] = start_with_element_base
                 uid = new_base.build_aux(equation=equation, x=x, y=y)

@@ -3,7 +3,7 @@
 REFERENCE_MODE_PATH = './StockAndFlowInPython/case/tea_cup_model.csv'
 # REFERENCE_MODE_PATH = './StockAndFlowInPython/case/water_sink.csv'
 
-ITERATION_TIMES = 40
+ITERATION_TIMES = 20
 
 ACTIVITY_DEMOMINATOR = 3
 

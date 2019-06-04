@@ -125,7 +125,7 @@ class Structure(object):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
     def get_element_by_uid(self, uid):
-        print("Uid_Element_Name, ", self.uid_element_name)
+        # print("Uid_Element_Name, ", self.uid_element_name)
         return self.sfd.nodes[self.uid_element_name[uid]]
 
     def get_element_name_by_uid(self, uid):
@@ -147,29 +147,29 @@ class Structure(object):
         print('Graph: Causality from {} to {}:'.format(from_element, to_element))
         print(self.sfd[from_element][to_element])
 
-    # TODO depreciate
-    def all_stocks(self):
-        stocks = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == STOCK:
-                stocks.append(node)
-        return stocks
-
-    # TODO decpreciate
-    def all_variables(self):
-        variables = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == VARIABLE:
-                variables.append(node)
-        return variables
-
-    # TODO decpreciate
-    def all_parameters(self):
-        parameters = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == PARAMETER:
-                parameters.append(node)
-        return parameters
+    # # TODO depreciate
+    # def all_stocks(self):
+    #     stocks = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == STOCK:
+    #             stocks.append(node)
+    #     return stocks
+    #
+    # # TODO decpreciate
+    # def all_variables(self):
+    #     variables = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == VARIABLE:
+    #             variables.append(node)
+    #     return variables
+    #
+    # # TODO decpreciate
+    # def all_parameters(self):
+    #     parameters = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == PARAMETER:
+    #             parameters.append(node)
+    #     return parameters
 
     def all_certain_type(self, element_type):
         # able to handle both single type and multiple types
