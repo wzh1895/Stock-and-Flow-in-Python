@@ -112,7 +112,8 @@ def new_expand_structure(base_structure, target_structure):
         else:  # it has an equation
             # set this equation to 0: we don't put equation directly in flow. Instead, we build this equation elsewhere,
             # then replace flow by it (or 'linear' flow from it).
-            equation = 0
+            # TODO: if put 0 here, a problem of 0 division may occur.
+            equation = 1
 
         flow_from = None
         flow_to = None
@@ -122,7 +123,7 @@ def new_expand_structure(base_structure, target_structure):
         elif chosen_flow_in_target['flow_from'] is not None and chosen_flow_in_target['flow_to'] is None:
             flow_from = start_with_element_base
             flow_to = None
-        # TODO there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
+        # TODO: there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
         new_base.build_flow(equation=equation, x=x, y=y, flow_from=flow_from, flow_to=flow_to)
 
     def import_flow_var_param_from_target():
@@ -226,7 +227,12 @@ def create_causal_link(base_structure):
         function_name = chosen_var_in_base['function'][0]
         arguments = chosen_var_in_base['function'][1:]  # make a copy of the arguments
         print("    Function is {} with arguments {}".format(function_name, arguments))
-        chosen_source_in_base = random.choice(list(new_base.model_structure.sfd.nodes).remove(chosen_var_name_in_base))  # not itself
+        try:
+            chosen_source_in_base = random.choice(list(new_base.model_structure.sfd.nodes).remove(chosen_var_name_in_base))  # not itself
+        except TypeError:
+            print("    There are no more element in base_structure {} except for {}".format(new_base.model_structure.sfd.nodes, chosen_var_name_in_base))
+            return new_base
+
         for i in range(len(arguments)):
             # TODO what implemented here is only 'close the loop', but we need also to consider 'hit the boundary'
             if type(arguments[i]) is int or float:  # if this argument is a constant

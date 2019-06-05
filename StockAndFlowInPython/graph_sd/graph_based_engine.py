@@ -333,6 +333,7 @@ class Structure(object):
         if name is None:
             name = self.name_manager.get_new_name(element_type=FLOW)
         uid = self.add_element(name, element_type=FLOW, flow_from=flow_from, flow_to=flow_to, x=x, y=y, function=function, value=value, points=points)
+
         self.create_stock_flow_connection(name, flow_from=flow_from, flow_to=flow_to)
         # print('Graph: added flow:', name, 'to graph.')
         return uid

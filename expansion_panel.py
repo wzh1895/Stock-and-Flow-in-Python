@@ -4,7 +4,8 @@ from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES,\
+    PURGE_SWITCH, PURGE_THRESHOLD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
@@ -37,13 +38,13 @@ class ExpansionPanel(Frame):
         self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
         self.reference_menu.add_command(label='Add reference mode', command=self.load_reference_mode_from_file)
 
-        self.model_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label='Model', menu=self.model_menu)
-        self.model_menu.add_command(label='Add stock', command=self.add_stock)
-        self.model_menu.add_command(label='Add flow', command=self.add_flow)
-        self.model_menu.add_command(label='Add variable', command=self.add_variable)
-        # TODO
-        self.model_menu.add_command(label='Add connector', command=None)
+        # self.model_menu = Menu(self.menubar, tearoff=0)
+        # self.menubar.add_cascade(label='Model', menu=self.model_menu)
+        # self.model_menu.add_command(label='Add stock', command=self.add_stock)
+        # self.model_menu.add_command(label='Add flow', command=self.add_flow)
+        # self.model_menu.add_command(label='Add variable', command=self.add_variable)
+        # # TODO
+        # self.model_menu.add_command(label='Add connector', command=None)
 
         self.action_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Action', menu=self.action_menu)
@@ -147,7 +148,8 @@ class ExpansionPanel(Frame):
                     self.structure_manager.cool_down()
 
             # STEP purge low activity structures
-            self.structure_manager.purge_low_activity_structures()
+            if PURGE_SWITCH:
+                self.structure_manager.purge_low_activity_structures()
 
             # STEP sort candidate structures by activity
             # TODO: control this not only by number
@@ -166,38 +168,6 @@ class ExpansionPanel(Frame):
     #
     # def resume_expansion(self):
     #     self.if_running_loop = True
-
-    # TODO
-    def add_stock(self):
-        add_dialog = AddElementWindow(STOCK)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        print(element_name, value, x, y)
-
-    # TODO
-    def add_flow(self):
-        add_dialog = AddElementWindow(FLOW)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        flow_to = add_dialog.flow_to
-        flow_from = add_dialog.flow_from
-        print(element_name, value, x, y, flow_to, flow_from)
-
-    # TODO
-    def add_variable(self):
-        add_dialog = AddElementWindow(VARIABLE)
-        self.wait_window(add_dialog)  # important!
-        element_name = add_dialog.name
-        value = float(add_dialog.value)
-        x = int(add_dialog.element_x)
-        y = int(add_dialog.element_y)
-        print(element_name, value, x, y)
 
     def load_reference_mode_from_file(self):
         self.reference_mode_manager.load_reference_mode_from_file()
@@ -235,42 +205,45 @@ class ExpansionPanel(Frame):
 
     def update_candidate_structure_activity_by_behavior(self):
         if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
-            # Get 2 random candidates
-            random_two_candidates = [None, None]
-            while random_two_candidates[0] == random_two_candidates[1]:
-                # Here we don't use the weighted random pair, to give those less active more opportunity
-                random_two_candidates = self.structure_manager.random_pair_even()
-                while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and
-                           self.structure_manager.if_can_simulate[random_two_candidates[1]]):
-                    # we have to get two simulatable structures to compare their behaviors
+            # Make more comparisons as there are more candidate structures
+            iter_times = len(self.structure_manager.those_can_simulate) // 2
+            for i in range(iter_times):
+                # Get 2 random candidates
+                random_two_candidates = [None, None]
+                while random_two_candidates[0] == random_two_candidates[1]:
+                    # Here we don't use the weighted random pair, to give those less active more opportunity
                     random_two_candidates = self.structure_manager.random_pair_even()
-            print("Two candidate structures chosen for comparison: ", random_two_candidates)
-            # Calculate their similarity to reference mode
-            candidate_0_distance = 0
-            candidate_1_distance = 0
-            s_uid_0 = random_two_candidates[0]
-            s_uid_1 = random_two_candidates[1]
-            for reference_mode_name, reference_mode_property in self.reference_modes.items():
-                uid = self.reference_modes_binding[reference_mode_name]
-                candidate_0_distance += self.behavioral_distance(
-                    self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
-                        'value'],
-                    reference_mode_property[1]
-                )
-                candidate_1_distance += self.behavioral_distance(
-                    self.structure_manager.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)[
-                        'value'],
-                    reference_mode_property[1]
-                )
+                    while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and
+                               self.structure_manager.if_can_simulate[random_two_candidates[1]]):
+                        # we have to get two simulatable structures to compare their behaviors
+                        random_two_candidates = self.structure_manager.random_pair_even()
+                print("Two candidate structures chosen for comparison: ", random_two_candidates)
+                # Calculate their similarity to reference mode
+                candidate_0_distance = 0
+                candidate_1_distance = 0
+                s_uid_0 = random_two_candidates[0]
+                s_uid_1 = random_two_candidates[1]
+                for reference_mode_name, reference_mode_property in self.reference_modes.items():
+                    uid = self.reference_modes_binding[reference_mode_name]
+                    candidate_0_distance += self.behavioral_distance(
+                        self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
+                            'value'],
+                        reference_mode_property[1]
+                    )
+                    candidate_1_distance += self.behavioral_distance(
+                        self.structure_manager.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)[
+                            'value'],
+                        reference_mode_property[1]
+                    )
 
-            print(candidate_0_distance, candidate_1_distance)
-            # Update their activity
-            if candidate_0_distance != candidate_1_distance:
-                if candidate_0_distance > candidate_1_distance:
-                    self.structure_manager.update_activity_elo(s_uid_1, s_uid_0)
-                else:
-                    self.structure_manager.update_activity_elo(s_uid_0, s_uid_1)
-            # print("All nodes' activity:", self.structure_manager.show_all_activity())
+                print(candidate_0_distance, candidate_1_distance)
+                # Update their activity
+                if candidate_0_distance != candidate_1_distance:
+                    if candidate_0_distance > candidate_1_distance:
+                        self.structure_manager.update_activity_elo(s_uid_1, s_uid_0)
+                    else:
+                        self.structure_manager.update_activity_elo(s_uid_0, s_uid_1)
+                # print("All nodes' activity:", self.structure_manager.show_all_activity())
 
     def update_concept_clds_likelihood(self):
         random_two_clds = [None, None]
@@ -574,9 +547,8 @@ class StructureManager(object):
     def sort_by_activity(self):
         # sort all candidate structures by activity
         self.sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
-        # print('sorted:', self.sorted_tree)
+        print('Sorted tree:', self.sorted_tree)
         string = ''
-        print("here,", self.sorted_tree)
         for i in range(3):
             string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
         self.candidate_structure_window.label_top_three_0.configure(text=string)
@@ -743,7 +715,7 @@ class StructureManager(object):
     def purge_low_activity_structures(self):
         elements = list(self.tree.nodes)
         for element in elements:
-            if self.tree.nodes[element]['activity'] <= 0:
+            if self.tree.nodes[element]['activity'] <= PURGE_THRESHOLD:
                 # TODO in the future, consider when edge has its attributes
                 in_edges_to_element = self.tree.in_edges(element)
                 print("In edges to 0 act ele:", in_edges_to_element)
@@ -770,6 +742,9 @@ class CandidateStructureWindow(Toplevel):
 
         self.btn_accept = Button(self.fm_actions, text='Accept and keep', command=self.accept_a_structure)
         self.btn_accept.pack(side=LEFT)
+
+        self.btn_modify = Button(self.fm_actions, text='Modify', command=self.modify_a_structure)
+        self.btn_modify.pack(side=LEFT)
 
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
@@ -809,6 +784,11 @@ class CandidateStructureWindow(Toplevel):
 
         # update tree display
         # TODO this needs mechanism like 'signal and slot', but Tkinter does not have. Will do in Qt.
+
+    def modify_a_structure(self):
+        # get the selected structure (entry) from listbox
+        selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
+        structure_modifier = StructureModifier(self.tree.nodes[selected_entry]['structure'])
 
     def generate_candidate_structure_list(self):
         try:
@@ -857,11 +837,11 @@ class CandidateStructureWindow(Toplevel):
                 attr = [attr[0]] + [factor for factor in attr[1:]]
             custom_node_labels[node] = "{}={}".format(node, attr)
 
-        edge_attrs_color = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')
+        edge_attrs_polarity = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')
         custom_edge_colors = list()
-        for edge, attr in edge_attrs_color.items():
+        for edge, attr in edge_attrs_polarity.items():
             color = 'k'  # black
-            if attr is 'negative':
+            if attr == 'negative':
                 color = 'b'  # blue
             custom_edge_colors.append(color)
 
@@ -897,6 +877,232 @@ class CandidateStructureWindow(Toplevel):
         self.update()
 
 
+class StructureModifier(Toplevel):
+    def __init__(self, structure, width=700, height=400, x=5, y=300):
+        super().__init__()
+        self.title("Candidate Structures")
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.structure = structure
+
+        self.fm_actions = LabelFrame(self, text='Actions', width=50)
+        self.fm_actions.pack(side=LEFT, fill=Y)
+
+        self.btn_add_stock = Button(self.fm_actions, text='Add stock', command=self.add_stock)
+        self.btn_add_stock.pack(side=TOP, anchor='w')
+
+        self.btn_add_flow = Button(self.fm_actions, text='Add flow', command=self.add_flow)
+        self.btn_add_flow.pack(side=TOP, anchor='w')
+
+        self.btn_add_aux = Button(self.fm_actions, text='Add auxiliary', command=self.add_variable)
+        self.btn_add_aux.pack(side=TOP, anchor='w')
+
+        self.btn_add_connector = Button(self.fm_actions, text='Add connector', command=self.add_connector)
+        self.btn_add_connector.pack(side=TOP, anchor='w')
+
+        self.fm_display = Frame(self)
+        self.fm_display.pack(side=LEFT, fill=BOTH)
+
+        self.display_structure()
+
+    def display_structure(self):
+        try:
+            plt.close()
+            self.candidate_structure_canvas.get_tk_widget().destroy()
+        except:
+            pass
+        fig, ax = plt.subplots()
+
+        node_attrs_function = nx.get_node_attributes(self.structure.model_structure.sfd, 'function')
+        node_attrs_value = nx.get_node_attributes(self.structure.model_structure.sfd, 'value')
+        custom_node_labels = dict()
+        for node, attr in node_attrs_function.items():
+            # when the element only has a value but no function
+            if attr is None:
+                attr = node_attrs_value[node][0]
+            # when the element has a function
+            else:
+                attr = [attr[0]] + [factor for factor in attr[1:]]
+            custom_node_labels[node] = "{}={}".format(node, attr)
+
+        edge_attrs_polarity = nx.get_edge_attributes(self.structure.model_structure.sfd, 'polarity')
+        custom_edge_colors = list()
+        for edge, attr in edge_attrs_polarity.items():
+            color = 'k'  # black
+            if attr == 'negative':
+                color = 'b'  # blue
+            custom_edge_colors.append(color)
+
+        nx.draw_networkx(G=self.structure.model_structure.sfd,
+                         labels=custom_node_labels,
+                         font_size=6,
+                         edge_color=custom_edge_colors)
+        plt.axis('off')  # turn off axis for structure display
+        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display)
+        self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
+
+    def add_stock(self):
+        add_dialog = AddElementWindow(element_type=STOCK, structure=self.structure)
+        self.wait_window(add_dialog)  # important!
+        self.display_structure()
+
+    def add_flow(self):
+        add_dialog = AddElementWindow(element_type=FLOW, structure=self.structure)
+        self.wait_window(add_dialog)  # important!
+        self.display_structure()
+
+    def add_variable(self):
+        add_dialog = AddElementWindow(element_type=VARIABLE, structure=self.structure)
+        self.wait_window(add_dialog)  # important!
+        self.display_structure()
+
+    def add_connector(self, from_var=None, to_var=None, polarity=None):
+        add_connector_dialog = AddConnectorWindow(structure=self.structure)
+        self.wait_window(add_connector_dialog)
+        self.display_structure()
+
+
+class AddElementWindow(Toplevel):
+    def __init__(self, element_type, structure, width=200, height=350, x=200, y=200):
+        super().__init__()
+        self.title("Add " + element_type)
+        self.geometry("+{}+{}".format(x, y))
+        self.element_type = element_type
+        self.structure = structure
+
+        self.label_name = Label(self, text="Name:")
+        self.label_name.pack(side=TOP, anchor='w')
+        self.entry_name = Entry(self)
+        self.entry_name.pack(side=TOP)
+
+        self.label_value = Label(self, text="Value:")
+        self.label_value.pack(side=TOP, anchor='w')
+        self.entry_value = Entry(self)
+        self.entry_value.pack(side=TOP)
+
+        self.label_x = Label(self, text="x:")
+        self.label_x.pack(side=TOP, anchor='w')
+        self.entry_x = Entry(self)
+        self.entry_x.pack(side=TOP)
+
+        self.label_y = Label(self, text="y:")
+        self.label_y.pack(side=TOP, anchor='w')
+        self.entry_y = Entry(self)
+        self.entry_y.pack(side=TOP)
+
+        if self.element_type == FLOW:
+            self.variables_in_model = ['-'] + self.structure.model_structure.all_certain_type(STOCK)
+
+            self.label_flow_to = Label(self, text="Flow to:")
+            self.label_flow_to.pack(side=TOP, anchor='w')
+
+            self.flow_to_variables_combobox = ttk.Combobox(self)
+            self.flow_to_variables_combobox["values"] = self.variables_in_model
+            self.flow_to_variables_combobox.current(0)
+            self.flow_to_variables_combobox.pack(side=TOP)
+
+            self.label_flow_from = Label(self, text="Flow from:")
+            self.label_flow_from.pack(side=TOP, anchor='w')
+
+            self.flow_from_variables_combobox = ttk.Combobox(self)
+            self.flow_from_variables_combobox["values"] = self.variables_in_model
+            self.flow_from_variables_combobox.current(0)
+            self.flow_from_variables_combobox.pack(side=TOP)
+
+        self.fm_buttons = Frame(self)
+        self.fm_buttons.pack(side=TOP, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+
+    def confirm(self):
+        try:
+            self.element_name = self.entry_name.get()
+            self.value = float(self.entry_value.get())
+            self.x = int(self.entry_x.get())
+            self.y = int(self.entry_y.get())
+            # print("name: {}, value: {}, x: {}, y:{}".format(self.element_name, self.value, self.x, self.y))
+            if self.element_type == FLOW:
+                self.flow_from = None if self.flow_from_variables_combobox.get() == '-' else self.flow_from_variables_combobox.get()
+                self.flow_to = None if self.flow_to_variables_combobox.get() == '-' else self.flow_to_variables_combobox.get()
+                # print("flow_from: {}, flow_to: {}".format(self.flow_from, self.flow_to))
+            if self.element_type == STOCK:
+                self.structure.build_stock(name=self.element_name, initial_value=self.value, x=self.x, y=self.y)
+            elif self.element_type == FLOW:
+                self.structure.build_flow(name=self.element_name, equation=self.value, x=self.x, y=self.y,
+                                          flow_from=self.flow_from, flow_to=self.flow_to)
+            elif self.element_type in [VARIABLE, PARAMETER]:
+                self.structure.build_aux(name=self.element_name, equation=self.value, x=self.x, y=self.y)
+            self.destroy()
+
+        except ValueError:
+            pass
+
+    def cancel(self):
+        self.destroy()
+
+
+class AddConnectorWindow(Toplevel):
+    def __init__(self, structure, width=200, height=350, x=200, y=200):
+        super().__init__()
+        self.title("Add causal link")
+        self.geometry("+{}+{}".format(x, y))
+        self.structure = structure
+
+        self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
+        for stock in self.structure.model_structure.all_certain_type(STOCK):
+            self.variables_in_model.remove(stock)
+
+        self.label_from = Label(self, text="From")
+        self.label_from.pack(side=TOP, anchor='w')
+
+        self.from_variable_combobox = ttk.Combobox(self)
+        self.from_variable_combobox["values"] = self.variables_in_model
+        self.from_variable_combobox.current(0)
+        # self.flow_from_variables_combobox.bind("<<ComboboxSelected>>", self)
+        self.from_variable_combobox.pack(side=TOP)
+
+        self.label_to = Label(self, text="To")
+        self.label_to.pack(side=TOP, anchor='w')
+
+        self.to_variable_combobox = ttk.Combobox(self)
+        self.to_variable_combobox["values"] = self.variables_in_model
+        self.to_variable_combobox.current(0)
+        # self.flow_to_variables_combobox.bind("<<ComboboxSelected>>", self)
+        self.to_variable_combobox.pack(side=TOP)
+
+        self.label_polarity = Label(self, text="Polarity")
+        self.label_polarity.pack(side=TOP, anchor='w')
+
+        self.polarity_combobox = ttk.Combobox(self)
+        self.polarity_combobox["values"] = ['-', 'positive', 'negative']
+        self.polarity_combobox.current(0)
+        # self.flow_to_variables_combobox.bind("<<ComboboxSelected>>", self)
+        self.polarity_combobox.pack(side=TOP)
+
+        self.fm_buttons = Frame(self)
+        self.fm_buttons.pack(side=TOP, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+
+    def confirm(self):
+        try:
+            from_var = self.from_variable_combobox.get()
+            to_var = self.to_variable_combobox.get()
+            polarity = self.polarity_combobox.get() if self.polarity_combobox.get() != '-' else None
+            # print("from var: {}, to var: {}, polarity: {}".format(from_var, to_var, polarity))
+            self.structure.build_connector(from_var=from_var, to_var=to_var, polarity=polarity)
+            self.destroy()
+
+        except ValueError:
+            pass
+
+    def cancel(self):
+        self.destroy()
+
+
 class ConceptCLDManager(object):
     """The class containing and managing all concept CLDs"""
 
@@ -922,7 +1128,7 @@ class ConceptCLDManager(object):
 
     def reset_all_likelihood(self):
         for cld in self.concept_clds_likelihood.keys():
-            self.concept_clds_likelihood[cld] == INITIAL_LIKELIHOOD
+            self.concept_clds_likelihood[cld] = INITIAL_LIKELIHOOD
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
@@ -1026,72 +1232,6 @@ class SelectReferenceModeWindow(Toplevel):
     def cancel(self):
         self.reference_mode_type = None
         self.selected_reference_mode = None
-        self.destroy()
-
-
-class AddElementWindow(Toplevel):
-    def __init__(self, element_type, width=200, height=350, x=200, y=200):
-        super().__init__()
-        self.title("Add " + element_type)
-        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
-
-        self.name = None
-        self.value = None
-        self.flow_from = None
-        self.flow_to = None
-        self.element_x = None
-        self.element_y = None
-
-        self.label_name = Label(self, text="Name:")
-        self.label_name.pack(side=TOP, anchor='w')
-        self.entry_name = Entry(self)
-        self.entry_name.pack(side=TOP)
-
-        self.label_value = Label(self, text="Value:")
-        self.label_value.pack(side=TOP, anchor='w')
-        self.entry_value = Entry(self)
-        self.entry_value.pack(side=TOP)
-
-        self.label_x = Label(self, text="x:")
-        self.label_x.pack(side=TOP, anchor='w')
-        self.entry_x = Entry(self)
-        self.entry_x.pack(side=TOP)
-
-        self.label_y = Label(self, text="y:")
-        self.label_y.pack(side=TOP, anchor='w')
-        self.entry_y = Entry(self)
-        self.entry_y.pack(side=TOP)
-
-        if element_type == FLOW:
-            self.label_flow_to = Label(self, text="Flow to:")
-            self.label_flow_to.pack(side=TOP, anchor='w')
-            self.entry_flow_to = Entry(self)
-            self.entry_flow_to.pack(side=TOP)
-
-            self.label_flow_from = Label(self, text="Flow from:")
-            self.label_flow_from.pack(side=TOP, anchor='w')
-            self.entry_flow_from = Entry(self)
-            self.entry_flow_from.pack(side=TOP)
-
-        self.fm_buttons = Frame(self)
-        self.fm_buttons.pack(side=TOP, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
-        self.confirm_button.pack(side=LEFT, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
-        self.confirm_button.pack(side=LEFT, anchor='center')
-
-    def confirm(self):
-        self.name = self.entry_name.get()
-        self.value = self.entry_value.get()
-        self.element_x = self.entry_x.get()
-        self.element_y = self.entry_y.get()
-        self.destroy()
-
-    def cancel(self):
-        self.name = None
-        self.value = None
-        self.element_x = None
-        self.element_y = None
         self.destroy()
 
 

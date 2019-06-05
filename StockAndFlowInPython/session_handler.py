@@ -333,7 +333,7 @@ class SessionHandler(object):
         # update variables' list
         self.variables_in_model = list(self.model_structure.sfd.nodes)
 
-    def build_stock(self, name, initial_value, x=0, y=0):
+    def build_stock(self, name=None, initial_value=None, x=0, y=0):
         """
         Build a stock in the way a modeler will do.
         :param name: The stock's name
@@ -386,7 +386,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name+angle instead of a number
                     linked_vars.append(linked_var[0])  # add the name to 'linked_vars'
-        print('   ', name, 'is linked to', linked_vars)
+        print('   Building flow:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
@@ -457,7 +457,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name instead of a number
                     linked_vars.append(linked_var[0])
-        print('   ', name, 'is linked to', linked_vars)
+        print('   Building aux:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
@@ -473,7 +473,7 @@ class SessionHandler(object):
         time.sleep(SLEEP_TIME)
         return uid
 
-    def build_connector(self, from_var, to_var, polarity):
+    def build_connector(self, from_var, to_var, polarity=None):
         self.model_structure.add_causality(from_element=from_var, to_element=to_var, polarity=polarity)
 
     def generate_location(self, sfd_window, linked_vars):
