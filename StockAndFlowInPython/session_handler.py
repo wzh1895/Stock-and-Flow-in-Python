@@ -342,7 +342,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("==>Building stock: {}".format(name))
+        print("===>Building stock: {}".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             # TODO: fix this line
             pos = self.generate_location(self.sfd_window1, [])
@@ -377,7 +377,7 @@ class SessionHandler(object):
         :param flow_to: Inflow to ...
         :return:
         """
-        print("==>Building flow: {}".format(name if name is not None else 'new'))
+        print("===>Building flow: {}".format(name if name is not None else 'new'))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
@@ -448,7 +448,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("==>Building aux: {}".format(name))
+        print("===>Building aux: {}".format(name))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []

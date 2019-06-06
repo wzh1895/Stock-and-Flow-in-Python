@@ -433,13 +433,14 @@ class Structure(object):
                              x=element[5],
                              y=element[6])
             elif element[0] == CONNECTOR:
-                self.add_connector(uid=element[1],
-                                   angle=element[2],
-                                   from_element=element[3],
-                                   to_element=element[4])
+                self.add_connector(angle=element[1],
+                                   from_element=element[2],
+                                   to_element=element[3],
+                                   polarity=element[4])
 
-    def add_connector(self, uid, from_element, to_element, angle=0):
-        self.add_causality(from_element, to_element, uid=uid, angle=angle)
+    def add_connector(self, from_element, to_element, angle=0, polarity=None, display=True):
+        uid = self.uid_manager.get_new_uid()
+        self.add_causality(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)
 
     def add_alias(self, uid, of_element, x=0, y=0):
         self.add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
@@ -484,16 +485,17 @@ class Structure(object):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.sfd.graph['structure_name'] = 'first_order_negative'
         self.add_elements_batch([
-            # 0type,    1name/uid,  2value/equation/angle                         3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',   [100],                                        None,       None,       289,    145,    None],
-            [FLOW,      'flow0',    [DIVISION, 'gap0',   'at0'],      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
-            [PARAMETER, 'goal0',    [20],                                         None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0',     [SUBTRACT, 'goal0', 'stock0'],    None,       None,       213,    212,    None],
-            [PARAMETER, 'at0',      [5],                                          None,       None,       123,    77,    None],
-            # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
-            # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
-            # [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
-            # [CONNECTOR, '3',        311,                           'at0',      'flow0',     0,      0,      None]
+            # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [DIVISION, 'gap0',   'at0'],               None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [PARAMETER, 'goal0',     [20],                                      None,       None,       163,    251,    None],
+            [VARIABLE,  'gap0',      [SUBTRACT, 'goal0', 'stock0'],             None,       None,       213,    212,    None],
+            [PARAMETER, 'at0',       [5],                                       None,       None,       123,    77,     None],
+            # 0type     1angle       2from         3to          4polarity
+            [CONNECTOR, 246,         'stock0',     'gap0',      'positive'],
+            [CONNECTOR, 353,         'goal0',      'gap0',      'negative'],
+            [CONNECTOR, 148,         'gap0',       'flow0',     'positive'],
+            [CONNECTOR, 311,         'at0',        'flow0',     'negative']
             ])
 
     # Set the model to a first order negative feedback loop
@@ -501,28 +503,31 @@ class Structure(object):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.sfd.graph['structure_name'] = 'first_order_positive'
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [MULTIPLICATION, 'stock0', 'fraction0'],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
-            [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
+            # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [MULTIPLICATION, 'stock0', 'fraction0'],   None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [PARAMETER, 'fraction0', [0.1],                                     None,       None,       163,    251,    None],
+            # 0type     1angle       2from         3to          4polarity
+            [CONNECTOR, 246,         'stock0',     'flow0',     'positive'],
+            [CONNECTOR, 311,         'fraction0',  'flow0',     'positive']
         ])
 
     # Set the model to one stock + one outflow
     def basic_stock_outflow(self):
         self.sfd.graph['structure_name'] = 'basic_stock_outflow '
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [100],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [4],                                                    'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
+            # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [4],                                       'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
         ])
 
     # Set the model to one stock + one inflow
     def basic_stock_inflow(self):
         self.sfd.graph['structure_name'] = 'basic_stock_inflow'
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                                    None,            None,            289,    145,    None],
-            [FLOW,      'flow0',     [4],                                                    None,            'stock0',        181,    145, [[85, 145], [266.5, 145]]],
+            # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [4],                                       None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
         ])
 
     # Clear a run
@@ -675,8 +680,8 @@ def main():
     structure0.first_order_negative()
     structure0.simulate(simulation_time=10)
     structure0.draw_graphs_with_curve()
+    # structure0.draw_graphs()
     structure0.draw_results()
-    structure0.all_stocks()
 
 
 if __name__ == '__main__':

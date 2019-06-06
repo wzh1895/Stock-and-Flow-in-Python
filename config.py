@@ -1,9 +1,9 @@
 
 # REFERENCE_MODE_PATH = './StockAndFlowInPython/case/linear_decrease.csv'
-# REFERENCE_MODE_PATH = './StockAndFlowInPython/case/tea_cup_model.csv'
-REFERENCE_MODE_PATH = './StockAndFlowInPython/case/water_sink.csv'
+REFERENCE_MODE_PATH = './StockAndFlowInPython/case/tea_cup_model.csv'
+# REFERENCE_MODE_PATH = './StockAndFlowInPython/case/water_sink.csv'
 
-ITERATION_TIMES = 1
+ITERATION_TIMES = 5
 
 ACTIVITY_DEMOMINATOR = 2
 

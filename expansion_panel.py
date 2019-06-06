@@ -1111,8 +1111,8 @@ class GenericStructureManager(object):
     def __init__(self):
         self.generic_structures = dict()  # name:structure
         self.generic_structures_likelihood = dict()   # name:likelihood
-        self.add_generic_structure(name='basic_stock_inflow')
-        self.add_generic_structure(name='basic_stock_outflow')
+        # self.add_generic_structure(name='basic_stock_inflow')
+        # self.add_generic_structure(name='basic_stock_outflow')
         self.add_generic_structure(name='first_order_positive')
         self.add_generic_structure(name='first_order_negative')
 
