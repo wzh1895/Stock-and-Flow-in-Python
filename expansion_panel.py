@@ -4,7 +4,7 @@ from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES,\
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES,\
     PURGE_SWITCH, PURGE_THRESHOLD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
@@ -76,9 +76,8 @@ class ExpansionPanel(Frame):
         # # Pause_resume control flag
         # self.if_loop_paused = True
 
-        # Initialize concept CLDs (generic structures)
-        self.concept_cld_manager = ConceptCLDManager()
-        # self.concept_cld_manager.generate_distribution()
+        # Initialize generic structures
+        self.generic_structure_manager = GenericStructureManager()
 
         # Initial expansion tree
         self.expansion_tree = nx.DiGraph()
@@ -116,8 +115,8 @@ class ExpansionPanel(Frame):
         self.expansion_loop()
 
     def expansion_loop(self):
-        self.concept_cld_manager.reset_all_likelihood()
-        self.concept_cld_manager.generate_distribution()
+        self.generic_structure_manager.reset_all_likelihood()
+        self.generic_structure_manager.generate_distribution()
 
         i = 1
         while i <= self.iteration_time:
@@ -125,9 +124,9 @@ class ExpansionPanel(Frame):
             self.lb_iteration_round.configure(text='Iter '+str(i))
             self.lb_iteration_round.update()
 
-            # STEP adjust concept CLDs' likelihood
-            for j in range(CONCETPT_CLD_LIKELIHOOD_UPDATE_TIMES):
-                self.update_concept_clds_likelihood()
+            # STEP adjust generic structures' likelihood
+            for j in range(GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES):
+                self.update_generic_structures_likelihood()
 
             # STEP structural modification
             chosen_task = random.choice(self.task_list)
@@ -192,7 +191,7 @@ class ExpansionPanel(Frame):
     def generate_candidate_structure(self):
         """Generate a new candidate structure"""
         base = self.structure_manager.random_single()
-        target = self.concept_cld_manager.random_single()
+        target = self.generic_structure_manager.random_single()
         new = new_expand_structure(base_structure=base, target_structure=target)
         # new = expand_structure(base_structure=base, target_structure=target)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
@@ -245,38 +244,38 @@ class ExpansionPanel(Frame):
                         self.structure_manager.update_activity_elo(s_uid_0, s_uid_1)
                 # print("All nodes' activity:", self.structure_manager.show_all_activity())
 
-    def update_concept_clds_likelihood(self):
-        random_two_clds = [None, None]
-        while random_two_clds[0] == random_two_clds[1]:  # The two cannot be the same
-            random_two_clds = self.concept_cld_manager.random_pair()
-        cld_0 = random_two_clds[0]
-        cld_1 = random_two_clds[1]
-        # print(random_two_clds)
-        # TODO this part is important: assessment of a concept CLD's likelihood.
+    def update_generic_structures_likelihood(self):
+        random_two_generic_structures = [None, None]
+        while random_two_generic_structures[0] == random_two_generic_structures[1]:  # The two cannot be the same
+            random_two_generic_structures = self.generic_structure_manager.random_pair()
+        generic_structure_0 = random_two_generic_structures[0]
+        generic_structure_1 = random_two_generic_structures[1]
+        # print(random_two_generic_structures)
+        # TODO this part is important: assessment of a generic structure's likelihood.
 
         # randomly choose a reference mode
         chosen_reference_mode = random.choice(list(self.reference_modes.keys()))
         chosen_reference_mode_type = self.reference_modes[chosen_reference_mode][0]
 
-        # randomly choose element from clds
-        chosen_element_from_cld_0 = random.choice(self.concept_cld_manager.concept_clds[cld_0].model_structure.all_certain_type(chosen_reference_mode_type))
-        chosen_element_from_cld_1 = random.choice(self.concept_cld_manager.concept_clds[cld_1].model_structure.all_certain_type(chosen_reference_mode_type))
+        # randomly choose element from generic_structures
+        chosen_element_from_generic_structure_0 = random.choice(self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.all_certain_type(chosen_reference_mode_type))
+        chosen_element_from_generic_structure_1 = random.choice(self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.all_certain_type(chosen_reference_mode_type))
 
-        random_two_clds_distance = {
-            cld_0: self.behavioral_distance(
-                self.concept_cld_manager.concept_clds[cld_0].model_structure.sfd.node[chosen_element_from_cld_0]['value'],
+        random_two_generic_structures_distance = {
+            generic_structure_0: self.behavioral_distance(
+                self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.sfd.node[chosen_element_from_generic_structure_0]['value'],
                 self.reference_modes[chosen_reference_mode][1]),
-            cld_1: self.behavioral_distance(
-                self.concept_cld_manager.concept_clds[cld_1].model_structure.sfd.node[chosen_element_from_cld_1]['value'],
+            generic_structure_1: self.behavioral_distance(
+                self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.sfd.node[chosen_element_from_generic_structure_1]['value'],
                 self.reference_modes[chosen_reference_mode][1])
         }
-        # print(random_two_clds_distance)
+        # print(random_two_generic_structures_distance)
         # a larger distance -> a lower likelihood
-        if random_two_clds_distance[random_two_clds[0]] < random_two_clds_distance[random_two_clds[1]]:
-            self.concept_cld_manager.update_likelihood_elo(random_two_clds[0], random_two_clds[1])
+        if random_two_generic_structures_distance[random_two_generic_structures[0]] < random_two_generic_structures_distance[random_two_generic_structures[1]]:
+            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[0], random_two_generic_structures[1])
         else:
-            self.concept_cld_manager.update_likelihood_elo(random_two_clds[1], random_two_clds[0])
-        print(self.concept_cld_manager.concept_clds_likelihood)
+            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[1], random_two_generic_structures[0])
+        print(self.generic_structure_manager.generic_structures_likelihood)
 
     def behavioral_distance(self, who_compare, compare_with):
         print("    Expansion: Calculating similarity...")
@@ -1033,6 +1032,9 @@ class AddElementWindow(Toplevel):
                                           flow_from=self.flow_from, flow_to=self.flow_to)
             elif self.element_type in [VARIABLE, PARAMETER]:
                 self.structure.build_aux(name=self.element_name, equation=self.value, x=self.x, y=self.y)
+
+            # simulate this modified structure
+            self.structure.simulation_handler(25)
             self.destroy()
 
         except ValueError:
@@ -1043,7 +1045,7 @@ class AddElementWindow(Toplevel):
 
 
 class AddConnectorWindow(Toplevel):
-    def __init__(self, structure, width=200, height=350, x=200, y=200):
+    def __init__(self, structure, x=200, y=200):
         super().__init__()
         self.title("Add causal link")
         self.geometry("+{}+{}".format(x, y))
@@ -1103,46 +1105,46 @@ class AddConnectorWindow(Toplevel):
         self.destroy()
 
 
-class ConceptCLDManager(object):
-    """The class containing and managing all concept CLDs"""
+class GenericStructureManager(object):
+    """The class containing and managing all generic structures"""
 
     def __init__(self):
-        self.concept_clds = dict()  # name:structure
-        self.concept_clds_likelihood = dict()   # name:likelihood
-        self.add_concept_cld(name='basic_stock_inflow')
-        self.add_concept_cld(name='basic_stock_outflow')
-        self.add_concept_cld(name='first_order_positive')
-        self.add_concept_cld(name='first_order_negative')
+        self.generic_structures = dict()  # name:structure
+        self.generic_structures_likelihood = dict()   # name:likelihood
+        self.add_generic_structure(name='basic_stock_inflow')
+        self.add_generic_structure(name='basic_stock_outflow')
+        self.add_generic_structure(name='first_order_positive')
+        self.add_generic_structure(name='first_order_negative')
 
-        self.concept_clds_likelihood_window = ConceptCLDsLikelihoodWindow(
-            concept_clds_likelihood=self.concept_clds_likelihood)
-        self.concept_clds_likelihood_window.create_likelihood_display()
+        self.generic_structures_likelihood_window = GenericStructuresLikelihoodWindow(
+            generic_structures_likelihood=self.generic_structures_likelihood)
+        self.generic_structures_likelihood_window.create_likelihood_display()
 
-    def add_concept_cld(self, name, likelihood=INITIAL_LIKELIHOOD):
+    def add_generic_structure(self, name, likelihood=INITIAL_LIKELIHOOD):
         a = SessionHandler()
         a.model_structure.set_predefined_structure[name]()
         a.model_structure.simulate(simulation_time=25)
         # a.model_structure.sfd.graph['likelihood'] = likelihood
-        self.concept_clds[name] = a
-        self.concept_clds_likelihood[name] = likelihood
+        self.generic_structures[name] = a
+        self.generic_structures_likelihood[name] = likelihood
 
     def reset_all_likelihood(self):
-        for cld in self.concept_clds_likelihood.keys():
-            self.concept_clds_likelihood[cld] = INITIAL_LIKELIHOOD
+        for generic_structure in self.generic_structures_likelihood.keys():
+            self.generic_structures_likelihood[generic_structure] = INITIAL_LIKELIHOOD
 
     def generate_distribution(self):
         """Generate a list, containing multiple uids of each structure"""
         distribution_list = list()
-        for concept_cld in self.concept_clds_likelihood.keys():
-            for i in range(self.concept_clds_likelihood[concept_cld]):
-                distribution_list.append(concept_cld)
+        for generic_structure in self.generic_structures_likelihood.keys():
+            for i in range(self.generic_structures_likelihood[generic_structure]):
+                distribution_list.append(generic_structure)
         return distribution_list
 
     def random_single(self):
         """Return one structure"""
-        random_concept_cld_name = random.choice(self.generate_distribution())
-        print('    {} is chosen as target_structure;'.format(random_concept_cld_name))
-        return self.concept_clds[random_concept_cld_name]
+        random_generic_structure_name = random.choice(self.generate_distribution())
+        print('    {} is chosen as target_structure;'.format(random_generic_structure_name))
+        return self.generic_structures[random_generic_structure_name]
 
     def random_pair(self):
         """Return a pair of structures for competition"""
@@ -1152,8 +1154,8 @@ class ConceptCLDManager(object):
 
     def update_likelihood_elo(self, winner, loser):
         """Update winner and loser's activity using Elo Rating System"""
-        r_winner = self.concept_clds_likelihood[winner]
-        r_loser = self.concept_clds_likelihood[loser]
+        r_winner = self.generic_structures_likelihood[winner]
+        r_loser = self.generic_structures_likelihood[loser]
         e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
         e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
@@ -1167,10 +1169,10 @@ class ConceptCLDManager(object):
             elif r < 1:
                 r = 1
             return r
-        self.concept_clds_likelihood[winner] = round(normalize(r_winner))
-        self.concept_clds_likelihood[loser] = round(normalize(r_loser))
+        self.generic_structures_likelihood[winner] = round(normalize(r_winner))
+        self.generic_structures_likelihood[loser] = round(normalize(r_loser))
 
-        self.concept_clds_likelihood_window.update_likelihood_display()
+        self.generic_structures_likelihood_window.update_likelihood_display()
 
 
 class SelectReferenceModeWindow(Toplevel):
@@ -1235,14 +1237,14 @@ class SelectReferenceModeWindow(Toplevel):
         self.destroy()
 
 
-class ConceptCLDsLikelihoodWindow(Toplevel):
-    def __init__(self, concept_clds_likelihood=None, window_title="Concept CLDs", width=250, height=90, x=350, y=50):
+class GenericStructuresLikelihoodWindow(Toplevel):
+    def __init__(self, generic_structures_likelihood=None, window_title="Generic Structures", width=250, height=90, x=350, y=50):
         super().__init__()
         self.title(window_title)
         self.width = width
         self.height = height
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
-        self.concept_clds_likelihood = concept_clds_likelihood
+        self.generic_structures_likelihood = generic_structures_likelihood
 
         self.fm_labels = Frame(master=self, width=self.width)
         self.fm_labels.pack(side=LEFT, anchor='nw')
@@ -1250,7 +1252,7 @@ class ConceptCLDsLikelihoodWindow(Toplevel):
         self.labels = list()
 
     def create_likelihood_display(self):
-        for item, llikelihood in self.concept_clds_likelihood.items():
+        for item, llikelihood in self.generic_structures_likelihood.items():
             text = item + " : " + str(llikelihood)
             self.labels.append(Label(self.fm_labels, text=text, font=6))
             self.labels[-1].pack(side=TOP, anchor='w')
