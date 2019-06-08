@@ -5,7 +5,6 @@ Calculating similarity between two dynamic behaviors (time sequences) using DTW 
 from dtw import dtw
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 # TESTS
@@ -20,6 +19,7 @@ test4 = np.linspace(100, 0, 101)
 test5 = np.linspace(0, 50, 101)
 # ramp from 50 to 0
 test6 = np.linspace(50, 0, 101)
+
 
 def categorize_behavior(who_compare, compare_with='./behaviour_utilities/basic_behaviors.csv'):
     """
@@ -51,7 +51,7 @@ def categorize_behavior(who_compare, compare_with='./behaviour_utilities/basic_b
     comparison_figure = Figure(figsize=(5, 4))
     comparison_plot = comparison_figure.add_subplot(111)
 
-    distances = {} # distance :basic behavior
+    distances = {}  # distance :basic behavior
     for basic_behavior in basic_behaviors.keys():
         y = basic_behaviors[basic_behavior]
         dist, cost, acc, path = dtw(x, y, dist=lambda x, y: np.linalg.norm(x-y, ord=1))
@@ -64,6 +64,7 @@ def categorize_behavior(who_compare, compare_with='./behaviour_utilities/basic_b
 
     comparison_plot.plot(x)
     return closest_behavior, comparison_figure
+
 
 def similarity_calc(who_compare, compare_with):
     # print(who_compare)
@@ -105,8 +106,6 @@ def similarity_calc(who_compare, compare_with):
     comparison_plot.plot(series_2)
     # print("    Distance: {}".format(dist))
     return dist, comparison_figure
-
-
 
 
 if __name__ == '__main__':

@@ -185,22 +185,6 @@ def new_expand_structure(base_structure, target_structure):
 
         print("    ****Equation for this new var:", equation)
 
-
-    def chains(structure):
-        structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
-        structure_chains = list()
-        for chain in structure_chains_generator:
-            structure_chains.append(chain)
-        print(structure_chains)
-
-    print('\n\nChains Part Start\n\n')
-    print(target_structure.model_structure.sfd.nodes)
-    print(target_structure.model_structure.sfd.edges)
-    chains(target_structure)
-
-
-    print('\n\nChains Part End\n\n')
-
     # TODO this mechanism need to be changed, using agent based algorithm
     start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
     if start_with_element_base_type == STOCK:
@@ -282,3 +266,31 @@ def create_causal_link(base_structure):
         chosen_var_in_base['function'] = new_function  # replace with the changed function
 
     return base_structure
+
+
+def apply_a_concept_cld(base_structure, target_structure):
+    print("    **** Applying a concept cld...")
+    # create a new base structure to modify
+    new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                                    uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                                    name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                                    uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_model_structure)
+    print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+
+    def chains(structure):
+        structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
+        structure_chains = list()
+        for chain in structure_chains_generator:
+            structure_chains.append(chain)
+        print(structure_chains)
+
+    print('\n\nChains Part Start\n\n')
+
+    # Build two concept clds
+
+
+
+    #
+
+    print('\n\nChains Part End\n\n')

@@ -76,6 +76,9 @@ class ExpansionPanel(Frame):
         # # Pause_resume control flag
         # self.if_loop_paused = True
 
+        # Initialize concept CLDs
+        self.concept_cld_manager = ConceptCLDManager()
+
         # Initialize generic structures
         self.generic_structure_manager = GenericStructureManager()
 
@@ -283,6 +286,41 @@ class ExpansionPanel(Frame):
                                                       np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
+
+
+class ConceptCLDManager(object):
+    def __init__(self):
+        # TODO: this dictionary will become another network in the future
+        self.concept_clds = dict()
+
+        concept_cld_constant = nx.DiGraph()
+        concept_cld_constant.add_node(STOCK)
+        self.concept_clds['constant'] = concept_cld_constant
+
+        concept_cld_growth_a = nx.DiGraph()
+        concept_cld_growth_a.add_nodes_from([STOCK, PARAMETER])
+        concept_cld_growth_a.add_edge(PARAMETER, STOCK, polarity='positive')
+        self.concept_clds['growth_a'] = concept_cld_growth_a
+
+        concept_cld_growth_b = nx.DiGraph()
+        concept_cld_growth_b.add_nodes_from([STOCK, MULTIPLICATION])
+        concept_cld_growth_b.add_edge(STOCK, MULTIPLICATION, polarity='positive')
+        concept_cld_growth_b.add_edge(MULTIPLICATION, STOCK, polarity='positive')
+        self.concept_clds['growth_b'] = concept_cld_growth_b
+
+        concept_cld_decline_a = nx.DiGraph()
+        concept_cld_decline_a.add_nodes_from([STOCK, PARAMETER])
+        concept_cld_decline_a.add_edge(PARAMETER, STOCK, polarity='negative')
+        self.concept_clds['decline_a'] = concept_cld_decline_a
+
+        concept_cld_decline_c = nx.DiGraph()
+        concept_cld_decline_c.add_nodes_from([STOCK, SUBTRACT, DIVISION])
+        concept_cld_decline_c.add_edge(STOCK, SUBTRACT, polarity='positive')
+        concept_cld_decline_c.add_edge(SUBTRACT, DIVISION, polarity='positive')
+        concept_cld_decline_c.add_edge(DIVISION, STOCK, polarity='negative')
+        self.concept_clds['decline_c'] = concept_cld_decline_c
+
+        # TODO: more concept CLDs to be added
 
 
 class ReferenceModeManager(Toplevel):
