@@ -21,7 +21,7 @@ test5 = np.linspace(0, 50, 101)
 test6 = np.linspace(50, 0, 101)
 
 
-def categorize_behavior(who_compare, compare_with='./behaviour_utilities/basic_behaviors.csv'):
+def categorize_behavior(who_compare, compare_with='./StockAndFlowInPython/behaviour_utilities/basic_behaviors.csv'):
     """
     Compare reference mode with known typical behavior patterns.
     """
@@ -60,7 +60,7 @@ def categorize_behavior(who_compare, compare_with='./behaviour_utilities/basic_b
         comparison_plot.plot(y)
 
     closest_behavior = distances[min(distances.keys())]
-    print("Classified as: ", closest_behavior)
+    print("    Behavior Utility: Classified as: ", closest_behavior)
 
     comparison_plot.plot(x)
     return closest_behavior, comparison_figure

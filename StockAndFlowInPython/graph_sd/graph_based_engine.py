@@ -505,11 +505,13 @@ class Structure(object):
         self.add_elements_batch([
             # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
             [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [MULTIPLICATION, 'stock0', 'fraction0'],   None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [FLOW,      'flow0',     [LINEAR, 'product0'],                      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [VARIABLE,  'product0',  [MULTIPLICATION, 'stock0', 'fraction0'],   None,       None,       50,     100,    None],
             [PARAMETER, 'fraction0', [0.1],                                     None,       None,       163,    251,    None],
             # 0type     1angle       2from         3to          4polarity
-            [CONNECTOR, 246,         'stock0',     'flow0',     'positive'],
-            [CONNECTOR, 311,         'fraction0',  'flow0',     'positive']
+            [CONNECTOR, 246,         'stock0',     'product0',  'positive'],
+            [CONNECTOR, 150,         'product0',   'flow0',     'positive'],
+            [CONNECTOR, 311,         'fraction0',  'product0',  'positive']
         ])
 
     # Set the model to one stock + one outflow
@@ -677,7 +679,7 @@ class Structure(object):
 
 def main():
     structure0 = Structure()
-    structure0.first_order_negative()
+    structure0.first_order_positive()
     structure0.simulate(simulation_time=10)
     structure0.draw_graphs_with_curve()
     # structure0.draw_graphs()

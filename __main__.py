@@ -4,13 +4,15 @@ from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES,\
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, \
+    CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES, \
     PURGE_SWITCH, PURGE_THRESHOLD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
-from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
+from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
+    apply_a_concept_cld
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACT, DIVISION, ADDITION
-from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -89,7 +91,7 @@ class ExpansionPanel(Frame):
         self.structure_manager = StructureManager(tree=self.expansion_tree)
 
         # Reference modes
-        self.reference_modes = dict()
+        self.reference_modes = dict()  # name : [type, time_series]
         self.reference_modes_binding = dict()  # reference_mode_name : uid
 
         # Initialize reference mode manager
@@ -103,7 +105,7 @@ class ExpansionPanel(Frame):
 
         # TODO this task list will be the predecessor of 'Code Rack'
         # Initialize task list
-        self.task_list = [1]
+        self.task_list = [3]
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -117,6 +119,7 @@ class ExpansionPanel(Frame):
 
         self.expansion_loop()
 
+    # TODO this is the basis for one agent's routine in the future
     def expansion_loop(self):
         self.generic_structure_manager.reset_all_likelihood()
         self.generic_structure_manager.generate_distribution()
@@ -124,14 +127,28 @@ class ExpansionPanel(Frame):
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
-            self.lb_iteration_round.configure(text='Iter '+str(i))
+            self.lb_iteration_round.configure(text='Iter ' + str(i))
             self.lb_iteration_round.update()
 
-            # STEP adjust generic structures' likelihood
+            # STEP: adjust generic structures' likelihood
             for j in range(GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES):
                 self.update_generic_structures_likelihood()
 
-            # STEP structural modification
+            # STEP: categorise a reference mode into a dynamic pattern. Temporarily only consider stock's ref mode
+            stock_ref_names = list()
+            for ref_name, ref_property in self.reference_modes.items():
+                if ref_property[0] == STOCK:
+                    stock_ref_names.append(ref_name)
+            print("    Currently we have stock ref modes:", stock_ref_names)
+            chosen_stock_ref_name = random.choice(stock_ref_names)
+            print("    We choose {} as the beginning stock".format(chosen_stock_ref_name))
+            pattern_name = self.categorize(behavior=self.reference_modes[chosen_stock_ref_name][1])
+
+            # STEP: fetch concept CLD based on pattern
+            concept_cld = self.concept_cld_manager.get_concept_cld_by_name(concept_cld_name=pattern_name)
+            print(concept_cld.nodes(data=True))
+
+            # STEP: structural modification
             chosen_task = random.choice(self.task_list)
             if chosen_task == 1:
                 self.generate_candidate_structure()
@@ -139,21 +156,24 @@ class ExpansionPanel(Frame):
             elif chosen_task == 2:
                 self.modify_function_in_candidate_structure()
                 self.task_list.append(random.choice([1, 2]))
+            elif chosen_task == 3:
+                self.apply_concept_cld_to_candidate_structure(concept_cld=concept_cld)
+                self.task_list.append(3)
 
-            # STEP adjust candidate structures' activity
+            # STEP: adjust candidate structures' activity
             for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):
                 self.update_candidate_structure_activity_by_behavior()
 
-            # STEP cool down those not simulatable structures
+            # STEP: cool down those not simulatable structures
             if COOL_DOWN_SWITCH:
                 for k in range(COOL_DOWN_TIMES):
                     self.structure_manager.cool_down()
 
-            # STEP purge low activity structures
+            # STEP: purge low activity structures
             if PURGE_SWITCH:
                 self.structure_manager.purge_low_activity_structures()
 
-            # STEP sort candidate structures by activity
+            # STEP: sort candidate structures by activity
             # TODO: control this not only by number
             if i > 4:  # get enough candidate structures to sort
                 self.structure_manager.sort_by_activity()
@@ -205,6 +225,13 @@ class ExpansionPanel(Frame):
         new = create_causal_link(base_structure=base)
         self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
+    def apply_concept_cld_to_candidate_structure(self, concept_cld):
+        """Expand a candidate structure following a concept CLD"""
+        base = self.structure_manager.random_single()
+        target = self.generic_structure_manager.random_single()
+        new = apply_a_concept_cld(base_structure=base, concept_cld=concept_cld, target_structure=target)
+        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
+
     def update_candidate_structure_activity_by_behavior(self):
         if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
             # Make more comparisons as there are more candidate structures
@@ -219,7 +246,7 @@ class ExpansionPanel(Frame):
                                self.structure_manager.if_can_simulate[random_two_candidates[1]]):
                         # we have to get two simulatable structures to compare their behaviors
                         random_two_candidates = self.structure_manager.random_pair_even()
-                print("Two candidate structures chosen for comparison: ", random_two_candidates)
+                print("    Two candidate structures chosen for comparison: ", random_two_candidates)
                 # Calculate their similarity to reference mode
                 candidate_0_distance = 0
                 candidate_1_distance = 0
@@ -261,23 +288,32 @@ class ExpansionPanel(Frame):
         chosen_reference_mode_type = self.reference_modes[chosen_reference_mode][0]
 
         # randomly choose element from generic_structures
-        chosen_element_from_generic_structure_0 = random.choice(self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.all_certain_type(chosen_reference_mode_type))
-        chosen_element_from_generic_structure_1 = random.choice(self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.all_certain_type(chosen_reference_mode_type))
+        chosen_element_from_generic_structure_0 = random.choice(
+            self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.all_certain_type(
+                chosen_reference_mode_type))
+        chosen_element_from_generic_structure_1 = random.choice(
+            self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.all_certain_type(
+                chosen_reference_mode_type))
 
         random_two_generic_structures_distance = {
             generic_structure_0: self.behavioral_distance(
-                self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.sfd.node[chosen_element_from_generic_structure_0]['value'],
+                self.generic_structure_manager.generic_structures[generic_structure_0].model_structure.sfd.node[
+                    chosen_element_from_generic_structure_0]['value'],
                 self.reference_modes[chosen_reference_mode][1]),
             generic_structure_1: self.behavioral_distance(
-                self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.sfd.node[chosen_element_from_generic_structure_1]['value'],
+                self.generic_structure_manager.generic_structures[generic_structure_1].model_structure.sfd.node[
+                    chosen_element_from_generic_structure_1]['value'],
                 self.reference_modes[chosen_reference_mode][1])
         }
         # print(random_two_generic_structures_distance)
         # a larger distance -> a lower likelihood
-        if random_two_generic_structures_distance[random_two_generic_structures[0]] < random_two_generic_structures_distance[random_two_generic_structures[1]]:
-            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[0], random_two_generic_structures[1])
+        if random_two_generic_structures_distance[random_two_generic_structures[0]] < \
+                random_two_generic_structures_distance[random_two_generic_structures[1]]:
+            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[0],
+                                                                 random_two_generic_structures[1])
         else:
-            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[1], random_two_generic_structures[0])
+            self.generic_structure_manager.update_likelihood_elo(random_two_generic_structures[1],
+                                                                 random_two_generic_structures[0])
         print(self.generic_structure_manager.generic_structures_likelihood)
 
     def behavioral_distance(self, who_compare, compare_with):
@@ -286,6 +322,12 @@ class ExpansionPanel(Frame):
                                                       np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
+
+    def categorize(self, behavior):
+        print("    Expansion: Categorizing a behavior...")
+        pattern, comparison_figure = categorize_behavior(np.array(behavior).reshape(-1, 1))
+        # ComparisonWindow(comparison_figure)
+        return pattern
 
 
 class ConceptCLDManager(object):
@@ -303,9 +345,10 @@ class ConceptCLDManager(object):
         self.concept_clds['growth_a'] = concept_cld_growth_a
 
         concept_cld_growth_b = nx.DiGraph()
-        concept_cld_growth_b.add_nodes_from([STOCK, MULTIPLICATION])
+        concept_cld_growth_b.add_nodes_from([STOCK, MULTIPLICATION, LINEAR])
         concept_cld_growth_b.add_edge(STOCK, MULTIPLICATION, polarity='positive')
-        concept_cld_growth_b.add_edge(MULTIPLICATION, STOCK, polarity='positive')
+        concept_cld_growth_b.add_edge(MULTIPLICATION, LINEAR, polarity='positive')
+        concept_cld_growth_b.add_edge(LINEAR, STOCK, polarity='positive')
         self.concept_clds['growth_b'] = concept_cld_growth_b
 
         concept_cld_decline_a = nx.DiGraph()
@@ -322,9 +365,15 @@ class ConceptCLDManager(object):
 
         # TODO: more concept CLDs to be added
 
+    def get_concept_cld_by_name(self, concept_cld_name):
+        for name, concept_cld in self.concept_clds.items():
+            if name == concept_cld_name:
+                return concept_cld
+
 
 class ReferenceModeManager(Toplevel):
-    def __init__(self, reference_modes, reference_modes_binding, reference_mode_path=REFERENCE_MODE_PATH, width=600, height=400, x=5, y=200):
+    def __init__(self, reference_modes, reference_modes_binding, reference_mode_path=REFERENCE_MODE_PATH, width=600,
+                 height=400, x=5, y=200):
         super().__init__()
         self.title("Reference Mode Manager")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -416,155 +465,157 @@ class ReferenceModeManager(Toplevel):
 
 
 class BindingManager(Toplevel):
-        def __init__(self, reference_modes, reference_modes_binding, tree, width=600, height=400, x=650, y=200):
-            super().__init__()
-            self.title("Binding Manager")
-            self.geometry("{}x{}+{}+{}".format(width, height, x, y))
-            self.reference_modes = reference_modes
-            self.reference_modes_binding = reference_modes_binding
-            self.tree = tree
+    def __init__(self, reference_modes, reference_modes_binding, tree, width=600, height=400, x=650, y=200):
+        super().__init__()
+        self.title("Binding Manager")
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.reference_modes = reference_modes
+        self.reference_modes_binding = reference_modes_binding
+        self.tree = tree
 
-            self.selected_structure = 0
-            self.selected_variable = None
-            self.selected_reference_mode = None
+        self.selected_structure = 0
+        self.selected_variable = None
+        self.selected_reference_mode = None
 
-            self.fm_actions = Frame(self)
-            self.fm_actions.pack(side=TOP, fill=X)
+        self.fm_actions = Frame(self)
+        self.fm_actions.pack(side=TOP, fill=X)
 
-            # TODO using Tkinter it is not possible to do this refresh. Going to be replaced by signal-slot in future.
-            self.btn_refresh = Button(self.fm_actions, text='Refresh', command=self.update_combobox)
-            self.btn_refresh.pack(side=LEFT)
+        # TODO using Tkinter it is not possible to do this refresh. Going to be replaced by signal-slot in future.
+        self.btn_refresh = Button(self.fm_actions, text='Refresh', command=self.update_combobox)
+        self.btn_refresh.pack(side=LEFT)
 
-            self.btn_add_binding = Button(self.fm_actions, text='Add binding', command=self.add_binding)
-            self.btn_add_binding.pack(side=LEFT)
+        self.btn_add_binding = Button(self.fm_actions, text='Add binding', command=self.add_binding)
+        self.btn_add_binding.pack(side=LEFT)
 
-            self.btn_remove_binding = Button(self.fm_actions, text='Remove binding', command=self.remove_binding)
-            self.btn_remove_binding.pack(side=LEFT)
+        self.btn_remove_binding = Button(self.fm_actions, text='Remove binding', command=self.remove_binding)
+        self.btn_remove_binding.pack(side=LEFT)
 
-            # Left hand side
+        # Left hand side
 
-            self.fm_list = LabelFrame(self, text='Bindings')
-            self.fm_list.pack(side=LEFT, fill=Y)
+        self.fm_list = LabelFrame(self, text='Bindings')
+        self.fm_list.pack(side=LEFT, fill=Y)
 
-            self.generate_binding_list_box()
+        self.generate_binding_list_box()
 
-            self.fm_display_and_browse = Frame(self)
-            self.fm_display_and_browse.pack(side=RIGHT, fill=BOTH, expand=True)
+        self.fm_display_and_browse = Frame(self)
+        self.fm_display_and_browse.pack(side=RIGHT, fill=BOTH, expand=True)
 
-            # Right hand side
+        # Right hand side
 
-            self.fm_display_details = LabelFrame(self.fm_display_and_browse, text='Binding Details')
-            self.fm_display_details.pack(side=TOP, fill=BOTH)
+        self.fm_display_details = LabelFrame(self.fm_display_and_browse, text='Binding Details')
+        self.fm_display_details.pack(side=TOP, fill=BOTH)
 
-            self.lb_binding_details = Label(self.fm_display_details, text='Select a binding to view details')
-            self.lb_binding_details.pack(side=TOP, anchor='w')
+        self.lb_binding_details = Label(self.fm_display_details, text='Select a binding to view details')
+        self.lb_binding_details.pack(side=TOP, anchor='w')
 
-            self.fm_browse_element = LabelFrame(self.fm_display_and_browse, text='Browse structure element')
-            self.fm_browse_element.pack(side=TOP, fill=BOTH)
+        self.fm_browse_element = LabelFrame(self.fm_display_and_browse, text='Browse structure element')
+        self.fm_browse_element.pack(side=TOP, fill=BOTH)
 
-            self.structure_list = ttk.Combobox(self.fm_browse_element)
-            self.structure_list["values"] = ['structure']
-            self.structure_list.current(0)
-            self.structure_list.bind("<<ComboboxSelected>>", self.select_structure)
-            self.structure_list.pack(side=LEFT)
+        self.structure_list = ttk.Combobox(self.fm_browse_element)
+        self.structure_list["values"] = ['structure']
+        self.structure_list.current(0)
+        self.structure_list.bind("<<ComboboxSelected>>", self.select_structure)
+        self.structure_list.pack(side=LEFT)
 
-            self.variable_list = ttk.Combobox(self.fm_browse_element)
-            self.variable_list["values"] = ['variable']
-            self.variable_list.current(0)
-            self.variable_list.bind("<<ComboboxSelected>>", self.select_variable)
-            self.variable_list.pack(side=LEFT)
+        self.variable_list = ttk.Combobox(self.fm_browse_element)
+        self.variable_list["values"] = ['variable']
+        self.variable_list.current(0)
+        self.variable_list.bind("<<ComboboxSelected>>", self.select_variable)
+        self.variable_list.pack(side=LEFT)
 
-            self.fm_browse_reference_mode = LabelFrame(self.fm_display_and_browse, text='Browse reference mode')
-            self.fm_browse_reference_mode.pack(side=TOP, fill=BOTH)
+        self.fm_browse_reference_mode = LabelFrame(self.fm_display_and_browse, text='Browse reference mode')
+        self.fm_browse_reference_mode.pack(side=TOP, fill=BOTH)
 
-            self.reference_mode_list = ttk.Combobox(self.fm_browse_reference_mode)
-            self.reference_mode_list["values"] = ['reference mode']
-            self.reference_mode_list.current(0)
-            self.reference_mode_list.bind("<<ComboboxSelected>>", self.select_reference_mode)
-            self.reference_mode_list.pack(side=LEFT)
+        self.reference_mode_list = ttk.Combobox(self.fm_browse_reference_mode)
+        self.reference_mode_list["values"] = ['reference mode']
+        self.reference_mode_list.current(0)
+        self.reference_mode_list.bind("<<ComboboxSelected>>", self.select_reference_mode)
+        self.reference_mode_list.pack(side=LEFT)
 
-        def add_binding(self):
-            if self.selected_reference_mode is not None:
-                if self.selected_variable is not None:
-                    # print("Here!", self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes(data=True))
-                    self.reference_modes_binding[self.selected_reference_mode] = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes[self.selected_variable]['uid']
-                    self.generate_binding_list_box()
-                else:
-                    print("Please select a variable.")
+    def add_binding(self):
+        if self.selected_reference_mode is not None:
+            if self.selected_variable is not None:
+                # print("Here!", self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes(data=True))
+                self.reference_modes_binding[self.selected_reference_mode] = \
+                self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes[
+                    self.selected_variable]['uid']
+                self.generate_binding_list_box()
             else:
-                print("Please select a reference mode.")
+                print("Please select a variable.")
+        else:
+            print("Please select a reference mode.")
 
-        def remove_binding(self):
-            selected_ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
-            bound_element_name = self.get_binding_element_name_by_ref_name(selected_ref_name)
-            self.reference_modes_binding.pop(selected_ref_name)
-            print("Removed binding between ref mode '{}' and variable '{}'".format(selected_ref_name, bound_element_name))
-            self.generate_binding_list_box()
+    def remove_binding(self):
+        selected_ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
+        bound_element_name = self.get_binding_element_name_by_ref_name(selected_ref_name)
+        self.reference_modes_binding.pop(selected_ref_name)
+        print("Removed binding between ref mode '{}' and variable '{}'".format(selected_ref_name, bound_element_name))
+        self.generate_binding_list_box()
 
-        def get_binding_element_name_by_ref_name(self, ref_name=None):
-            if ref_name is None:
-                ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
-            selected_binding_element_uid = self.reference_modes_binding[ref_name]
-            selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
-                get_element_name_by_uid(selected_binding_element_uid)
-            return selected_binding_element_name
+    def get_binding_element_name_by_ref_name(self, ref_name=None):
+        if ref_name is None:
+            ref_name = self.binding_list_box.get(self.binding_list_box.curselection())
+        selected_binding_element_uid = self.reference_modes_binding[ref_name]
+        selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
+            get_element_name_by_uid(selected_binding_element_uid)
+        return selected_binding_element_name
 
+    def select_structure(self, *args):
+        self.selected_structure = self.structure_list.get()
+        # print("structure {} is selected.".format(self.selected_structure))
+        self.update_combobox()
 
-        def select_structure(self, *args):
-            self.selected_structure = self.structure_list.get()
-            # print("structure {} is selected.".format(self.selected_structure))
-            self.update_combobox()
+    def select_variable(self, *args):
+        self.selected_variable = self.variable_list.get()
+        self.update_combobox()
 
-        def select_variable(self, *args):
-            self.selected_variable = self.variable_list.get()
-            self.update_combobox()
+    def select_reference_mode(self, *args):
+        self.selected_reference_mode = self.reference_mode_list.get()
+        self.update_combobox()
 
-        def select_reference_mode(self, *args):
-            self.selected_reference_mode = self.reference_mode_list.get()
-            self.update_combobox()
+    def generate_binding_list_box(self):
+        try:
+            self.binding_list_box.destroy()
+        except AttributeError:
+            pass
+        self.binding_list_box = Listbox(self.fm_list, width=15)
+        self.binding_list_box.pack(side=LEFT, fill=Y)
 
-        def generate_binding_list_box(self):
-            try:
-                self.binding_list_box.destroy()
-            except AttributeError:
-                pass
-            self.binding_list_box = Listbox(self.fm_list, width=15)
-            self.binding_list_box.pack(side=LEFT, fill=Y)
+        for ref_mode in self.reference_modes_binding.keys():
+            self.binding_list_box.insert(END, ref_mode)
+        self.binding_list_box.bind('<<ListboxSelect>>', self.show_binding_details)
 
-            for ref_mode in self.reference_modes_binding.keys():
-                self.binding_list_box.insert(END, ref_mode)
-            self.binding_list_box.bind('<<ListboxSelect>>', self.show_binding_details)
+    def show_binding_details(self, evt):
+        self.update_combobox()
+        selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
+        selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
+        selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
+            get_element_name_by_uid(selected_binding_element_uid)
+        detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
+                                                                selected_binding_element_uid,
+                                                                selected_binding_element_name)
+        self.lb_binding_details.configure(text=detail_text)
+        self.lb_binding_details.update()
 
-        def show_binding_details(self, evt):
-            self.update_combobox()
-            selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
-            selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
-            selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.\
-                get_element_name_by_uid(selected_binding_element_uid)
-            detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
-                                                   selected_binding_element_uid,
-                                                   selected_binding_element_name)
-            self.lb_binding_details.configure(text=detail_text)
-            self.lb_binding_details.update()
+    def update_combobox(self):
+        # print('updating combobox')
+        try:
+            structures = list(self.tree.nodes)
+        except:
+            structures = ['structure']
+        self.structure_list["values"] = structures
 
-        def update_combobox(self):
-            # print('updating combobox')
-            try:
-                structures = list(self.tree.nodes)
-            except:
-                structures = ['structure']
-            self.structure_list["values"] = structures
+        # This int() is very important, because what get() from combobox is 'str.
+        try:
+            variables_in_selected_structure = list(
+                self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes)
+        except KeyError:
+            # print("key error")
+            variables_in_selected_structure = ['variable']
+        self.variable_list["values"] = variables_in_selected_structure
 
-            # This int() is very important, because what get() from combobox is 'str.
-            try:
-                variables_in_selected_structure = list(self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes)
-            except KeyError:
-                # print("key error")
-                variables_in_selected_structure = ['variable']
-            self.variable_list["values"] = variables_in_selected_structure
-
-            reference_mode_names = list(self.reference_modes.keys())
-            self.reference_mode_list["values"] = reference_mode_names
+        reference_mode_names = list(self.reference_modes.keys())
+        self.reference_mode_list["values"] = reference_mode_names
 
 
 class StructureManager(object):
@@ -681,7 +732,7 @@ class StructureManager(object):
     def cool_down(self):
         """Cool down structures"""
         for u in self.tree.nodes:  # no matter it is simulatable or not
-        # for u in self.those_cannot_simulate:
+            # for u in self.those_cannot_simulate:
             self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1 if self.tree.nodes[u][
                                                                                        'activity'] > 1 else 1
         self.update_candidate_structure_window()
@@ -720,6 +771,7 @@ class StructureManager(object):
             elif r < 1:
                 r = 1
             return r
+
         self.tree.nodes[winner]['activity'] = round(normalize(r_winner))
         self.tree.nodes[loser]['activity'] = round(normalize(r_loser))
 
@@ -1148,7 +1200,7 @@ class GenericStructureManager(object):
 
     def __init__(self):
         self.generic_structures = dict()  # name:structure
-        self.generic_structures_likelihood = dict()   # name:likelihood
+        self.generic_structures_likelihood = dict()  # name:likelihood
         # self.add_generic_structure(name='basic_stock_inflow')
         # self.add_generic_structure(name='basic_stock_outflow')
         self.add_generic_structure(name='first_order_positive')
@@ -1198,15 +1250,17 @@ class GenericStructureManager(object):
         e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
         gain_loser = 0
-        k = 4   # maximum points one can gain or lose in one round
+        k = 4  # maximum points one can gain or lose in one round
         r_winner = r_winner + k * (gain_winner - e_winner)
         r_loser = r_loser + k * (gain_loser - e_loser)
+
         def normalize(r):
             if r > 50:
                 r = 50
             elif r < 1:
                 r = 1
             return r
+
         self.generic_structures_likelihood[winner] = round(normalize(r_winner))
         self.generic_structures_likelihood[loser] = round(normalize(r_loser))
 
@@ -1276,7 +1330,8 @@ class SelectReferenceModeWindow(Toplevel):
 
 
 class GenericStructuresLikelihoodWindow(Toplevel):
-    def __init__(self, generic_structures_likelihood=None, window_title="Generic Structures", width=250, height=90, x=350, y=50):
+    def __init__(self, generic_structures_likelihood=None, window_title="Generic Structures", width=250, height=90,
+                 x=350, y=50):
         super().__init__()
         self.title(window_title)
         self.width = width

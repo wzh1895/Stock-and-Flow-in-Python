@@ -268,7 +268,7 @@ def create_causal_link(base_structure):
     return base_structure
 
 
-def apply_a_concept_cld(base_structure, target_structure):
+def apply_a_concept_cld(base_structure, concept_cld, target_structure):
     print("    **** Applying a concept cld...")
     # create a new base structure to modify
     new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
@@ -278,19 +278,56 @@ def apply_a_concept_cld(base_structure, target_structure):
     new_base = SessionHandler(model_structure=new_model_structure)
     print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
-    def chains(structure):
-        structure_chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
-        structure_chains = list()
-        for chain in structure_chains_generator:
-            structure_chains.append(chain)
-        print(structure_chains)
+    # TODO this chain_decomposition function seems not to be very reliable. Replace it with something else in the future
+    def generate_chains(structure):
+        chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
+        chains = list()
+        for chain in chains_generator:
+            chains.append(chain)
+        print(structure.model_structure.sfd.edges)
+        print(chains)
 
-    print('\n\nChains Part Start\n\n')
+        # making the chains directed
+        for chain in chains:
+            for i in range(len(chain)):
+                if structure.model_structure.sfd.has_edge(chain[i][0], chain[i][1]):
+                    # this edge is stored in the structure in the right direction
+                    pass
+                elif structure.model_structure.sfd.has_edge(chain[i][1], chain[i][0]):  # just to be safe
+                    # this edge is
+                    new_joint = (chain[i][1], chain[i][0])
+                    chain[i] = new_joint
 
-    # Build two concept clds
+        # making the chains start from stock
+        for j in range(len(chains)):
+            new_chain = list()
+            # find the joint that start with a stock
+            current_joint = None
+            for joint in chains[j]:
+                if structure.model_structure.sfd.nodes[joint[0]]['element_type'] == STOCK:
+                    current_joint = joint
+                    break
+            for k in range(len(chains[j])):
+                new_chain.append(current_joint)
+                next_joint_head = current_joint[1]
+                for joint in chains[j]:
+                    if joint[0] == next_joint_head:
+                        current_joint = joint
+                        break
+            chains[j] = new_chain
 
+        print(chains)
+        return chains
 
+    # The idea here, is to use the concept CLD to guide the extraction of elements from the target structure and the
+    # addition of these elements to the base structure.
 
-    #
+    # Analyze the target structure to find all the feedback loops
+    chains_in_target = generate_chains(target_structure)
 
-    print('\n\nChains Part End\n\n')
+    # Chances are there is no chain in target structure / there are multiple chains in target structure
+    if len(chains_in_target) == 0:  # There is no chain in target, so do nothing
+        return new_base
+    else:  # Use the concept CLD to instruct importing elements from target to base structure
+
+        return new_base
