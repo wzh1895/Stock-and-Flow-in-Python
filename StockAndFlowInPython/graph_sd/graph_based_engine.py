@@ -22,7 +22,7 @@ def addition(x, y):
     return float(x) + float(y)
 
 
-def subtract(x, y):
+def subtraction(x, y):
     return float(x) - float(y)
 
 
@@ -35,12 +35,12 @@ def multiplication(x, y):
 
 
 LINEAR = linear
-SUBTRACT = subtract
+SUBTRACTION = subtraction
 DIVISION = division
 ADDITION = addition
 MULTIPLICATION = multiplication
 
-function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
+function_names = [LINEAR, SUBTRACTION, DIVISION, ADDITION, MULTIPLICATION]
 
 
 class UidManager(object):
@@ -487,9 +487,9 @@ class Structure(object):
         self.add_elements_batch([
             # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
             [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [DIVISION, 'gap0',   'at0'],               None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [FLOW,      'flow0',     [DIVISION, 'gap0',   'at0'],               'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
             [PARAMETER, 'goal0',     [20],                                      None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0',      [SUBTRACT, 'goal0', 'stock0'],             None,       None,       213,    212,    None],
+            [VARIABLE,  'gap0', [SUBTRACTION, 'stock0', 'goal0'], None, None, 213, 212, None],
             [PARAMETER, 'at0',       [5],                                       None,       None,       123,    77,     None],
             # 0type     1angle       2from         3to          4polarity
             [CONNECTOR, 246,         'stock0',     'gap0',      'positive'],

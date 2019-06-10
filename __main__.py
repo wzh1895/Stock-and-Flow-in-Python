@@ -12,7 +12,7 @@ from StockAndFlowInPython.structure_utilities.structure_utilities import new_exp
     apply_a_concept_cld
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
-    PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACT, DIVISION, ADDITION
+    PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -92,15 +92,15 @@ class ExpansionPanel(Frame):
 
         # Reference modes
         self.reference_modes = dict()  # name : [type, time_series]
-        self.reference_modes_binding = dict()  # reference_mode_name : uid
+        self.reference_mode_bindings = dict()  # reference_mode_name : uid
 
         # Initialize reference mode manager
         self.reference_mode_manager = ReferenceModeManager(reference_modes=self.reference_modes,
-                                                           reference_modes_binding=self.reference_modes_binding)
+                                                           reference_modes_binding=self.reference_mode_bindings)
 
         # Initialize binding manager
         self.binding_manager = BindingManager(reference_modes=self.reference_modes,
-                                              reference_modes_binding=self.reference_modes_binding,
+                                              reference_modes_binding=self.reference_mode_bindings,
                                               tree=self.expansion_tree)
 
         # TODO this task list will be the predecessor of 'Code Rack'
@@ -134,30 +134,55 @@ class ExpansionPanel(Frame):
             for j in range(GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES):
                 self.update_generic_structures_likelihood()
 
-            # STEP: categorise a reference mode into a dynamic pattern. Temporarily only consider stock's ref mode
-            stock_ref_names = list()
-            for ref_name, ref_property in self.reference_modes.items():
-                if ref_property[0] == STOCK:
-                    stock_ref_names.append(ref_name)
-            print("    Currently we have stock ref modes:", stock_ref_names)
-            chosen_stock_ref_name = random.choice(stock_ref_names)
-            print("    We choose {} as the beginning stock".format(chosen_stock_ref_name))
-            pattern_name = self.categorize(behavior=self.reference_modes[chosen_stock_ref_name][1])
-
-            # STEP: fetch concept CLD based on pattern
-            concept_cld = self.concept_cld_manager.get_concept_cld_by_name(concept_cld_name=pattern_name)
-            print(concept_cld.nodes(data=True))
-
             # STEP: structural modification
             chosen_task = random.choice(self.task_list)
             if chosen_task == 1:
-                self.generate_candidate_structure()
+                """Generate a new candidate structure"""
+                base = self.structure_manager.random_single()
+                target = self.generic_structure_manager.random_single()
+                # get all elements in base structure
+                base_structure_elements = list(base.model_structure.sfd.nodes)
+                # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
+                start_with_element_base = random.choice(base_structure_elements)
+                new = new_expand_structure(base_structure=base,
+                                           start_with_element_base=start_with_element_base,
+                                           target_structure=target)
+                # new = expand_structure(base_structure=base, target_structure=target)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new)
                 self.task_list.append(random.choice([1, 2]))
+
             elif chosen_task == 2:
-                self.modify_function_in_candidate_structure()
+                """Create a new causal link in an existing candidate structure"""
+                base = self.structure_manager.random_single()
+                new = create_causal_link(base_structure=base)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new)
                 self.task_list.append(random.choice([1, 2]))
+
             elif chosen_task == 3:
-                self.apply_concept_cld_to_candidate_structure(concept_cld=concept_cld)
+                """Expand a candidate structure following a concept CLD"""
+                # categorise a reference mode into a dynamic pattern. Temporarily only consider stock's ref mode
+                stock_ref_names = list()
+                for ref_name, ref_property in self.reference_modes.items():
+                    if ref_property[0] == STOCK:
+                        stock_ref_names.append(ref_name)
+                print("    Currently we have stock ref modes:", stock_ref_names)
+                chosen_stock_ref_name = random.choice(stock_ref_names)
+                chosen_stock_uid = self.reference_mode_bindings[chosen_stock_ref_name]
+                print("    We choose {}, uid {} as the beginning stock".format(chosen_stock_ref_name, chosen_stock_uid))
+                pattern_name = self.categorize(behavior=self.reference_modes[chosen_stock_ref_name][1])
+
+                # fetch concept CLD based on pattern
+                concept_cld = self.concept_cld_manager.get_concept_cld_by_name(concept_cld_name=pattern_name)
+                print(concept_cld.nodes(data=True))
+
+                base = self.structure_manager.random_single()
+                # TODO: this is not purely random
+                target = self.generic_structure_manager.random_single()
+                new = apply_a_concept_cld(base_structure=base,
+                                          stock_uid_in_base_to_start_with=chosen_stock_uid,
+                                          concept_cld=concept_cld,
+                                          target_structure=target)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new)
                 self.task_list.append(3)
 
             # STEP: adjust candidate structures' activity
@@ -182,15 +207,6 @@ class ExpansionPanel(Frame):
             self.binding_manager.update_combobox()
             i += 1
 
-            # while self.if_loop_paused:
-            #     time.sleep(0.1)
-
-    # def pause_expansion(self):
-    #     self.if_running_loop = False
-    #
-    # def resume_expansion(self):
-    #     self.if_running_loop = True
-
     def load_reference_mode_from_file(self):
         self.reference_mode_manager.load_reference_mode_from_file()
 
@@ -205,32 +221,11 @@ class ExpansionPanel(Frame):
                 uid = structure.build_flow(name=reference_mode_name, equation=0, x=100, y=100)
             elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
                 uid = structure.build_aux(name=reference_mode_name, equation=0, x=100, y=100)
-            self.reference_modes_binding[reference_mode_name] = uid
+            self.reference_mode_bindings[reference_mode_name] = uid
             self.binding_manager.generate_binding_list_box()
         structure.simulation_handler(25)
         self.structure_manager.add_structure(structure=structure)
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
-
-    def generate_candidate_structure(self):
-        """Generate a new candidate structure"""
-        base = self.structure_manager.random_single()
-        target = self.generic_structure_manager.random_single()
-        new = new_expand_structure(base_structure=base, target_structure=target)
-        # new = expand_structure(base_structure=base, target_structure=target)
-        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-
-    def modify_function_in_candidate_structure(self):
-        """Create a new causal link in an existing candidate structure"""
-        base = self.structure_manager.random_single()
-        new = create_causal_link(base_structure=base)
-        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-
-    def apply_concept_cld_to_candidate_structure(self, concept_cld):
-        """Expand a candidate structure following a concept CLD"""
-        base = self.structure_manager.random_single()
-        target = self.generic_structure_manager.random_single()
-        new = apply_a_concept_cld(base_structure=base, concept_cld=concept_cld, target_structure=target)
-        self.structure_manager.derive_structure(base_structure=base, new_structure=new)
 
     def update_candidate_structure_activity_by_behavior(self):
         if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
@@ -253,7 +248,7 @@ class ExpansionPanel(Frame):
                 s_uid_0 = random_two_candidates[0]
                 s_uid_1 = random_two_candidates[1]
                 for reference_mode_name, reference_mode_property in self.reference_modes.items():
-                    uid = self.reference_modes_binding[reference_mode_name]
+                    uid = self.reference_mode_bindings[reference_mode_name]
                     candidate_0_distance += self.behavioral_distance(
                         self.structure_manager.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
                             'value'],
@@ -337,11 +332,14 @@ class ConceptCLDManager(object):
 
         concept_cld_constant = nx.DiGraph()
         concept_cld_constant.add_node(STOCK)
+        concept_cld_constant.graph['polarity'] = 'no'
+
         self.concept_clds['constant'] = concept_cld_constant
 
         concept_cld_growth_a = nx.DiGraph()
         concept_cld_growth_a.add_nodes_from([STOCK, PARAMETER])
         concept_cld_growth_a.add_edge(PARAMETER, STOCK, polarity='positive')
+        concept_cld_growth_a.graph['polarity'] = 'no'
         self.concept_clds['growth_a'] = concept_cld_growth_a
 
         concept_cld_growth_b = nx.DiGraph()
@@ -349,18 +347,21 @@ class ConceptCLDManager(object):
         concept_cld_growth_b.add_edge(STOCK, MULTIPLICATION, polarity='positive')
         concept_cld_growth_b.add_edge(MULTIPLICATION, LINEAR, polarity='positive')
         concept_cld_growth_b.add_edge(LINEAR, STOCK, polarity='positive')
+        concept_cld_growth_b.graph['polarity'] = 'positive'
         self.concept_clds['growth_b'] = concept_cld_growth_b
 
         concept_cld_decline_a = nx.DiGraph()
         concept_cld_decline_a.add_nodes_from([STOCK, PARAMETER])
         concept_cld_decline_a.add_edge(PARAMETER, STOCK, polarity='negative')
+        concept_cld_decline_a.graph['polarity'] = 'no'
         self.concept_clds['decline_a'] = concept_cld_decline_a
 
         concept_cld_decline_c = nx.DiGraph()
-        concept_cld_decline_c.add_nodes_from([STOCK, SUBTRACT, DIVISION])
-        concept_cld_decline_c.add_edge(STOCK, SUBTRACT, polarity='positive')
-        concept_cld_decline_c.add_edge(SUBTRACT, DIVISION, polarity='positive')
+        concept_cld_decline_c.add_nodes_from([STOCK, SUBTRACTION, DIVISION])
+        concept_cld_decline_c.add_edge(STOCK, SUBTRACTION, polarity='positive')
+        concept_cld_decline_c.add_edge(SUBTRACTION, DIVISION, polarity='positive')
         concept_cld_decline_c.add_edge(DIVISION, STOCK, polarity='negative')
+        concept_cld_decline_c.graph['polarity'] = 'negative'
         self.concept_clds['decline_c'] = concept_cld_decline_c
 
         # TODO: more concept CLDs to be added
@@ -705,7 +706,7 @@ class StructureManager(object):
                            activity=new_activity
                            )
 
-        # subtract this part of activity from the base_structure
+        # subtraction this part of activity from the base_structure
         self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
         if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
             self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1

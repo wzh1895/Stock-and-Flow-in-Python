@@ -2,10 +2,12 @@ import networkx as nx
 import copy
 import random
 from networkx.algorithms import chain_decomposition
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, ADDITION, SUBTRACT, MULTIPLICATION, DIVISION, LINEAR
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, \
+    ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, LINEAR
 from StockAndFlowInPython.session_handler import SessionHandler
 
-
+element_types = [STOCK, FLOW, VARIABLE, PARAMETER]
+functions = [ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, LINEAR]
 """
 def expand_structure(base_structure, target_structure):
     # new_base = copy.deepcopy(base_structure)
@@ -78,7 +80,7 @@ def expand_structure(base_structure, target_structure):
 """
 
 
-def new_expand_structure(base_structure, target_structure):
+def new_expand_structure(base_structure, start_with_element_base, target_structure):
     print("    **** Building new structure...")
     # new_base = copy.deepcopy(base_structure)
     # print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
@@ -90,10 +92,6 @@ def new_expand_structure(base_structure, target_structure):
     new_base = SessionHandler(model_structure=new_model_structure)
     print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
-    # get all elements in base structure
-    base_structure_elements = list(new_base.model_structure.sfd.nodes)
-    # pick an element from base_structure to start with. Now: randomly. Future: guided by activity.
-    start_with_element_base = random.choice(base_structure_elements)
     print("    **** {} in base structure is chosen to start with".format(start_with_element_base))
     # print("    **** Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
 
@@ -157,7 +155,7 @@ def new_expand_structure(base_structure, target_structure):
                 element_name = new_base.model_structure.get_element_name_by_uid(uid)
                 new_base.build_connector(from_var=start_with_element_base, to_var=element_name, polarity='positive')
 
-            elif equation[0] == SUBTRACT:
+            elif equation[0] == SUBTRACTION:
                 factor = random.choice([1, 2])
                 equation[factor] = start_with_element_base
                 equation[3-factor] = 0
@@ -185,7 +183,7 @@ def new_expand_structure(base_structure, target_structure):
 
         print("    ****Equation for this new var:", equation)
 
-    # TODO this mechanism need to be changed, using agent based algorithm
+    # TODO: this mechanism need to be changed, using agent based algorithm
     start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
     if start_with_element_base_type == STOCK:
         # only flows can influence it. we need to find a flow from target structure.
@@ -234,7 +232,7 @@ def create_causal_link(base_structure):
             return new_base
 
         for i in range(len(arguments)):
-            # TODO what implemented here is only 'close the loop', but we need also to consider 'hit the boundary'
+            # TODO: what implemented here is only 'close the loop', but we need also to consider 'hit the boundary'
             if type(arguments[i]) is int or float:  # if this argument is a constant
                 if chosen_source_in_base in arguments:  # not same as the other argument (if there are two)
                     print("    The chosen source is already in the arguments, skip this loop.")
@@ -247,7 +245,7 @@ def create_causal_link(base_structure):
                     elif function_name == MULTIPLICATION:
                         new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
                                                  polarity='positive')
-                    elif function_name == SUBTRACT:
+                    elif function_name == SUBTRACTION:
                         new_base.build_connector(from_var=chosen_source_in_base, to_var=chosen_var_name_in_base,
                                                  polarity='positive' if i == 0 else 'negative'
                                                  # y=a-b, a: positive, b: negative
@@ -268,7 +266,7 @@ def create_causal_link(base_structure):
     return base_structure
 
 
-def apply_a_concept_cld(base_structure, concept_cld, target_structure):
+def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept_cld, target_structure):
     print("    **** Applying a concept cld...")
     # create a new base structure to modify
     new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
@@ -278,14 +276,14 @@ def apply_a_concept_cld(base_structure, concept_cld, target_structure):
     new_base = SessionHandler(model_structure=new_model_structure)
     print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
-    # TODO this chain_decomposition function seems not to be very reliable. Replace it with something else in the future
+    # TODO: this chain_decomposition function seems not to be very reliable. Replace it with something else in the future
     def generate_chains(structure):
         chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
         chains = list()
         for chain in chains_generator:
             chains.append(chain)
-        print(structure.model_structure.sfd.edges)
-        print(chains)
+        # print(structure.model_structure.sfd.edges)
+        # print(chains)
 
         # making the chains directed
         for chain in chains:
@@ -316,8 +314,19 @@ def apply_a_concept_cld(base_structure, concept_cld, target_structure):
                         break
             chains[j] = new_chain
 
-        print(chains)
+        # print(chains)
         return chains
+
+    def decide_chain_polarity(c):
+        p = 'positive'
+        for joint in c:
+            if target_structure.model_structure.sfd.edges[joint]['polarity'] == 'negative':
+                if p == 'positive':
+                    p = 'negative'
+                else:
+                    p = 'positive'
+                # print("polarity changed to", p)
+        return p
 
     # The idea here, is to use the concept CLD to guide the extraction of elements from the target structure and the
     # addition of these elements to the base structure.
@@ -329,5 +338,107 @@ def apply_a_concept_cld(base_structure, concept_cld, target_structure):
     if len(chains_in_target) == 0:  # There is no chain in target, so do nothing
         return new_base
     else:  # Use the concept CLD to instruct importing elements from target to base structure
+        # Preparation
+        print("    1. Which stock to start in the base structure?", stock_uid_in_base_to_start_with)
+        print("    2. Which concept CLD to follow?\n       {}".format(concept_cld.edges))
+        print("       This concept CLD has {} loop.".format(concept_cld.graph['polarity']))
+        print("    3. Which chain to use in target structure?")
+        chosen_chain_in_target = None
+        # TODO: now we use the first-met suitable chain, and only decide by polarity. Update needed in the future.
+        for chain in chains_in_target:
+            polarity = decide_chain_polarity(chain)
+            # print("Chain polarity:", polarity)
+            if polarity == concept_cld.graph['polarity']:
+                chosen_chain_in_target = chain
+                break
+        print("       {}".format(chosen_chain_in_target))
+        if chosen_chain_in_target is None:
+            print("    Could not find a suitable chain in target to operate. Aborting.")
+            return new_base
+
+        # Iterate over the concept CLD to import elements from target to base
+        current_node_in_concept_cld = STOCK  # TODO: need to update, because in a concept CLD there could be >1 nodes
+        current_joint_in_target_chain = chosen_chain_in_target[0]
+
+        # a dict storing the 3 currently focused joints/element
+        structure_operating = {'concept': current_node_in_concept_cld,
+                             'target': current_joint_in_target_chain,
+                             'base': stock_uid_in_base_to_start_with,
+                             }
+
+        continue_mapping = True
+        continue_building = True
+
+        while continue_mapping:
+            # Check if current [element in base] fits current [joint in concept]
+
+            func = new_base.model_structure.get_element_by_uid(structure_operating['base'])['function']
+            if func is None:
+                check = False
+            else:
+                if func[0] == structure_operating['concept']:
+                    check = True
+                else:
+                    check = False
+
+            if (structure_operating['concept'] in element_types and
+                new_base.model_structure.get_element_by_uid(structure_operating['base'])['element_type'] == structure_operating['concept']) \
+                    or (structure_operating['concept'] in functions and check):
+                print("    Success 1: concept CLD's node matches the element in base structure.")
+
+                # move forward on concept cld
+                structure_operating['concept'] = list(concept_cld.successors(structure_operating['concept']))[0]
+                print("    Moved to the next element in concept cld: ", structure_operating['concept'])
+
+                # check if in base structure, the focused element has a successor
+                successors_in_base = list(new_base.model_structure.sfd.successors(new_base.model_structure.get_element_name_by_uid(structure_operating['base'])))
+                if len(successors_in_base) == 0:
+                    print("    In base structure the current element has no successor, stop mapping.")
+                    continue_mapping = False
+                else:
+                    # TODO: in future need to select when there are more loops. Consider chains/ paths.
+                    structure_operating['base'] = successors_in_base[0]
+            else:
+                print("    Not fit: {} and {}, stop mapping.".format(structure_operating['concept'], structure_operating['base']))
+                continue_mapping = False
+
+        while continue_building:
+            # Iterate along the target chain to find a node that fits the current element in concept cld
+            continue_seeking = True
+            print("Here 1,", target_structure.model_structure.sfd.nodes[structure_operating['target'][0]])
+            while continue_seeking:
+
+                func = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]['function']
+                if func is None:
+                    print("Here 1.5")
+                    check = False
+                else:
+                    print("Here 2,", func[0], structure_operating['concept'])
+                    if func[0] == structure_operating['concept']:
+                        check = True
+                    else:
+                        check = False
+
+                if (structure_operating['concept'] in element_types and
+                    target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]['element_type'] == structure_operating['concept']) \
+                        or (structure_operating['concept'] in functions and check):
+                    print("    Success 2: concept CLD's node matches the element in target structure.")
+                    continue_seeking = False  # Time to build
+                else:
+                    # replace 'target' in structure_operating with the next joint in chain
+                    idx = chosen_chain_in_target.index(structure_operating['target']) + 1
+                    try:
+                        structure_operating['target'] = chosen_chain_in_target[idx]
+                    except IndexError:
+                        # The chain has been looped up and no fitting element is found
+                        print("    Failure: Cannot find a fitting element in target chain.")
+                        return new_base
+
+            # Import the target chain's current element into base_structure
+
+
+            continue_building = False
+
+            print("Finally,", structure_operating)
 
         return new_base
