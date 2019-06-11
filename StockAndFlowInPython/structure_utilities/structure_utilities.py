@@ -339,7 +339,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
         return new_base
     else:  # Use the concept CLD to instruct importing elements from target to base structure
         # Preparation
-        print("    1. Which stock to start in the base structure?", stock_uid_in_base_to_start_with)
+        print("    1. Which stock to start in the base structure? uid:", stock_uid_in_base_to_start_with)
         print("    2. Which concept CLD to follow?\n       {}".format(concept_cld.edges))
         print("       This concept CLD has {} loop.".format(concept_cld.graph['polarity']))
         print("    3. Which chain to use in target structure?")
@@ -435,10 +435,91 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                         return new_base
 
             # Import the target chain's current element into base_structure
+            # Because we consider only loop/chain in this utility, so what imported must have a function #TODO: in future when there are >1 order loops, may be different
+            print("    Starting building new element in base...")
+            start_with_element_base = new_base.model_structure.get_element_name_by_uid(structure_operating['base'])
+            print("    **** Element in base to build on:", start_with_element_base)
+            chosen_var_in_target = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]
+            print("    **** Details of element to import:", chosen_var_in_target)
 
+            x = chosen_var_in_target['pos'][0]
+            y = chosen_var_in_target['pos'][1]
 
-            continue_building = False
+            if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter  #TODO: now it's impossible for this to be Parameter, but save for later
+                equation = chosen_var_in_target['value'][0]
+            else:  # it has a function as equation
+                # Not just copy-paste the equation; but to modify its parameters to constants
+
+                equation = copy.deepcopy(chosen_var_in_target['function'])
+
+                if equation[0] == ADDITION:
+                    equation[1] = start_with_element_base
+                    equation[2] = 0
+                    uid = new_base.build_aux(equation=equation, x=x, y=y)
+                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                             polarity='positive')
+
+                elif equation[0] == MULTIPLICATION:
+                    equation[1] = start_with_element_base
+                    equation[2] = 1
+                    uid = new_base.build_aux(equation=equation, x=x, y=y)
+                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                             polarity='positive')
+
+                elif equation[0] == SUBTRACTION:
+                    # TODO: mechanism to decide if a-b or b-a
+                    # factor = random.choice([1, 2])
+                    equation[1] = start_with_element_base
+                    equation[2] = 0
+                    uid = new_base.build_aux(equation=equation, x=x, y=y)
+                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                             polarity='positive'
+                                             )
+
+                elif equation[0] == DIVISION:
+                    # TODO: mechanism to decide if a /b or b /a
+                    # factor = random.choice([1, 2])
+                    equation[1] = start_with_element_base
+                    equation[2] = 1
+                    uid = new_base.build_aux(equation=equation, x=x, y=y)
+                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                             polarity='positive'
+                                             )
+
+                elif equation[0] == LINEAR:
+                    equation[1] = start_with_element_base
+                    uid = new_base.build_aux(equation=equation, x=x, y=y)
+                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                             polarity='positive')
+
+            # move forward on base_structure
+            structure_operating['base'] = uid
+
+            # move forward on concept cld
+            structure_operating['concept'] = list(concept_cld.successors(structure_operating['concept']))[0]
+            print("    Moved to the next element in concept cld: ", structure_operating['concept'])
+
+            # if this element from the concept cld is identical to the starting
+            # TODO: need to update for conditions with more than 1 stock
+            if structure_operating['concept'] == STOCK:
+                # close the loop by add connection from the last added var to stock
+                # 2 steps: 1. create a flow and 2. make it equivalent to the last added var
+                f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],
+                                            x=100, y=100,
+                                            flow_from=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with),
+                                            flow_to=None)
+                new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(structure_operating['base']),
+                                         to_var=new_base.model_structure.get_element_name_by_uid(f_uid),
+                                         polarity='positive')
+                # stop building
+                continue_building = False
 
             print("Finally,", structure_operating)
+            print("Finally2,", new_base.model_structure.sfd.nodes(data='function'))
 
         return new_base
