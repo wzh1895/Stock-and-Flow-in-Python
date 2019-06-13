@@ -20,18 +20,17 @@ def name_handler(name):
 
 
 class SessionHandler(object):
-    def __init__(self, structure_name='default'):
+    def __init__(self, model_structure=None):
         # backends
-        self.model_structure = Structure(structure_name)
+        if model_structure is None:
+            self.model_structure = Structure()
+        else:
+            self.model_structure = model_structure
         self.filename = ''
         self.model = None
         self.variables_in_model = None
         self.selected_variable = None
         self.simulation_time = 75
-
-        # front ends
-
-        # self.simulation_result1 = SimulationResult()
 
     def file_load(self):
         self.filename = filedialog.askopenfilename()
@@ -315,26 +314,26 @@ class SessionHandler(object):
         """
         Refresh 1) graph network window 2) SFD window 3) variable list
         """
-        try:
-            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
-        except:
-            pass
-        try:
-            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
-        except:
-            pass
-
-        # draw graph network again
-        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True),
-                                                               master=self.graph_network_window1.top)
-        self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
-        # draw sfd again
-        self.sfd_window1.sfd_canvas1.reset_canvas()
-        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
+        # try:
+        #     self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+        # except:
+        #     pass
+        # try:
+        #     self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+        # except:
+        #     pass
+        #
+        # # draw graph network again
+        # self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True),
+        #                                                        master=self.graph_network_window1.top)
+        # self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
+        # # draw sfd again
+        # self.sfd_window1.sfd_canvas1.reset_canvas()
+        # self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
         # update variables' list
         self.variables_in_model = list(self.model_structure.sfd.nodes)
 
-    def build_stock(self, name, initial_value, x=0, y=0):
+    def build_stock(self, name=None, initial_value=None, x=0, y=0):
         """
         Build a stock in the way a modeler will do.
         :param name: The stock's name
@@ -343,7 +342,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("\n==>Building stock {}\n".format(name))
+        print("===>Building stock: {}".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             # TODO: fix this line
             pos = self.generate_location(self.sfd_window1, [])
@@ -366,7 +365,7 @@ class SessionHandler(object):
             equation = [equation]
         return equation
 
-    def build_flow(self, name, equation, x=0, y=0, points=list(), flow_from=None, flow_to=None):
+    def build_flow(self, name=None, equation=None, x=0, y=0, points=list(), flow_from=None, flow_to=None):
         """
         Build a flow in the way a modeler will do.
         :param name: The flow's name
@@ -378,7 +377,7 @@ class SessionHandler(object):
         :param flow_to: Inflow to ...
         :return:
         """
-        print("\n==>Building flow {}\n".format(name))
+        print("===>Building flow: {}".format(name if name is not None else 'new'))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
@@ -387,7 +386,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name+angle instead of a number
                     linked_vars.append(linked_var[0])  # add the name to 'linked_vars'
-        print(name, 'is linked to', linked_vars)
+        print('    Building flow:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
@@ -430,17 +429,17 @@ class SessionHandler(object):
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
         uid = self.model_structure.add_flow(name=name,
-                                      equation=equation,
-                                      flow_from=flow_from,
-                                      flow_to=flow_to,
-                                      x=x,
-                                      y=y,
-                                      points=points)
+                                            equation=equation,
+                                            flow_from=flow_from,
+                                            flow_to=flow_to,
+                                            x=x,
+                                            y=y,
+                                            points=points)
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
 
-    def build_aux(self, name, equation, x=0, y=0):
+    def build_aux(self, name=None, equation=None, x=0, y=0):
         """
         Build an auxiliary variable in the way a modeler will do.
         :param name: The variable's name
@@ -449,7 +448,7 @@ class SessionHandler(object):
         :param y: Y coordinate in the canvas
         :return:
         """
-        print("\n==>Building aux {}\n".format(name))
+        print("===>Building aux: {}".format(name))
 
         linked_vars = list()  # collect linked variables for generating location
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
@@ -458,7 +457,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name instead of a number
                     linked_vars.append(linked_var[0])
-        print(name, 'is linked to', linked_vars)
+        print('   Building aux:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)
@@ -467,12 +466,15 @@ class SessionHandler(object):
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
         uid = self.model_structure.add_aux(name=name,
-                                     equation=equation,
-                                     x=x,
-                                     y=y)
+                                           equation=equation,
+                                           x=x,
+                                           y=y)
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
+
+    def build_connector(self, from_var, to_var, polarity=None):
+        self.model_structure.add_causality(from_element=from_var, to_element=to_var, polarity=polarity)
 
     def generate_location(self, sfd_window, linked_vars):
         """
@@ -636,7 +638,8 @@ class GraphNetworkWindow(object):
 
 
 class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red", width=500, height=430, x=650, y=250, attr=None):
+    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red",
+                 width=500, height=430, x=650, y=250, attr=None):
         super().__init__()
         self.title(window_title)
         self.width = width

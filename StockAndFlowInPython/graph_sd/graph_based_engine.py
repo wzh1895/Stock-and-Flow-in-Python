@@ -14,38 +14,33 @@ ALIAS = 'alias'
 
 
 # Define functions
-class Functions(object):
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def linear(x, a=1, b=0):
-        return a * float(x) + b
-
-    @staticmethod
-    def addition(x, y):
-        return float(x) + float(y)
-
-    @staticmethod
-    def subtract(x, y):
-        return float(x) - float(y)
-
-    @staticmethod
-    def division(x, y):
-        return float(x) / float(y)
-
-    @staticmethod
-    def multiplication(x, y):
-        return float(x) * float(y)
+def linear(x, a=1, b=0):
+    return a * float(x) + b
 
 
-LINEAR = Functions.linear
-SUBTRACT = Functions.subtract
-DIVISION = Functions.division
-ADDITION = Functions.addition
-MULTIPLICATION = Functions.multiplication
+def addition(x, y):
+    return float(x) + float(y)
 
-function_names = [LINEAR, SUBTRACT, DIVISION, ADDITION, MULTIPLICATION]
+
+def subtraction(x, y):
+    return float(x) - float(y)
+
+
+def division(x, y):
+    return float(x) / float(y)
+
+
+def multiplication(x, y):
+    return float(x) * float(y)
+
+
+LINEAR = linear
+SUBTRACTION = subtraction
+DIVISION = division
+ADDITION = addition
+MULTIPLICATION = multiplication
+
+function_names = [LINEAR, SUBTRACTION, DIVISION, ADDITION, MULTIPLICATION]
 
 
 class UidManager(object):
@@ -70,25 +65,31 @@ class NameManager(object):
     def get_new_name(self, element_type):
         if element_type == STOCK:
             self.stock_id += 1
-            return 'stock'+str(self.stock_id)
+            return 'stock_'+str(self.stock_id)
         elif element_type == FLOW:
             self.flow_id += 1
-            return 'flow'+str(self.flow_id)
+            return 'flow_' + str(self.flow_id)
         elif element_type == VARIABLE:
             self.variable_id += 1
-            return 'variable'+str(self.variable_id)
+            return 'variable_' + str(self.variable_id)
         elif element_type == PARAMETER:
             self.parameter_id += 1
-            return 'parameter'+str(self.parameter_id)
+            return 'parameter_' + str(self.parameter_id)
 
 
 class Structure(object):
-    def __init__(self, structure_name='default'):
-        self.sfd = nx.DiGraph()
-        self.sfd.graph['structure_name'] = structure_name
-        self.uid_manager = UidManager()
-        self.name_manager = NameManager()
-        self.uid_element_name = dict()
+    def __init__(self, sfd=None, uid_manager=None, name_manager=None, uid_element_name=None):
+        if sfd is None:
+            self.sfd = nx.DiGraph()
+            self.uid_manager = UidManager()
+            self.name_manager = NameManager()
+            self.uid_element_name = dict()
+        else:
+            self.sfd = sfd
+            self.uid_manager = uid_manager
+            self.name_manager = name_manager
+            self.uid_element_name = uid_element_name
+
         self.simulation_time = None
         self.maximum_steps = 1000
         self.dt = 0.25
@@ -99,18 +100,19 @@ class Structure(object):
                                          'first_order_negative': self.first_order_negative
                                          }
 
-
     def add_element(self, element_name, element_type, flow_from=None, flow_to=None, x=0, y=0, function=None, value=None, points=None):
         uid = self.uid_manager.get_new_uid()
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, uid=uid, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
         # print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
-        # automatically add dependencies, if a function is used for this variable
-        if function is not None and type(function) is not str:
-            self.add_function_dependencies(element_name, function)
-        # bind uid with element's name
+
+        # # automatically add dependencies, if a function is used for this variable
+        # if function is not None and type(function) is not str:
+        #     self.add_function_dependencies(element_name, function)
+
         self.uid_element_name[uid] = element_name
+
         return uid
 
     def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
@@ -123,7 +125,12 @@ class Structure(object):
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
     def get_element_by_uid(self, uid):
+        # print("Uid_Element_Name, ", self.uid_element_name)
         return self.sfd.nodes[self.uid_element_name[uid]]
+
+    def get_element_name_by_uid(self, uid):
+        print("here", self.uid_element_name)
+        return self.uid_element_name[uid]
 
     def print_elements(self):
         print('Graph: All elements in this SFD:')
@@ -141,33 +148,44 @@ class Structure(object):
         print('Graph: Causality from {} to {}:'.format(from_element, to_element))
         print(self.sfd[from_element][to_element])
 
-    def all_stocks(self):
-        stocks = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == STOCK:
-                stocks.append(node)
-        return stocks
+    # # TODO depreciate
+    # def all_stocks(self):
+    #     stocks = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == STOCK:
+    #             stocks.append(node)
+    #     return stocks
+    #
+    # # TODO decpreciate
+    # def all_variables(self):
+    #     variables = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == VARIABLE:
+    #             variables.append(node)
+    #     return variables
+    #
+    # # TODO decpreciate
+    # def all_parameters(self):
+    #     parameters = list()
+    #     for node, attributes in self.sfd.nodes.data():
+    #         if attributes['element_type'] == PARAMETER:
+    #             parameters.append(node)
+    #     return parameters
 
-    def all_flows(self):
-        flows = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == FLOW:
-                flows.append(node)
-        return flows
+    def all_certain_type(self, element_type):
+        # able to handle both single type and multiple types
+        elements = list()
+        if type(element_type) != list:
+            element_types = [element_type]
+        else:
+            element_types = element_type
 
-    def all_variables(self):
-        variables = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == VARIABLE:
-                variables.append(node)
-        return variables
-
-    def all_parameters(self):
-        parameters = list()
-        for node, attributes in self.sfd.nodes.data():
-            if attributes['element_type'] == PARAMETER:
-                parameters.append(node)
-        return parameters
+        for ele_tp in element_types:
+            for node, attributes in self.sfd.nodes.data():
+                if attributes['element_type'] == ele_tp:
+                    elements.append(node)
+        # print(elements, "Found for", element_types)
+        return elements
 
     def get_coordinate(self, name):
         """
@@ -182,39 +200,61 @@ class Structure(object):
         Core function for simulation, based on recursion
         :param name: Name of the element to calculate
         """
-        if self.sfd.nodes[name]['element_type'] == STOCK:
+        if type(name) == int or type(name) == float:
+            # if the name is actually a constant:
+            return name
+
+        elif self.sfd.nodes[name]['element_type'] == STOCK:
             # if the node is a stock
-            return self.sfd.nodes[name]['value'][-1]  # just return its value, update afterward.
+            return self.sfd.nodes[name]['value'][-1]  # just return its latest value, update afterward.
         elif self.sfd.nodes[name]['function'] is None:
             # if the node does not have a function and not a stock, then it's constant
             # if this node is a constant, still extend its value list by its last value
-            self.sfd.nodes[name]['value'].append(self.sfd.nodes[name]['value'][-1])
+
+            # However, if this variable is participating in more than 1 calculation, its value could be extended twice.
+            # use 'visited' to fix this problem.
+            if name not in self.visited:
+                self.sfd.nodes[name]['value'].append(self.sfd.nodes[name]['value'][-1])
+                self.visited.append(name)
             return self.sfd.nodes[name]['value'][-1]  # use its latest value
         else:  # it's not a constant value but a function  #
             # params = self.sfd.nodes[name]['function'][1:]  # extract all parameters needed by this function
-            params = [param[0] for param in self.sfd.nodes[name]['function'][1:]]  # take the name but not the angle
+            params = [param for param in self.sfd.nodes[name]['function'][1:]]  # take the name but not the angle
             for j in range(len(params)):  # use recursion to find the values of params, then -
                 params[j] = self.calculate(params[j])  # replace the param's name with its value.
             new_value = self.sfd.nodes[name]['function'][0](*params)  # calculate the new value for this step
-            self.sfd.nodes[name]['value'].append(new_value)  # add this new value to this node's value list
+
+            # However, if this variable is participating in mor than 1 calculation, its value could be extended twice.
+            # use 'visited' to solve this problem.
+            if name not in self.visited:
+                self.sfd.nodes[name]['value'].append(new_value)  # add this new value to this node's value list
+                self.visited.append(name)
             return new_value  # return the new value to where it was called
 
     def step(self, dt=0.25):
         """
         Core function for simulation. Calculating all flows and adjust stocks accordingly based on recursion.
         """
+        # have a dictionary for flows and their values in this dt, to be added to /subtracted from stocks afterward.
         flows_dt = dict()
-        # have a dictionary of flows and their values in this dt, to be added to /subtracted from stocks afterward.
 
         # find all flows in the model
-        for element in self.sfd.nodes:  # loop through all elements in this SFD,
-            if self.sfd.nodes[element]['element_type'] == FLOW:  # if this element is a FLOW --
-                flows_dt[element] = 0  # make a position for it in the dict of flows_dt, initializing it with 0
+        for element in self.all_certain_type(FLOW):  # loop through all elements in this SFD,
+            flows_dt[element] = 0  # make a position for it in the dict of flows_dt, initializing it with 0
+
+        # have a list for all visited (calculated) variables (F/V/P) in this model
+        self.visited = list()
 
         # calculate flows
         for flow in flows_dt.keys():
             flows_dt[flow] = dt * self.calculate(flow)
         # print('All flows dt:', flows_dt)
+
+        # calculate all not visited variables and parameters in this model, in order to update their value list
+        # because all flows and stocks must be visited, only V and P are considered.
+        for element in self.all_certain_type([VARIABLE, PARAMETER]):
+            if element not in self.visited:
+                self.calculate(element)
 
         # calculating changes in stocks
         # have a dictionary of affected stocks and their changes, for one flow could affect 2 stocks.
@@ -232,7 +272,10 @@ class Structure(object):
                             direction_factor = 1
                         else:
                             print("Graph: Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
-                        affected_stocks[successor] = flows_dt[flow] * direction_factor
+                        if successor in affected_stocks.keys():  # this stock may have been added by other flows
+                            affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        else:
+                            affected_stocks[successor] = flows_dt[flow] * direction_factor
                     else:  # otherwise update this flow's value on top of results of previous calculation (f2 = f1 + f0)
                         if self.sfd.nodes[flow]['flow_from'] == successor:  # if flow influences this stock negatively
                             direction_factor = -1
@@ -240,8 +283,10 @@ class Structure(object):
                             direction_factor = 1
                         else:
                             print("Graph: Strange! {} seems to influence {} but not found in graph's attributes.".format(flow, successor))
-                        affected_stocks[successor] = flows_dt[flow] * direction_factor
-                        affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        if successor in affected_stocks.keys():  # this stock may have been added by other flows
+                            affected_stocks[successor] += flows_dt[flow] * direction_factor
+                        else:
+                            affected_stocks[successor] = flows_dt[flow] * direction_factor
 
         # updating affected stocks values
         for stock in affected_stocks.keys():
@@ -272,16 +317,12 @@ class Structure(object):
             # print('Graph: reset value of', node, 'to', self.sfd.nodes[node]['value'])
 
     # Add elements on a stock-and-flow level (work with model file handlers)
-    def add_stock(self, name, equation, x=0, y=0, structure_name='default'):
-        # name is overwritten by auto-generated name
-        name = self.name_manager.get_new_name(element_type=STOCK)
+    def add_stock(self, name=None, equation=None, x=0, y=0):
         uid = self.add_element(name, element_type=STOCK, x=x, y=y, value=equation)
         # print('Graph: added stock:', name, 'to graph.')
         return uid
 
-    def add_flow(self, name, equation, x=0, y=0, points=None, flow_from=None, flow_to=None, structure_name='default'):
-        # name is overwritten by auto-generated name
-        name = self.name_manager.get_new_name(element_type=FLOW)
+    def add_flow(self, name=None, equation=None, x=0, y=0, points=None, flow_from=None, flow_to=None):
         # Decide if the 'equation' is a function or a constant number
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number
@@ -290,12 +331,15 @@ class Structure(object):
         else:
             function = equation  # it's a function
             value = list()
+        if name is None:
+            name = self.name_manager.get_new_name(element_type=FLOW)
         uid = self.add_element(name, element_type=FLOW, flow_from=flow_from, flow_to=flow_to, x=x, y=y, function=function, value=value, points=points)
-        self.create_stock_flow_connection(name, structure_name, flow_from=flow_from, flow_to=flow_to)
+
+        self.create_stock_flow_connection(name, flow_from=flow_from, flow_to=flow_to)
         # print('Graph: added flow:', name, 'to graph.')
         return uid
 
-    def create_stock_flow_connection(self, name, flow_from=None, flow_to=None):
+    def create_stock_flow_connection(self, name=None, flow_from=None, flow_to=None):
         """
         Connect stock and flow.
         :param name: The flow's name
@@ -307,23 +351,22 @@ class Structure(object):
         # If the flow influences a stock, create the causal link
         if flow_from is not None:  # Just set up
             self.sfd.nodes[name]['flow_from'] = flow_from
-            self.add_causality(name, flow_from, display=False)
+            self.add_causality(name, flow_from, display=False, polarity='negative')
         if flow_to is not None:  # Just set up
             self.sfd.nodes[name]['flow_to'] = flow_to
-            self.add_causality(name, flow_to, display=False)
+            self.add_causality(name, flow_to, display=False, polarity='positive')
 
-    def add_aux(self, name, equation, x=0, y=0, structure_name='default'):
-
+    def add_aux(self, name=None, equation=None, x=0, y=0):
         # Decide if this aux is a parameter or variable
         if type(equation[0]) is int or type(equation[0]) is float:
             # if equation starts with a number, it's a parameter
-            # name is overwritten by auto-generated name
-            name = self.name_manager.get_new_name(element_type=PARAMETER)
+            if name is None:
+                name = self.name_manager.get_new_name(element_type=PARAMETER)
             uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
         else:
             # It's a variable, has its own function
-            # name is overwritten by auto-generated name
-            name = self.name_manager.get_new_name(element_type=VARIABLE)
+            if name is None:
+                name = self.name_manager.get_new_name(element_type=VARIABLE)
             uid = self.add_element(name, element_type=VARIABLE, x=x, y=y, function=equation, value=list())
             # Then it is assumed to take information from other variables, therefore causal links should be created.
             # Already implemented in structure's add_element function, not needed here.
@@ -333,7 +376,7 @@ class Structure(object):
         # print('Graph: added aux', name, 'to graph.')
         return uid
 
-    def replace_equation(self, name, new_equation, structure_name='default'):
+    def replace_equation(self, name, new_equation):
         """
         Replace the equation of a variable.
         :param name: The name of the variable
@@ -391,19 +434,20 @@ class Structure(object):
                              x=element[5],
                              y=element[6])
             elif element[0] == CONNECTOR:
-                self.add_connector(uid=element[1],
-                                   angle=element[2],
-                                   from_element=element[3],
-                                   to_element=element[4])
+                self.add_connector(angle=element[1],
+                                   from_element=element[2],
+                                   to_element=element[3],
+                                   polarity=element[4])
 
-    def add_connector(self, uid, from_element, to_element, angle=0, structure_name='default'):
-        self.add_causality(from_element, to_element, uid=uid, angle=angle)
+    def add_connector(self, from_element, to_element, angle=0, polarity=None, display=True):
+        uid = self.uid_manager.get_new_uid()
+        self.add_causality(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)
 
-    def add_alias(self, uid, of_element, x=0, y=0, structure_name='default'):
+    def add_alias(self, uid, of_element, x=0, y=0):
         self.add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
         # print('Graph: added alias of', of_element, 'to graph.\n')
 
-    def delete_variable(self, name, structure_name='default'):
+    def delete_variable(self, name):
         """
         Delete a variable
         :param name:
@@ -413,7 +457,7 @@ class Structure(object):
         self.sfd.remove_node(name)
         print("Graph: {} is removed from the graph.".format(name))
 
-    def remove_stock_flow_connection(self, name, stock_name, structure_name='default'):
+    def remove_stock_flow_connection(self, name, stock_name):
         """
         Disconnect stock and flow
         :param name: The flow's name
@@ -438,61 +482,67 @@ class Structure(object):
         #     self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
 
     # Set the model to a first order negative feedback loop
-    def first_order_negative(self, structure_name='default'):
+    def first_order_negative(self):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.sfd.graph['structure_name'] = 'first_order_negative'
         self.add_elements_batch([
-            # 0type,    1name/uid,  2value/equation/angle                         3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',   [100],                                        None,       None,       289,    145,    None],
-            [FLOW,      'flow0',    [DIVISION, ['gap0', 148], ['at0', 311]],      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
-            [PARAMETER, 'goal0',    [20],                                         None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0',     [SUBTRACT, ['goal0', 353], ['stock0', 246]],  None,       None,       213,    212,    None],
-            [PARAMETER, 'at0',      [5],                                          None,       None,       123,    77,    None],
-            # [CONNECTOR, '0',        246,                           'stock0',   'gap0',      0,      0,      None],
-            # [CONNECTOR, '1',        353,                           'goal0',    'gap0',      0,      0,      None],
-            # [CONNECTOR, '2',        148,                           'gap0',     'flow0',     0,      0,      None],
-            # [CONNECTOR, '3',        311,                           'at0',      'flow0',     0,      0,      None]
+            # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [DIVISION, 'gap0',   'at0'],               'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
+            [PARAMETER, 'goal0',     [20],                                      None,       None,       163,    251,    None],
+            [VARIABLE,  'gap0', [SUBTRACTION, 'stock0', 'goal0'], None, None, 213, 212, None],
+            [PARAMETER, 'at0',       [5],                                       None,       None,       123,    77,     None],
+            # 0type     1angle       2from         3to          4polarity
+            [CONNECTOR, 246,         'stock0',     'gap0',      'positive'],
+            [CONNECTOR, 353,         'goal0',      'gap0',      'negative'],
+            [CONNECTOR, 148,         'gap0',       'flow0',     'positive'],
+            [CONNECTOR, 311,         'at0',        'flow0',     'negative']
             ])
 
     # Set the model to a first order negative feedback loop
-    def first_order_positive(self, structure_name='default'):
+    def first_order_positive(self):
         # adding a structure that has been pre-defined using multi-dimensional arrays.
         self.sfd.graph['structure_name'] = 'first_order_positive'
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [MULTIPLICATION, ['stock0', 100], ['fraction0', 160]],  None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
-            [PARAMETER, 'fraction0', [0.1],                                                  None,       None,       163,    251,    None],
+            # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [LINEAR, 'product0'],                      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [VARIABLE,  'product0',  [MULTIPLICATION, 'stock0', 'fraction0'],   None,       None,       50,     100,    None],
+            [PARAMETER, 'fraction0', [0.1],                                     None,       None,       163,    251,    None],
+            # 0type     1angle       2from         3to          4polarity
+            [CONNECTOR, 246,         'stock0',     'product0',  'positive'],
+            [CONNECTOR, 150,         'product0',   'flow0',     'positive'],
+            [CONNECTOR, 311,         'fraction0',  'product0',  'positive']
         ])
 
     # Set the model to one stock + one outflow
     def basic_stock_outflow(self):
-        self.sfd.graph['structure_name'] = 'basic_stock_outflow'
+        self.sfd.graph['structure_name'] = 'basic_stock_outflow '
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [100],                                                    None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [4],                                                    'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
+            # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [4],                                       'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
         ])
 
-    # Set the model to one stock + one outflow
+    # Set the model to one stock + one inflow
     def basic_stock_inflow(self):
         self.sfd.graph['structure_name'] = 'basic_stock_inflow'
         self.add_elements_batch([
-            # 0type,    1name/uid,   2value/equation/angle                                   3flow_from,      4flow_to,        5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                                    None,            None,            289,    145,    None],
-            [FLOW,      'flow0',     [4],                                                    None,            'stock0',        181,    145, [[85, 145], [266.5, 145]]],
+            # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
+            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
+            [FLOW,      'flow0',     [4],                                       None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
         ])
 
     # Clear a run
-    def clear_a_run(self, structure_name='default'):
+    def clear_a_run(self):
         self.clear_value()
 
     # Reset a structure
-    def reset_a_structure(self, structure_name='default'):
+    def reset_a_structure(self):
         self.sfd.clear()
 
     # Simulate a structure based on a certain set of parameters
-    def simulate(self, simulation_time, structure_name='default', dt=0.25):
+    def simulate(self, simulation_time, dt=0.25):
         # print('Graph: Simulating...')
         self.simulation_time = simulation_time
         self.dt = dt
@@ -509,12 +559,12 @@ class Structure(object):
             self.step(dt)
 
     # Return a behavior
-    def get_behavior(self, name, structure_name='default'):
+    def get_behavior(self, name):
         # print(self.structures[structure_name].sfd.nodes[name]['value'])
         return self.sfd.nodes[name]['value']
 
     # Draw results
-    def draw_results(self, structure_name='default', names=None, rtn=False):
+    def draw_results(self, names=None, rtn=False):
         if names is None:
             names = list(self.sfd.nodes)
 
@@ -557,7 +607,7 @@ class Structure(object):
             plt.show()
 
     # Draw graphs
-    def draw_graphs(self, structure_name='default', rtn=False):
+    def draw_graphs(self, rtn=False):
         self.figure1 = plt.figure(figsize=(5, 5))
         plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
         pos = nx.get_node_attributes(self.sfd, 'pos')
@@ -569,7 +619,7 @@ class Structure(object):
             plt.show()
 
     # Draw graphs with curve
-    def draw_graphs_with_curve(self, structure_name='default', rtn=False):
+    def draw_graphs_with_curve(self, rtn=False):
         self.figure1 = plt.figure(figsize=(8, 6))
         ax = plt.gca()
         ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
@@ -630,10 +680,11 @@ class Structure(object):
 
 def main():
     structure0 = Structure()
-    structure0.first_order_negative()
-    structure0.simulate(simulation_time=80)
+    structure0.first_order_positive()
+    structure0.simulate(simulation_time=10)
     structure0.draw_graphs_with_curve()
-    structure0.all_stocks()
+    # structure0.draw_graphs()
+    structure0.draw_results()
 
 
 if __name__ == '__main__':
