@@ -129,7 +129,6 @@ class Structure(object):
         return self.sfd.nodes[self.uid_element_name[uid]]
 
     def get_element_name_by_uid(self, uid):
-        print("here", self.uid_element_name)
         return self.uid_element_name[uid]
 
     def print_elements(self):

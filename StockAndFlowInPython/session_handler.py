@@ -457,7 +457,7 @@ class SessionHandler(object):
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name instead of a number
                     linked_vars.append(linked_var[0])
-        print('   Building aux:', name, 'is linked to', linked_vars)
+        print('    Building aux:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             pos = self.generate_location(self.sfd_window1, linked_vars)

@@ -333,27 +333,33 @@ class ConceptCLDManager(object):
         concept_cld_constant = nx.DiGraph()
         concept_cld_constant.add_node(STOCK)
         concept_cld_constant.graph['polarity'] = 'no'
-
+        concept_cld_constant.graph['begin_with'] = STOCK
+        concept_cld_constant.graph['end_with'] = STOCK
         self.concept_clds['constant'] = concept_cld_constant
 
         concept_cld_growth_a = nx.DiGraph()
         concept_cld_growth_a.add_nodes_from([STOCK, PARAMETER])
         concept_cld_growth_a.add_edge(PARAMETER, STOCK, polarity='positive')
         concept_cld_growth_a.graph['polarity'] = 'no'
+        concept_cld_growth_a.graph['begin_with'] = STOCK
+        concept_cld_growth_a.graph['end_with'] = STOCK
         self.concept_clds['growth_a'] = concept_cld_growth_a
 
         concept_cld_growth_b = nx.DiGraph()
-        concept_cld_growth_b.add_nodes_from([STOCK, MULTIPLICATION, LINEAR])
+        concept_cld_growth_b.add_nodes_from([STOCK, MULTIPLICATION])
         concept_cld_growth_b.add_edge(STOCK, MULTIPLICATION, polarity='positive')
-        concept_cld_growth_b.add_edge(MULTIPLICATION, LINEAR, polarity='positive')
-        concept_cld_growth_b.add_edge(LINEAR, STOCK, polarity='positive')
+        concept_cld_growth_b.add_edge(MULTIPLICATION, STOCK, polarity='positive')
         concept_cld_growth_b.graph['polarity'] = 'positive'
+        concept_cld_growth_b.graph['begin_with'] = STOCK
+        concept_cld_growth_b.graph['end_with'] = STOCK
         self.concept_clds['growth_b'] = concept_cld_growth_b
 
         concept_cld_decline_a = nx.DiGraph()
         concept_cld_decline_a.add_nodes_from([STOCK, PARAMETER])
         concept_cld_decline_a.add_edge(PARAMETER, STOCK, polarity='negative')
         concept_cld_decline_a.graph['polarity'] = 'no'
+        concept_cld_decline_a.graph['begin_with'] = STOCK
+        concept_cld_decline_a.graph['end_with'] = STOCK
         self.concept_clds['decline_a'] = concept_cld_decline_a
 
         concept_cld_decline_c = nx.DiGraph()
@@ -362,6 +368,8 @@ class ConceptCLDManager(object):
         concept_cld_decline_c.add_edge(SUBTRACTION, DIVISION, polarity='positive')
         concept_cld_decline_c.add_edge(DIVISION, STOCK, polarity='negative')
         concept_cld_decline_c.graph['polarity'] = 'negative'
+        concept_cld_decline_c.graph['begin_with'] = STOCK
+        concept_cld_decline_c.graph['end_with'] = STOCK
         self.concept_clds['decline_c'] = concept_cld_decline_c
 
         # TODO: more concept CLDs to be added
