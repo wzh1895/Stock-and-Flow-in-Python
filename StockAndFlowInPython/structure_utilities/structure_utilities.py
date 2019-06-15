@@ -510,11 +510,13 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                 # close the loop by add connection from the last added var to stock
                 # 2 steps: 1. create a flow and 2. make it equivalent to the last added var
                 polarity_f_s = concept_cld.edges[list(concept_cld.in_edges(structure_operating['concept']))[0]]['polarity']
-                # print(polarity_f_s, 'KKKKKK')
                 f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],
-                                            x=100, y=100,
                                             flow_from=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'negative' else None,
-                                            flow_to=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'positive' else None)
+                                            flow_to=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'positive' else None,
+                                            x=120 if polarity_f_s == 'positive' else 302,
+                                            y=172,
+                                            points=[[49, 172], [191, 172]] if polarity_f_s == 'positive' else [[236, 171], [392, 171]]
+                                            )
                 new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(structure_operating['base']),
                                          to_var=new_base.model_structure.get_element_name_by_uid(f_uid),
                                          polarity='positive')

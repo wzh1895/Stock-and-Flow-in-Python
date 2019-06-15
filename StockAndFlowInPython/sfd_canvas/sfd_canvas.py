@@ -10,10 +10,6 @@ import shutil
 import os
 
 
-def name_handler(name):
-    return name.replace(' ', '_').replace('\n', '_')
-
-
 class SFDCanvas(Frame):
     def __init__(self, master):
         super().__init__(master)
@@ -35,10 +31,14 @@ class SFDCanvas(Frame):
 
         self.pack(fill=BOTH, expand=1)
 
-    def set_sfd_and_draw(self, sfd):
+    @staticmethod
+    def name_handler(name):
+        return name.replace(' ', '_').replace('\n', '_')
+
+    def draw_sfd(self, sfd):
         """
         Receive a graph representation of SFD and draw it on canvas
-        :param sfd: Received stock and Flow representation in graph
+        :param sfd: Graph network
         :return:
         """
         self.sfd = sfd
@@ -57,10 +57,8 @@ class SFDCanvas(Frame):
         self.ymost = 300
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
 
-
-
     def locate_var(self, name):
-        name = name_handler(name)
+        name = self.name_handler(name)
         # print("locating...")
         # print(name)
         # print(self.session_handler1.model_structure.sfd.nodes)
@@ -83,7 +81,8 @@ class SFDCanvas(Frame):
         """
         for i in range(len(pts)-1):
             if i != len(pts)-2:
-                self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1])
+                self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1],
+                                        arrow=LAST, arrowshape=(8, 10, 3))
             else:
                 self.canvas.create_line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1],
                                         arrow=LAST, arrowshape=(8, 10, 3))
@@ -106,112 +105,113 @@ class SFDCanvas(Frame):
         self.canvas.create_text(x, y, anchor=CENTER, font=("Arial", 10), text="G")
         self.canvas.create_text(x, y + r + 10, anchor=CENTER, font=("Arial", 10, "italic"), text=label)
 
-    def create_connector(self, xA, yA, xB, yB, angle, color='black'):
-        # self.create_dot(xA,yA,3,'black')
-        # self.create_dot(xB,yB,3,'black')
-        alpha = math.radians(angle)
-        if math.pi < alpha < math.pi * 2:
-            alpha -= math.pi * 2
-        # beta = math.atan2((yA - yB), (xB - xA))  # angle between A->B and x-positive
-        # print('alpha in degrees, ', math.degrees(alpha), 'beta in degrees, ', math.degrees(beta))
-
-        # calculate the center of circle
-
-        rad_radiusA = alpha - math.pi * 0.5  # radiant of radius of the circle going out from A
-        # print('rad_radiusA (degrees), ', math.degrees(rad_radiusA), 'radians, ', rad_radiusA)
-        gA = math.tan(rad_radiusA)
-        # print('gradiantA, ', gA)
-        if xB != xA:
-            gAB = (yA - yB) / (xB - xA)  # y axis inversed, could be 'zero division'
+    def create_connector(self, x_a, y_a, x_b, y_b, angle=None, color='black'):
+        if angle is None:
+            self.canvas.create_line(x_a, y_a, x_b, y_b, smooth=True, fill='maroon2', arrow=LAST, arrowshape=(9, 11, 4))
         else:
-            gAB = 99.99
-        # print('gradiantAB, ', gAB)
+            # self.create_dot(xA,yA,3,'black')
+            # self.create_dot(xB,yB,3,'black')
+            alpha = math.radians(angle)
+            if math.pi < alpha < math.pi * 2:
+                alpha -= math.pi * 2
+            # beta = math.atan2((yA - yB), (xB - xA))  # angle between A->B and x-positive
+            # print('alpha in degrees, ', math.degrees(alpha), 'beta in degrees, ', math.degrees(beta))
 
-        gM = (-1) / gAB
-        # print('gradiantM, ', gM)
-        xM = (xA + xB) / 2
-        yM = (yA + yB) / 2
-        # print("M's coordinate", xM, yM)
+            # calculate the center of circle
 
-        xC = (yA + gA * xA - gM * xM - yM) / (gA - gM)
-        yC = yA - gA * (xC - xA)
-        # print("A's coordinate: ", xA, yA)
-        # print("C's coordinate: ", xC, yC)
-
-        # self.create_dot(xC, yC, 2, color, str(angle))  # draw center of the circle
-        # TODO: when C and A are calculated to be the same point (and in fact not)
-        rad_CA = math.atan2((yC - yA), (xA - xC))
-        rad_CB = math.atan2((yC - yB), (xB - xC))
-
-        # print('rad_CA, ', rad_CA, 'rad_CB, ', rad_CB)
-
-        # calculate radius
-
-        radius = (pow((xB - xC), 2) + pow((yC - yB), 2)) ** 0.5
-        baseArc = math.atan2(yC - yA, xA - xC)
-
-        # print('baseArc in degrees, ', math.degrees(baseArc))
-
-        # print("checking youhu or liehu")
-        # vectors, this part seems to be correct
-
-        vecStarting = [math.cos(alpha), math.sin(alpha)]
-        vecAtoB = [xB - xA, yA - yB]
-        # print('vecStarting, ', vecStarting, 'vecAtoB, ', vecAtoB)
-        angleCos = self.cos_formula(vecStarting, vecAtoB)
-        # print('Cosine of the angle in Between, ', angleCos)
-
-        # checking youhu or liehu the direction
-
-        inverse = 1
-
-        if angleCos < 0:  # you hu
-            # print('deg_CA, ', math.degrees(rad_CA),'deg_CB',math.degrees(rad_CB))
-            diff = rad_CB-rad_CA
-            # print('youhu')
-        else:  # lie hu
-            if rad_CA*rad_CB<0 and rad_CA <= rad_CB: # yi hao
-                diff = rad_CB-rad_CA
-                if diff > math.pi:
-                    diff = abs(diff) - math.pi*2
-            elif rad_CA*rad_CB<0 and rad_CA > rad_CB:
-                diff = math.pi*2-rad_CA+rad_CB
-                if diff > math.pi:
-                    diff = diff - math.pi*2
-            elif rad_CA*rad_CB>0 and rad_CA > rad_CB:
-                diff = rad_CB-rad_CA
-                if diff > math.pi:
-                    diff = math.pi*2 - diff
-            elif rad_CA*rad_CB>0 and rad_CA < rad_CB:
-                diff = rad_CB-rad_CA
-                if diff > math.pi:
-                    diff = math.pi*2 - diff
+            rad_radiusA = alpha - math.pi * 0.5  # radiant of radius of the circle going out from A
+            # print('rad_radiusA (degrees), ', math.degrees(rad_radiusA), 'radians, ', rad_radiusA)
+            gA = math.tan(rad_radiusA)
+            # print('gradiantA, ', gA)
+            if x_b != x_a:
+                gAB = (y_a - y_b) / (x_b - x_a)  # y axis inversed, could be 'zero division'
             else:
+                gAB = 99.99
+            # print('gradiantAB, ', gAB)
+
+            gM = (-1) / gAB
+            # print('gradiantM, ', gM)
+            xM = (x_a + x_b) / 2
+            yM = (y_a + y_b) / 2
+            # print("M's coordinate", xM, yM)
+
+            xC = (y_a + gA * x_a - gM * xM - yM) / (gA - gM)
+            yC = y_a - gA * (xC - x_a)
+            # print("A's coordinate: ", xA, yA)
+            # print("C's coordinate: ", xC, yC)
+
+            # self.create_dot(xC, yC, 2, color, str(angle))  # draw center of the circle
+            # TODO: when C and A are calculated to be the same point (and in fact not)
+            rad_CA = math.atan2((yC - y_a), (x_a - xC))
+            rad_CB = math.atan2((yC - y_b), (x_b - xC))
+
+            # print('rad_CA, ', rad_CA, 'rad_CB, ', rad_CB)
+
+            # calculate radius
+
+            radius = (pow((x_b - xC), 2) + pow((yC - y_b), 2)) ** 0.5
+            baseArc = math.atan2(yC - y_a, x_a - xC)
+
+            # print('baseArc in degrees, ', math.degrees(baseArc))
+
+            # print("checking youhu or liehu")
+            # vectors, this part seems to be correct
+
+            vecStarting = [math.cos(alpha), math.sin(alpha)]
+            vecAtoB = [x_b - x_a, y_a - y_b]
+            # print('vecStarting, ', vecStarting, 'vecAtoB, ', vecAtoB)
+            angleCos = self.cos_formula(vecStarting, vecAtoB)
+            # print('Cosine of the angle in Between, ', angleCos)
+
+            # checking youhu or liehu the direction
+
+            inverse = 1
+
+            if angleCos < 0:  # you hu
+                # print('deg_CA, ', math.degrees(rad_CA),'deg_CB',math.degrees(rad_CB))
                 diff = rad_CB-rad_CA
-            # print('liehu')
-        # print('final diff in degrees, ', math.degrees(diff))
-        # generate new points
+                # print('youhu')
+            else:  # lie hu
+                if rad_CA*rad_CB<0 and rad_CA <= rad_CB: # yi hao
+                    diff = rad_CB-rad_CA
+                    if diff > math.pi:
+                        diff = abs(diff) - math.pi*2
+                elif rad_CA*rad_CB<0 and rad_CA > rad_CB:
+                    diff = math.pi*2-rad_CA+rad_CB
+                    if diff > math.pi:
+                        diff = diff - math.pi*2
+                elif rad_CA*rad_CB>0 and rad_CA > rad_CB:
+                    diff = rad_CB-rad_CA
+                    if diff > math.pi:
+                        diff = math.pi*2 - diff
+                elif rad_CA*rad_CB>0 and rad_CA < rad_CB:
+                    diff = rad_CB-rad_CA
+                    if diff > math.pi:
+                        diff = math.pi*2 - diff
+                else:
+                    diff = rad_CB-rad_CA
+                # print('liehu')
+            # print('final diff in degrees, ', math.degrees(diff))
+            # generate new points
 
-        x = [xA]
-        y = [yA]
-        n = 7
+            x = [x_a]
+            y = [y_a]
+            n = 7
 
-        for i in range(n):
-            baseArc = baseArc + diff / (n + 1) * inverse
-            x1 = xC + radius * math.cos(baseArc)
-            x.append(x1)
-            y1 = yC - radius * math.sin(baseArc)
-            y.append(y1)
-            # Draw dots of the connectors, if you would like
-            # self.create_dot(x1,y1,2,'gray',str(i))
+            for i in range(n):
+                baseArc = baseArc + diff / (n + 1) * inverse
+                x1 = xC + radius * math.cos(baseArc)
+                x.append(x1)
+                y1 = yC - radius * math.sin(baseArc)
+                y.append(y1)
+                # Draw dots of the connectors, if you would like
+                # self.create_dot(x1,y1,2,'gray',str(i))
 
-        x.append(xB)
-        y.append(yB)
+            x.append(x_b)
+            y.append(y_b)
 
-        self.canvas.create_line(x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3], x[4], y[4], x[5], y[5], x[6], y[6],
-                                x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=LAST, arrowshape=(9, 11, 4))
-
-        # print('\n')
+            self.canvas.create_line(x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3], x[4], y[4], x[5], y[5], x[6], y[6],
+                                    x[7], y[7], x[8], y[8], smooth=True, fill='maroon2', arrow=LAST, arrowshape=(9, 11, 4))
 
     def create_dot(self, x, y, r, color, label=''):
         self.canvas.create_oval(x - r, y - r, x + r, y + r, outline=color, fill=color)
@@ -238,6 +238,7 @@ class SFDCanvas(Frame):
 
     def sfd_drawer(self):
         # now starts the 'drawing' part
+        print("\nSFD Canvas is drawing...")
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
 
         # self.canvas.config(width = wid, height = hei)
@@ -252,25 +253,21 @@ class SFDCanvas(Frame):
         for connector in self.sfd.edges():
             from_element = connector[0]
             to_element = connector[1]
-            if self.sfd[from_element][to_element][0]['display']:
+            if self.sfd[from_element][to_element]['display']:
                 # Only draw when 'display' == True, avoid FLOW--->STOCK
-                print('SFD Canvas is drawing connector from', from_element, 'to', to_element)
+                print('    SFD Canvas is drawing connector from {} to {}'.format(from_element, to_element))
                 from_cord = self.locate_var(from_element)
                 # print(from_cord)
                 to_cord = self.locate_var(to_element)
                 # print(to_cord)
-                angle = self.sfd[from_element][to_element][0]['angle']
+                angle = self.sfd[from_element][to_element]['angle']
                 # print('angle:', angle)
                 self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
         for element in self.sfd.nodes:
-            # print(element)
-            # print(self.session_handler1.model_structure.sfd.nodes.data())
-            # print(self.session_handler1.model_structure.sfd.nodes[element])
-            # print("This element: ", element)
-            # print("These elements:", self.session_handler1.model_structure.sfd.nodes)
             if self.sfd.nodes[element]['element_type'] == STOCK:
+                print("    SFD Canvas is drawing stock {}".format(element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 # print(x,y)
@@ -283,6 +280,7 @@ class SFDCanvas(Frame):
         # draw flows
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] == FLOW:
+                print("    SFD Canvas is drawing flow {}".format(element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 points = self.sfd.nodes[element]['points']
@@ -295,6 +293,7 @@ class SFDCanvas(Frame):
         # draw auxs
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                print("    SFD Canvas is drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 self.create_aux(x, y, radius1, element)
@@ -305,6 +304,7 @@ class SFDCanvas(Frame):
 
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] == ALIAS:
+                print("    SFD Canvas is drawing alias {}".format(element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 of_element = self.sfd.nodes[element]['function']
@@ -321,10 +321,10 @@ class SFDCanvas(Frame):
         self.canvas.pack(side=LEFT, expand=1, fill=BOTH)
 
 
-class GraphWindow():
-    def __init__(self, title, figure):
-        top = Toplevel()
-        top.title(title)
-        graph = FigureCanvasTkAgg(figure, master=top)
-        graph.draw()
-        graph._tkcanvas.pack()
+# class GraphWindow():
+#     def __init__(self, title, figure):
+#         top = Toplevel()
+#         top.title(title)
+#         graph = FigureCanvasTkAgg(figure, master=top)
+#         graph.draw()
+#         graph._tkcanvas.pack()

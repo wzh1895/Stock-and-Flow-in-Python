@@ -13,6 +13,7 @@ from StockAndFlowInPython.structure_utilities.structure_utilities import new_exp
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
+from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -215,12 +216,12 @@ class ExpansionPanel(Frame):
         for reference_mode_name, reference_mode_properties in self.reference_modes.items():
             if reference_mode_properties[0] == STOCK:
                 uid = structure.build_stock(name=reference_mode_name, initial_value=reference_mode_properties[1][0],
-                                            x=100,
-                                            y=100)
+                                            x=213,
+                                            y=174)
             elif reference_mode_properties[0] == FLOW:
-                uid = structure.build_flow(name=reference_mode_name, equation=0, x=100, y=100)
+                uid = structure.build_flow(name=reference_mode_name, equation=0, x=302, y=171, points=[[236, 171], [392, 171]])
             elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
-                uid = structure.build_aux(name=reference_mode_name, equation=0, x=100, y=100)
+                uid = structure.build_aux(name=reference_mode_name, equation=0, x=302, y=278)
             self.reference_mode_bindings[reference_mode_name] = uid
             self.binding_manager.generate_binding_list_box()
         structure.simulation_handler(25)
@@ -827,7 +828,7 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, width=1200, height=400, x=5, y=700):
+    def __init__(self, tree, width=1600, height=400, x=5, y=700):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -847,12 +848,17 @@ class CandidateStructureWindow(Toplevel):
         self.fm_select = Frame(self)
         self.fm_select.pack(side=LEFT)
 
-        self.label_select = Label(self.fm_select, text='Candidate\nSturctures', font=6)
+        self.label_select = Label(self.fm_select, text='Candidate\nStructures', font=6)
         self.label_select.pack(anchor='nw')
 
-        self.fm_display_structure = Frame(self)
+        # Display
+
+        self.stock_and_flow_diagram = SFDCanvas(self)
+        self.stock_and_flow_diagram.pack(side=LEFT)
+
+        self.fm_display_structure_cld = Frame(self)
         # self.fm_display_structure.configure(width=500)
-        self.fm_display_structure.pack(side=LEFT)
+        self.fm_display_structure_cld.pack(side=LEFT)
 
         self.fm_display_behaviour = Frame(self)
         # self.fm_display_behaviour.configure(width=500)
@@ -909,16 +915,24 @@ class CandidateStructureWindow(Toplevel):
         self.candidate_structure_list_box.bind('<<ListboxSelect>>', self.display_candidate)
 
     def display_candidate(self, evt):
-        self.display_candidate_structure()
+        self.display_candidate_structure_sfd()
+        self.display_candidate_structure_cld()
         self.display_candidate_behaviour()
 
-    def display_candidate_structure(self):
+    def display_candidate_structure_sfd(self):
+        selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
+        self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
+
+        self.stock_and_flow_diagram.reset_canvas()
+        self.stock_and_flow_diagram.draw_sfd(self.selected_candidate_structure.model_structure.sfd)
+
+    def display_candidate_structure_cld(self):
         selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
         self.selected_candidate_structure = self.tree.nodes[selected_entry]['structure']
 
         try:
             plt.close()
-            self.candidate_structure_canvas.get_tk_widget().destroy()
+            self.candidate_structure_cld_canvas.get_tk_widget().destroy()
         except:
             pass
         fig, ax = plt.subplots()
@@ -948,8 +962,8 @@ class CandidateStructureWindow(Toplevel):
                          font_size=6,
                          edge_color=custom_edge_colors)
         plt.axis('off')  # turn off axis for structure display
-        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure)
-        self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
+        self.candidate_structure_cld_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure_cld)
+        self.candidate_structure_cld_canvas.get_tk_widget().pack(side=LEFT)
 
         # Display behavior
         self.update()

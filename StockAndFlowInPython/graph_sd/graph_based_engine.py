@@ -121,7 +121,7 @@ class Structure(object):
             self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_manager.get_new_uid(),
                                angle=from_variable[1])
 
-    def add_causality(self, from_element, to_element, uid=0, angle=0, polarity=None, display=True):  # add one causality
+    def add_causality(self, from_element, to_element, uid=0, angle=None, polarity=None, display=True):  # add one causality
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
     def get_element_by_uid(self, uid):
@@ -486,16 +486,18 @@ class Structure(object):
         self.sfd.graph['structure_name'] = 'first_order_negative'
         self.add_elements_batch([
             # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
-            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [DIVISION, 'gap0',   'at0'],               'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
-            [PARAMETER, 'goal0',     [20],                                      None,       None,       163,    251,    None],
-            [VARIABLE,  'gap0', [SUBTRACTION, 'stock0', 'goal0'], None, None, 213, 212, None],
-            [PARAMETER, 'at0',       [5],                                       None,       None,       123,    77,     None],
+            [STOCK,     'stock0',    [100],                                     None,       None,       213,    174,    None],
+            [FLOW,      'flow0',     [LINEAR, 'quotient0'],                     'stock0',   None,       302,    171,    [[236, 171], [392, 171]]],
+            [VARIABLE,  'quotient0', [DIVISION, 'gap0',   'at0'],               None,       None,       302,    220,    None],
+            [PARAMETER, 'goal0',     [20],                                      None,       None,       270,    300,    None],
+            [VARIABLE,  'gap0',      [SUBTRACTION, 'stock0', 'goal0'],          None,       None,       252,    250,    None],
+            [PARAMETER, 'at0',       [5],                                       None,       None,       362,    102,    None],
             # 0type     1angle       2from         3to          4polarity
-            [CONNECTOR, 246,         'stock0',     'gap0',      'positive'],
-            [CONNECTOR, 353,         'goal0',      'gap0',      'negative'],
-            [CONNECTOR, 148,         'gap0',       'flow0',     'positive'],
-            [CONNECTOR, 311,         'at0',        'flow0',     'negative']
+            [CONNECTOR, 289,        'stock0',     'gap0',      'positive'],
+            [CONNECTOR, 85,         'goal0',      'gap0',      'negative'],
+            [CONNECTOR, 35,         'gap0',       'quotient0', 'positive'],
+            [CONNECTOR, 200,        'at0',        'quotient0', 'negative'],
+            [CONNECTOR, 35,         'quotient0',  'flow0',     'positive']
             ])
 
     # Set the model to a first order negative feedback loop
@@ -504,14 +506,14 @@ class Structure(object):
         self.sfd.graph['structure_name'] = 'first_order_positive'
         self.add_elements_batch([
             # 0type,    1name        2value/equation                            3flow_from, 4flow_to,   5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [LINEAR, 'product0'],                      None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
-            [VARIABLE,  'product0',  [MULTIPLICATION, 'stock0', 'fraction0'],   None,       None,       50,     100,    None],
-            [PARAMETER, 'fraction0', [0.1],                                     None,       None,       163,    251,    None],
+            [STOCK,     'stock0',    [1],                                       None,       None,       213,    174,    None],
+            [FLOW,      'flow0',     [LINEAR, 'product0'],                      None,       'stock0',   120,    172,    [[49, 172], [191, 172]]],
+            [VARIABLE,  'product0',  [MULTIPLICATION, 'stock0', 'fraction0'],   None,       None,       158,    102,    None],
+            [PARAMETER, 'fraction0', [0.1],                                     None,       None,       61,     97,     None],
             # 0type     1angle       2from         3to          4polarity
-            [CONNECTOR, 246,         'stock0',     'product0',  'positive'],
-            [CONNECTOR, 150,         'product0',   'flow0',     'positive'],
-            [CONNECTOR, 311,         'fraction0',  'product0',  'positive']
+            [CONNECTOR, 93,         'stock0',     'product0',  'positive'],
+            [CONNECTOR, 195,         'product0',   'flow0',     'positive'],
+            [CONNECTOR, 38,         'fraction0',  'product0',  'positive']
         ])
 
     # Set the model to one stock + one outflow
@@ -519,8 +521,8 @@ class Structure(object):
         self.sfd.graph['structure_name'] = 'basic_stock_outflow '
         self.add_elements_batch([
             # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
-            [STOCK,     'stock0',    [100],                                     None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [4],                                       'stock0',   None,       181,    145,    [[85, 145], [266.5, 145]]],
+            [STOCK,     'stock0',    [100],                                     None,       None,       213,    174,    None],
+            [FLOW,      'flow0',     [4],                                       'stock0',   None,       302,    171,    [[236, 171], [392, 171]]],
         ])
 
     # Set the model to one stock + one inflow
@@ -528,8 +530,8 @@ class Structure(object):
         self.sfd.graph['structure_name'] = 'basic_stock_inflow'
         self.add_elements_batch([
             # 0type,    1name/uid,   2value/equation/angle                      3flow_from, 4flow_to,   5x,     6y,     7pts,
-            [STOCK,     'stock0',    [1],                                       None,       None,       289,    145,    None],
-            [FLOW,      'flow0',     [4],                                       None,       'stock0',   181,    145,    [[85, 145], [266.5, 145]]],
+            [STOCK,     'stock0',    [1],                                       None,       None,       375,    250,    None],
+            [FLOW,      'flow0',     [4],                                       None,       'stock0',   120,    172,    [[49, 172], [191, 172]]],
         ])
 
     # Clear a run
@@ -644,7 +646,8 @@ class Structure(object):
 
     # Draw network with FancyArrowPatch
     # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
-    def draw_network(self, G, pos, ax):
+    @staticmethod
+    def draw_network(G, pos, ax):
         for n in G:
             # print('Graph: Engine is drawing network element for', n)
             circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
@@ -666,12 +669,12 @@ class Structure(object):
                 color = 'r'
 
                 edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
-                                    arrowstyle='-|>',
-                                    connectionstyle='arc3,rad=%s' % rad,
-                                    mutation_scale=15.0,
-                                    linewidth=1,
-                                    alpha=alpha,
-                                    color=color)
+                                       arrowstyle='-|>',
+                                       connectionstyle='arc3,rad=%s' % rad,
+                                       mutation_scale=15.0,
+                                       linewidth=1,
+                                       alpha=alpha,
+                                       color=color)
                 seen[(u, v)] = rad
                 ax.add_patch(edge)
             return edge

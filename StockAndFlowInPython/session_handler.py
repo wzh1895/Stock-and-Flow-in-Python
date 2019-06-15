@@ -38,7 +38,7 @@ class SessionHandler(object):
             self.read_xmile_model(self.filename)
             # draw sfd
             self.show_sfd_window()
-            self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
+            self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
             # draw graph network
             self.draw_graph_network()
             self.variables_in_model = list(self.model_structure.sfd.nodes)
@@ -67,7 +67,7 @@ class SessionHandler(object):
             self.model_structure.first_order_positive()
         # draw sfd
         self.sfd_window1 = SFDWindow()
-        self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
+        self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
         # draw graph network
         self.draw_graph_network()
         self.variables_in_model = list(self.model_structure.sfd.nodes)
@@ -329,19 +329,11 @@ class SessionHandler(object):
         # self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
         # # draw sfd again
         # self.sfd_window1.sfd_canvas1.reset_canvas()
-        # self.sfd_window1.sfd_canvas1.set_sfd_and_draw(self.model_structure.sfd)
+        # self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
         # update variables' list
         self.variables_in_model = list(self.model_structure.sfd.nodes)
 
     def build_stock(self, name=None, initial_value=None, x=0, y=0):
-        """
-        Build a stock in the way a modeler will do.
-        :param name: The stock's name
-        :param initial_value: Th e stock's initial value
-        :param x: X coordinate in the canvas
-        :param y: Y coordinate in the canvas
-        :return:
-        """
         print("===>Building stock: {}".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             # TODO: fix this line
@@ -366,17 +358,6 @@ class SessionHandler(object):
         return equation
 
     def build_flow(self, name=None, equation=None, x=0, y=0, points=list(), flow_from=None, flow_to=None):
-        """
-        Build a flow in the way a modeler will do.
-        :param name: The flow's name
-        :param equation: The flow's equation
-        :param x: X coordinate in the canvas
-        :param y: Y coordination in the canvas
-        :param points: Starting, ending and all bending points in between
-        :param flow_from: Outflow from ...
-        :param flow_to: Inflow to ...
-        :return:
-        """
         print("===>Building flow: {}".format(name if name is not None else 'new'))
 
         linked_vars = list()  # collect linked variables for generating location
@@ -440,14 +421,6 @@ class SessionHandler(object):
         return uid
 
     def build_aux(self, name=None, equation=None, x=0, y=0):
-        """
-        Build an auxiliary variable in the way a modeler will do.
-        :param name: The variable's name
-        :param equation: The variable's equation
-        :param x: X coordinate in the canvas
-        :param y: Y coordinate in the canvas
-        :return:
-        """
         print("===>Building aux: {}".format(name))
 
         linked_vars = list()  # collect linked variables for generating location
@@ -473,8 +446,8 @@ class SessionHandler(object):
         time.sleep(SLEEP_TIME)
         return uid
 
-    def build_connector(self, from_var, to_var, polarity=None):
-        self.model_structure.add_causality(from_element=from_var, to_element=to_var, polarity=polarity)
+    def build_connector(self, from_var, to_var, angle=None, polarity=None):
+        self.model_structure.add_causality(from_element=from_var, angle=angle, to_element=to_var, polarity=polarity)
 
     def generate_location(self, sfd_window, linked_vars):
         """
@@ -539,13 +512,6 @@ class SessionHandler(object):
         time.sleep(SLEEP_TIME)
 
     def connect_stock_flow(self, flow_name, new_flow_from=None, new_flow_to=None):
-        """
-        Connecting stock and flow as a part of model expansion
-        :param flow_name: The flow to connect
-        :param new_flow_from: The stock this flow should flow from
-        :param new_flow_to: The stock this flow should flow to
-        :return:
-        """
         # step 1: remove connectors from this flow to those replaced
         # step 2: replace flow_from/flow_to by the new flow_from/to in the graph representation
         # step 3: add connectors according to the new flow_from/to
