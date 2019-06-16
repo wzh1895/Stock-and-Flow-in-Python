@@ -11,8 +11,8 @@ import os
 
 
 class SFDCanvas(Frame):
-    def __init__(self, master):
-        super().__init__(master)
+    def __init__(self, master, width=500):
+        super().__init__(master, width=width)
         self.master = master
         self.xmost = 300
         self.ymost = 300
@@ -217,8 +217,8 @@ class SFDCanvas(Frame):
         self.canvas.create_oval(x - r, y - r, x + r, y + r, outline=color, fill=color)
         self.canvas.create_text(x, y - 10, anchor=CENTER, font=("Arial", 10), text=label)
 
-    def cos_formula(self, a, b):
-
+    @staticmethod
+    def cos_formula(a, b):
         l = 0
         m = 0
         n = 0
@@ -249,20 +249,6 @@ class SFDCanvas(Frame):
         height_stock = 35
         length1 = 115
         radius1 = 8
-
-        for connector in self.sfd.edges():
-            from_element = connector[0]
-            to_element = connector[1]
-            if self.sfd[from_element][to_element]['display']:
-                # Only draw when 'display' == True, avoid FLOW--->STOCK
-                print('    SFD Canvas is drawing connector from {} to {}'.format(from_element, to_element))
-                from_cord = self.locate_var(from_element)
-                # print(from_cord)
-                to_cord = self.locate_var(to_element)
-                # print(to_cord)
-                angle = self.sfd[from_element][to_element]['angle']
-                # print('angle:', angle)
-                self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1]-8, angle)
 
         # draw stocks
         for element in self.sfd.nodes:
@@ -313,6 +299,21 @@ class SFDCanvas(Frame):
                     self.xmost = x
                 if y > self.ymost:
                     self.ymost = y
+
+        # draw connectors
+        for connector in self.sfd.edges():
+            from_element = connector[0]
+            to_element = connector[1]
+            if self.sfd[from_element][to_element]['display']:
+                # Only draw when 'display' == True, avoid FLOW--->STOCK
+                print('    SFD Canvas is drawing connector from {} to {}'.format(from_element, to_element))
+                from_cord = self.locate_var(from_element)
+                # print(from_cord)
+                to_cord = self.locate_var(to_element)
+                # print(to_cord)
+                angle = self.sfd[from_element][to_element]['angle']
+                # print('angle:', angle)
+                self.create_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)
 
         self.xmost += 150
         self.ymost += 100

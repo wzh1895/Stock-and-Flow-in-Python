@@ -115,14 +115,14 @@ class Structure(object):
 
         return uid
 
-    def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
-        for from_variable in function[1:]:
-            # print('Graph: adding causality, from_var:', from_variable)
-            self.add_causality(from_element=from_variable[0], to_element=element_name, uid=self.uid_manager.get_new_uid(),
-                               angle=from_variable[1])
-
     def add_causality(self, from_element, to_element, uid=0, angle=None, polarity=None, display=True):  # add one causality
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
+
+    def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
+        for from_variable in function[1:]:
+            if type(from_variable) == str:
+                print('Graph: adding dependencies, from {} to {}'.format(from_variable, element_name))
+                self.add_causality(from_element=from_variable, to_element=element_name, uid=self.uid_manager.get_new_uid())
 
     def get_element_by_uid(self, uid):
         # print("Uid_Element_Name, ", self.uid_element_name)
@@ -390,7 +390,7 @@ class Structure(object):
         # step 1:
         to_remove = list()
         for u, v in self.sfd.in_edges(name):
-            print(u, v)
+            print("In_edge found:", u, v)
             to_remove.append((u, v))
         self.sfd.remove_edges_from(to_remove)
         print("Graph: Edges removed.")

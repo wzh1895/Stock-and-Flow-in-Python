@@ -9,7 +9,7 @@ from tkinter import filedialog
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
-from StockAndFlowInPython.parsing.XMILE_parsing import parsing_equation
+from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 
 SLEEP_TIME = 0
@@ -191,7 +191,7 @@ class SessionHandler(object):
             x = float(stockview.getAttribute("x"))
             y = float(stockview.getAttribute("y"))
             print('adding stock', name)
-            self.model_structure.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
+            self.model_structure.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=text_to_equation(eqn)), x=x, y=y)
             self.stock_views_array.append([name, eqn, inflow, outflow, x, y])
 
         # fetch views for all flows and draw
@@ -214,7 +214,7 @@ class SessionHandler(object):
             y = float(flowview.getAttribute("y"))
             print('adding flow', name)
             self.model_structure.add_flow(name=name,
-                                          equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)),
+                                          equation=self.add_angle_to_eqn(name=name, eqn=text_to_equation(eqn)),
                                           x=x, y=y,
                                           flow_from=self.get_outfrom_stock(name),
                                           flow_to=self.get_into_stock(name),
@@ -237,7 +237,7 @@ class SessionHandler(object):
             x = float(auxview.getAttribute("x"))
             y = float(auxview.getAttribute("y"))
             print('adding aux', name)
-            self.model_structure.add_aux(name=name, equation=self.add_angle_to_eqn(name=name, eqn=parsing_equation(eqn)), x=x, y=y)
+            self.model_structure.add_aux(name=name, equation=self.add_angle_to_eqn(name=name, eqn=text_to_equation(eqn)), x=x, y=y)
 
         # fetch views for all aliases and draw
         self.aliasviews = []
@@ -627,7 +627,7 @@ class NewGraphNetworkWindow(Toplevel):
             node_attr_mapping[node] = "{} [{}]".format(node, attr)
         nx.draw(self.graph_network,
                 labels=node_attr_mapping,
-                font_size=8,
+                font_size=9,
                 node_color=node_color,
                 font_color='black',
                 #with_labels=True

@@ -14,6 +14,7 @@ from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similar
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
+from StockAndFlowInPython.parsing.XMILE_parsing import equation_to_text, text_to_equation
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -111,8 +112,9 @@ class ExpansionPanel(Frame):
         # TODO test
         self.load_reference_mode_from_file()
 
-        # Build element for each reference mode in root structure
-        self.build_element_for_reference_modes()
+        # Add a root structure
+        structure = SessionHandler()
+        self.structure_manager.add_structure(structure=structure)
         self.binding_manager.update_combobox()
 
         # Specify round to iterate
@@ -124,6 +126,12 @@ class ExpansionPanel(Frame):
     def expansion_loop(self):
         self.generic_structure_manager.reset_all_likelihood()
         self.generic_structure_manager.generate_distribution()
+
+        # Build element for each newly added reference mode in root structure
+        self.build_element_for_reference_modes()
+
+        # TODO: Check if all reference modes are built into all candidate structures. This is to allow that once adding
+        #  a new reference mode, all candidate structures can have this new ref mode's variable added.
 
         i = 1
         while i <= self.iteration_time:
@@ -212,20 +220,23 @@ class ExpansionPanel(Frame):
         self.reference_mode_manager.load_reference_mode_from_file()
 
     def build_element_for_reference_modes(self):
-        structure = SessionHandler()
+        # Get the first (also only) structure from expansion tree
+        structure = self.structure_manager.tree.nodes[list(self.structure_manager.tree.nodes)[0]]['structure']
         for reference_mode_name, reference_mode_properties in self.reference_modes.items():
-            if reference_mode_properties[0] == STOCK:
-                uid = structure.build_stock(name=reference_mode_name, initial_value=reference_mode_properties[1][0],
-                                            x=213,
-                                            y=174)
-            elif reference_mode_properties[0] == FLOW:
-                uid = structure.build_flow(name=reference_mode_name, equation=0, x=302, y=171, points=[[236, 171], [392, 171]])
-            elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
-                uid = structure.build_aux(name=reference_mode_name, equation=0, x=302, y=278)
-            self.reference_mode_bindings[reference_mode_name] = uid
-            self.binding_manager.generate_binding_list_box()
+            # some ref mode may have been built, so we need to check with bindings.
+            if reference_mode_name not in self.reference_mode_bindings.keys():  # not yet built
+                if reference_mode_properties[0] == STOCK:
+                    uid = structure.build_stock(name=reference_mode_name, initial_value=reference_mode_properties[1][0],
+                                                x=213,
+                                                y=174)
+                elif reference_mode_properties[0] == FLOW:
+                    uid = structure.build_flow(name=reference_mode_name, equation=0, x=302, y=171, points=[[236, 171], [392, 171]])
+                elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
+                    uid = structure.build_aux(name=reference_mode_name, equation=0, x=302, y=278)
+                self.reference_mode_bindings[reference_mode_name] = uid
+                self.binding_manager.generate_binding_list_box()
         structure.simulation_handler(25)
-        self.structure_manager.add_structure(structure=structure)
+
         self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
 
     def update_candidate_structure_activity_by_behavior(self):
@@ -423,13 +434,13 @@ class ReferenceModeManager(Toplevel):
         self.numerical_data = pd.read_csv(self.reference_mode_path)
         for column in self.numerical_data:
             self.time_series[column] = self.numerical_data[column].tolist()
-        select_dialog = SelectReferenceModeWindow(self.time_series)
+        select_dialog = SelectReferenceModeWindow(time_series=self.time_series, reference_modes=self.reference_modes)
         self.wait_window(select_dialog)  # important!
-        reference_mode_type = select_dialog.reference_mode_type
-        reference_mode_name = select_dialog.selected_reference_mode
-        if reference_mode_type is not None and reference_mode_name is not None:
-            self.reference_modes[reference_mode_name] = [reference_mode_type, self.time_series[reference_mode_name]]
-            print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
+        # reference_mode_type = select_dialog.reference_mode_type
+        # reference_mode_name = select_dialog.selected_reference_mode
+        # if reference_mode_type is not None and reference_mode_name is not None:
+        #     self.reference_modes[reference_mode_name] = [reference_mode_type, self.time_series[reference_mode_name]]
+        #     print("Added reference mode for {} : {}".format(reference_mode_type, reference_mode_name))
         self.generate_reference_mode_list_box()
 
     def get_reference_mode_file_name(self):
@@ -472,6 +483,71 @@ class ReferenceModeManager(Toplevel):
         self.reference_modes_binding.pop(selected_reference_mode)
         self.generate_reference_mode_list_box()
         self.show_reference_mode()
+
+
+class SelectReferenceModeWindow(Toplevel):
+    def __init__(self, time_series, reference_modes, width=600, height=400, x=300, y=200):
+        super().__init__()
+        self.title("Select Reference Mode...")
+        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.time_series = time_series
+        self.reference_modes = reference_modes
+        # self.selected_reference_mode = None
+        # self.reference_mode_type = None
+
+        self.fm_select = Frame(self)
+        self.fm_select.pack(side=LEFT)
+        self.time_series_list = Listbox(self.fm_select)
+        self.time_series_list.pack(side=TOP)
+        for column in time_series.keys():
+            self.time_series_list.insert(END, column)
+        self.time_series_list.bind('<<ListboxSelect>>', self.display_reference_mode)
+
+        self.ref_md_type = StringVar(self, value='None')
+        self.radio_button_type_1 = Radiobutton(self.fm_select, text='Stock', variable=self.ref_md_type, value=STOCK)
+        self.radio_button_type_1.pack(side=TOP, anchor='w')
+        self.radio_button_type_2 = Radiobutton(self.fm_select, text='Flow', variable=self.ref_md_type, value=FLOW)
+        self.radio_button_type_2.pack(side=TOP, anchor='w')
+        self.radio_button_type_3 = Radiobutton(self.fm_select, text='Auxiliary', variable=self.ref_md_type,
+                                               value=VARIABLE)
+        self.radio_button_type_3.pack(side=TOP, anchor='w')
+
+        self.fm_display = Frame(self)
+        self.fm_display.pack(side=LEFT)
+
+        self.fm_buttons = Frame(self.fm_select)
+        self.fm_buttons.pack(side=BOTTOM, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Add', command=self.add)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.confirm_button = Button(self.fm_buttons, text='Close', command=self.close)
+        self.confirm_button.pack(side=LEFT, anchor='center')
+
+    def display_reference_mode(self, evt):
+        try:
+            self.reference_mode_graph.get_tk_widget().destroy()
+        except AttributeError:
+            pass
+        self.reference_mode_figure = Figure(figsize=(5, 4))
+        self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
+        self.reference_mode_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())],
+                                      '*')
+        self.reference_mode_plot.set_xlabel("Time")
+        self.reference_mode_plot.set_ylabel(self.time_series_list.get(self.time_series_list.curselection()))
+        self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
+        self.reference_mode_graph.draw()
+        self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
+
+    def add(self):
+        reference_mode_type = self.ref_md_type.get()
+        selected_reference_mode = self.time_series_list.get(self.time_series_list.curselection())
+        if reference_mode_type is not None and selected_reference_mode is not None:
+            self.reference_modes[selected_reference_mode] = [reference_mode_type, self.time_series[selected_reference_mode]]
+            print("Added reference mode for {} : {}".format(reference_mode_type, selected_reference_mode))
+
+    def close(self):
+        # self.reference_mode_type = None
+        # self.selected_reference_mode = None
+        self.destroy()
 
 
 class BindingManager(Toplevel):
@@ -683,8 +759,11 @@ class StructureManager(object):
         # 1. identical to base_structure it self
         # if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
         GM = iso.DiGraphMatcher(base_structure.model_structure.sfd, new_structure.model_structure.sfd,
-                                node_match=iso.categorical_node_match(attr=['function'], default=[None])
-                                # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
+                                node_match=iso.categorical_node_match(attr=['function'],
+                                                                      # attr=['equation', 'value'],
+                                                                      default=[None],
+                                                                      # default=[None, None]
+                                                                      )
                                 )
         if GM.is_isomorphic():
             self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] += 1
@@ -695,8 +774,10 @@ class StructureManager(object):
             GM = iso.DiGraphMatcher(self.tree.nodes[neighbour]['structure'].model_structure.sfd,
                                     new_structure.model_structure.sfd,
                                     node_match=iso.categorical_node_match(attr=['function', 'flow_from', 'flow_to'],
-                                                                          default=[None, None, None])
-                                    # node_match=iso.categorical_node_match(attr=['equation', 'value'], default=[None, None])
+                                                                          # attr=['equation', 'value'],
+                                                                          default=[None, None, None],
+                                                                          # default=[None, None]
+                                                                          )
                                     )
             if GM.is_isomorphic():
                 # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
@@ -828,7 +909,7 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, width=1600, height=400, x=5, y=700):
+    def __init__(self, tree, width=1600, height=450, x=5, y=700):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
@@ -853,14 +934,17 @@ class CandidateStructureWindow(Toplevel):
 
         # Display
 
-        self.stock_and_flow_diagram = SFDCanvas(self)
+        self.fm_display = Frame(self)
+        self.fm_display.pack(side=LEFT)
+
+        self.stock_and_flow_diagram = SFDCanvas(self.fm_display)
         self.stock_and_flow_diagram.pack(side=LEFT)
 
-        self.fm_display_structure_cld = Frame(self)
+        self.fm_display_structure_cld = Frame(self.fm_display)
         # self.fm_display_structure.configure(width=500)
         self.fm_display_structure_cld.pack(side=LEFT)
 
-        self.fm_display_behaviour = Frame(self)
+        self.fm_display_behaviour = Frame(self.fm_display)
         # self.fm_display_behaviour.configure(width=500)
         self.fm_display_behaviour.pack(side=LEFT)
 
@@ -902,12 +986,12 @@ class CandidateStructureWindow(Toplevel):
             pass
 
         self.candidate_structure_list_box = Listbox(self.fm_select)
-        self.candidate_structure_list_box.configure(width=15, height=20)
-        self.candidate_structure_list_box.pack(side=LEFT, fill=Y)
+        self.candidate_structure_list_box.configure(width=10, height=20)
+        self.candidate_structure_list_box.pack(side=TOP)
 
         self.candidate_structure_list_scrollbar = Scrollbar(self.fm_select, orient="vertical")
         self.candidate_structure_list_scrollbar.config(command=self.candidate_structure_list_box.yview)
-        self.candidate_structure_list_scrollbar.pack(side=RIGHT, fill=Y)
+        self.candidate_structure_list_scrollbar.pack(side=RIGHT)
 
         for u in list(self.tree.nodes):
             # print("adding entry", u)
@@ -959,10 +1043,11 @@ class CandidateStructureWindow(Toplevel):
 
         nx.draw_networkx(G=self.selected_candidate_structure.model_structure.sfd,
                          labels=custom_node_labels,
-                         font_size=6,
+                         font_size=8,
                          edge_color=custom_edge_colors)
         plt.axis('off')  # turn off axis for structure display
         self.candidate_structure_cld_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure_cld)
+        self.candidate_structure_cld_canvas.get_tk_widget().configure(width=550)
         self.candidate_structure_cld_canvas.get_tk_widget().pack(side=LEFT)
 
         # Display behavior
@@ -983,6 +1068,7 @@ class CandidateStructureWindow(Toplevel):
             # names=['stock0'],
             rtn=True)
         self.simulation_result_canvas = FigureCanvasTkAgg(figure=result_figure, master=self.fm_display_behaviour)
+        self.simulation_result_canvas.get_tk_widget().configure(width=600)
         self.simulation_result_canvas.get_tk_widget().pack(side=LEFT)
 
         # Display result
@@ -990,33 +1076,95 @@ class CandidateStructureWindow(Toplevel):
 
 
 class StructureModifier(Toplevel):
-    def __init__(self, structure, width=700, height=400, x=5, y=300):
+    def __init__(self, structure, width=1250, height=450, x=5, y=300):
         super().__init__()
-        self.title("Candidate Structures")
+        self.title("Structure Modifier")
         self.geometry("{}x{}+{}+{}".format(width, height, x, y))
         self.structure = structure
+        self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
 
-        self.fm_actions = LabelFrame(self, text='Actions', width=50)
+        # Actions
+
+        self.fm_actions = Frame(self, width=100)
         self.fm_actions.pack(side=LEFT, fill=Y)
 
-        self.btn_add_stock = Button(self.fm_actions, text='Add stock', command=self.add_stock)
+        self.btn_refresh = Button(self.fm_actions, text='Refresh', command=self.refresh_display_structure)
+        self.btn_refresh.pack(side=TOP, anchor='w')
+
+        # Add
+
+        self.fm_actions_add = LabelFrame(self.fm_actions, text='Add')
+        self.fm_actions_add.pack(side=TOP, anchor='w', fill=X)
+
+        self.btn_add_stock = Button(self.fm_actions_add, text='Stock', command=self.add_stock)
         self.btn_add_stock.pack(side=TOP, anchor='w')
 
-        self.btn_add_flow = Button(self.fm_actions, text='Add flow', command=self.add_flow)
+        self.btn_add_flow = Button(self.fm_actions_add, text='Flow', command=self.add_flow)
         self.btn_add_flow.pack(side=TOP, anchor='w')
 
-        self.btn_add_aux = Button(self.fm_actions, text='Add auxiliary', command=self.add_variable)
+        self.btn_add_aux = Button(self.fm_actions_add, text='Auxiliary', command=self.add_variable)
         self.btn_add_aux.pack(side=TOP, anchor='w')
 
-        self.btn_add_connector = Button(self.fm_actions, text='Add connector', command=self.add_connector)
+        self.btn_add_connector = Button(self.fm_actions_add, text='Connector', command=self.add_connector)
         self.btn_add_connector.pack(side=TOP, anchor='w')
 
-        self.fm_display = Frame(self)
-        self.fm_display.pack(side=LEFT, fill=BOTH)
+        # Remove
 
-        self.display_structure()
+        self.fm_actions_remove = LabelFrame(self.fm_actions, text='Remove')
+        self.fm_actions_remove.pack(side=TOP, anchor='w', fill=X)
 
-    def display_structure(self):
+        self.label_remove = Label(self.fm_actions_remove, text="Variable to remove")
+        self.label_remove.pack(side=TOP, anchor='w')
+
+        self.variable_to_remove_combobox = ttk.Combobox(self.fm_actions_remove)
+        self.variable_to_remove_combobox["values"] = self.variables_in_model
+        self.variable_to_remove_combobox.current(0)
+        # self.variable_to_remove_combobox.bind("<<ComboboxSelected>>", self)
+        self.variable_to_remove_combobox.pack(side=TOP)
+
+        self.btn_remove = Button(self.fm_actions_remove, text='Remove', command=self.remove_element)
+        self.btn_remove.pack(side=TOP, anchor='w')
+
+        # Modify
+
+        self.fm_actions_modify = LabelFrame(self.fm_actions, text='Modify')
+        self.fm_actions_modify.pack(side=TOP, anchor='w', fill=X)
+
+        self.label_modify = Label(self.fm_actions_modify, text="Variable to modify")
+        self.label_modify.pack(side=TOP, anchor='w')
+
+        self.variable_to_modify_combobox = ttk.Combobox(self.fm_actions_modify)
+        self.variable_to_modify_combobox["values"] = self.variables_in_model
+        self.variable_to_modify_combobox.current(0)
+        self.variable_to_modify_combobox.bind("<<ComboboxSelected>>", self.on_select_var_to_modify)
+        self.variable_to_modify_combobox.pack(side=TOP, anchor='w')
+
+        self.label_equation = Label(self.fm_actions_modify, text="Equation:")
+        self.label_equation.pack(side=TOP, anchor='w')
+        self.entry_equation = Entry(self.fm_actions_modify)
+        self.entry_equation.pack(side=TOP)
+
+        self.btn_modify = Button(self.fm_actions_modify, text='Modify', command=self.modify_element)
+        self.btn_modify.pack(side=TOP, anchor='w')
+
+        # End of Actions
+
+        self.stock_and_flow_diagram = SFDCanvas(self)
+        self.stock_and_flow_diagram.pack(side=LEFT, fill=BOTH)
+
+        self.fm_display_cld = Frame(self)
+        self.fm_display_cld.pack(side=LEFT, fill=BOTH)
+
+        self.refresh_display_structure()
+
+    def refresh_display_structure(self):
+        # Controller
+        self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
+        self.variable_to_remove_combobox["values"] = self.variables_in_model
+        self.variable_to_modify_combobox["values"] = self.variables_in_model
+
+        # CLD
+
         try:
             plt.close()
             self.candidate_structure_canvas.get_tk_widget().destroy()
@@ -1046,31 +1194,64 @@ class StructureModifier(Toplevel):
 
         nx.draw_networkx(G=self.structure.model_structure.sfd,
                          labels=custom_node_labels,
-                         font_size=6,
+                         font_size=8,
                          edge_color=custom_edge_colors)
         plt.axis('off')  # turn off axis for structure display
-        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display)
+        self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_cld)
+        self.candidate_structure_canvas.get_tk_widget().configure(width=550)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
+
+        # SFD
+        self.stock_and_flow_diagram.reset_canvas()
+        self.stock_and_flow_diagram.draw_sfd(sfd=self.structure.model_structure.sfd)
+
+        # Simulation
+        self.structure.simulation_handler(25)
 
     def add_stock(self):
         add_dialog = AddElementWindow(element_type=STOCK, structure=self.structure)
         self.wait_window(add_dialog)  # important!
-        self.display_structure()
+        self.refresh_display_structure()
 
     def add_flow(self):
         add_dialog = AddElementWindow(element_type=FLOW, structure=self.structure)
         self.wait_window(add_dialog)  # important!
-        self.display_structure()
+        self.refresh_display_structure()
 
     def add_variable(self):
         add_dialog = AddElementWindow(element_type=VARIABLE, structure=self.structure)
         self.wait_window(add_dialog)  # important!
-        self.display_structure()
+        self.refresh_display_structure()
 
-    def add_connector(self, from_var=None, to_var=None, polarity=None):
+    def add_connector(self):
         add_connector_dialog = AddConnectorWindow(structure=self.structure)
         self.wait_window(add_connector_dialog)
-        self.display_structure()
+        self.refresh_display_structure()
+
+    def remove_element(self):
+        var_to_remove = self.variable_to_remove_combobox.get()
+        self.structure.delete_variable(name=var_to_remove)
+        self.refresh_display_structure()
+
+    def on_select_var_to_modify(self, evt):
+        original_equation = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['function']
+        if original_equation is None:
+            original_equation = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['value'][0]
+        original_equation_text = equation_to_text(original_equation)
+        self.entry_equation.delete(0, END)
+        self.entry_equation.insert(0, original_equation_text)
+
+    def modify_element(self):
+        new_equation = self.entry_equation.get()
+        # decide if this new equation is a number or not (starting with a number)
+        if new_equation[0].isdigit():
+            new_equation = float(new_equation)
+        else:
+            new_equation = text_to_equation(equation_text=new_equation)
+            print("new equation generated:", new_equation)
+        self.structure.model_structure.replace_equation(name=self.variable_to_modify_combobox.get(),
+                                                        new_equation=new_equation)
+        self.refresh_display_structure()
 
 
 class AddElementWindow(Toplevel):
@@ -1288,68 +1469,6 @@ class GenericStructureManager(object):
         self.generic_structures_likelihood[loser] = round(normalize(r_loser))
 
         self.generic_structures_likelihood_window.update_likelihood_display()
-
-
-class SelectReferenceModeWindow(Toplevel):
-    def __init__(self, time_series, width=600, height=400, x=300, y=200):
-        super().__init__()
-        self.title("Select Reference Mode...")
-        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
-        self.time_series = time_series
-        self.selected_reference_mode = None
-        self.reference_mode_type = None
-
-        self.fm_select = Frame(self)
-        self.fm_select.pack(side=LEFT)
-        self.time_series_list = Listbox(self.fm_select)
-        self.time_series_list.pack(side=TOP)
-        for column in time_series.keys():
-            self.time_series_list.insert(END, column)
-        self.time_series_list.bind('<<ListboxSelect>>', self.display_reference_mode)
-
-        self.ref_md_type = StringVar(self, value='None')
-        self.radio_button_type_1 = Radiobutton(self.fm_select, text='Stock', variable=self.ref_md_type, value=STOCK)
-        self.radio_button_type_1.pack(side=TOP, anchor='w')
-        self.radio_button_type_2 = Radiobutton(self.fm_select, text='Flow', variable=self.ref_md_type, value=FLOW)
-        self.radio_button_type_2.pack(side=TOP, anchor='w')
-        self.radio_button_type_3 = Radiobutton(self.fm_select, text='Auxiliary', variable=self.ref_md_type,
-                                               value=VARIABLE)
-        self.radio_button_type_3.pack(side=TOP, anchor='w')
-
-        self.fm_display = Frame(self)
-        self.fm_display.pack(side=LEFT)
-
-        self.fm_buttons = Frame(self.fm_select)
-        self.fm_buttons.pack(side=BOTTOM, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
-        self.confirm_button.pack(side=LEFT, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
-        self.confirm_button.pack(side=LEFT, anchor='center')
-
-    def display_reference_mode(self, evt):
-        try:
-            self.reference_mode_graph.get_tk_widget().destroy()
-        except AttributeError:
-            pass
-        self.reference_mode_figure = Figure(figsize=(5, 4))
-        self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
-        self.reference_mode_plot.plot(self.time_series[self.time_series_list.get(self.time_series_list.curselection())],
-                                      '*')
-        self.reference_mode_plot.set_xlabel("Time")
-        self.reference_mode_plot.set_ylabel(self.time_series_list.get(self.time_series_list.curselection()))
-        self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
-        self.reference_mode_graph.draw()
-        self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
-
-    def confirm(self):
-        self.reference_mode_type = self.ref_md_type.get()
-        self.selected_reference_mode = self.time_series_list.get(self.time_series_list.curselection())
-        self.destroy()
-
-    def cancel(self):
-        self.reference_mode_type = None
-        self.selected_reference_mode = None
-        self.destroy()
 
 
 class GenericStructuresLikelihoodWindow(Toplevel):
