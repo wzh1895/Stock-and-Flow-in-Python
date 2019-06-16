@@ -10,7 +10,7 @@ from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, IN
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
     apply_a_concept_cld
-from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc, categorize_behavior
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
@@ -325,8 +325,8 @@ class ExpansionPanel(Frame):
 
     def behavioral_distance(self, who_compare, compare_with):
         print("    Expansion: Calculating similarity...")
-        distance, comparison_figure = similarity_calc(np.array(who_compare).reshape(-1, 1),
-                                                      np.array(compare_with).reshape(-1, 1))
+        distance, comparison_figure = similarity_calc_pattern(np.array(who_compare).reshape(-1, 1),
+                                                              np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
 

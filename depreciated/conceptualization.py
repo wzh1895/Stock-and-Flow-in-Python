@@ -5,7 +5,7 @@ Main function of the program
 from matplotlib.figure import Figure
 from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern
 from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ class Panel(Frame):
 
         # Calculate similarity and suggest archetype
 
-        self.suggested_archetype, self.comparison_figure = similarity_calc(self.tea_cup_temperature_time_series)
+        self.suggested_archetype, self.comparison_figure = similarity_calc_pattern(self.tea_cup_temperature_time_series)
         # print(dir(self.comparison_figure.get_axes()[0]))
         # self.comparison_figure.get_axes()[0].axis('off')  # disable axes
         self.comparison_figure.get_axes()[0].set_xticks([])  # disable ticks on X-axis
