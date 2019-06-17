@@ -347,16 +347,6 @@ class SessionHandler(object):
         time.sleep(SLEEP_TIME)
         return uid
 
-    def wrap_equation(self, equation):
-        """
-        Check if the equation is a number; if so, wrap it into []
-        :param equation:
-        :return:
-        """
-        if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
-            equation = [equation]
-        return equation
-
     def build_flow(self, name=None, equation=None, x=0, y=0, points=list(), flow_from=None, flow_to=None):
         print("===>Building flow: {}".format(name if name is not None else 'new'))
 
@@ -499,6 +489,20 @@ class SessionHandler(object):
         self.refresh()
         time.sleep(SLEEP_TIME)
 
+    # def wrap_equation(self, equation):
+    #     """
+    #     Check if the equation is a number; if so, wrap it into []
+    #     :param equation:
+    #     :return:
+    #     """
+    #     try:
+    #         equation = float(equation)
+    #     except ValueError:
+    #         pass
+    #     if type(equation) == int or type(equation) == float:  # if equation is number, wrap it into []
+    #         equation = [equation]
+    #     return equation
+
     def replace_equation(self, name, new_equation):
         """
         Equation replacement as a part of model expansion
@@ -506,7 +510,7 @@ class SessionHandler(object):
         :param new_equation: New equation for this variable
         :return:
         """
-        new_equation = self.wrap_equation(new_equation)
+        # new_equation = self.wrap_equation(new_equation)
         self.model_structure.replace_equation(name, new_equation)
         self.refresh()
         time.sleep(SLEEP_TIME)

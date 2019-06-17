@@ -11,7 +11,7 @@ import os
 
 
 class SFDCanvas(Frame):
-    def __init__(self, master, width=500):
+    def __init__(self, master, width=900):
         super().__init__(master, width=width)
         self.master = master
         self.xmost = 300

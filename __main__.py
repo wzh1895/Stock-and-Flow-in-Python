@@ -909,13 +909,15 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, width=1600, height=450, x=5, y=700):
+    def __init__(self, tree, x=5, y=200):
         super().__init__()
         self.title("Candidate Structures")
-        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.geometry("+{}+{}".format(x, y))
 
         self.tree = tree
         self.selected_candidate_structure = None
+
+        # Top widgets
 
         self.fm_actions = Frame(self)
         self.fm_actions.pack(side=TOP, fill=BOTH)
@@ -926,37 +928,37 @@ class CandidateStructureWindow(Toplevel):
         self.btn_modify = Button(self.fm_actions, text='Modify', command=self.modify_a_structure)
         self.btn_modify.pack(side=LEFT)
 
-        self.fm_select = Frame(self)
+        # Middle widgets
+
+        self.fm_middle = Frame(self)
+        self.fm_middle.pack(side=TOP, fill=X)
+
+        self.fm_select = Frame(self.fm_middle)
         self.fm_select.pack(side=LEFT)
 
         self.label_select = Label(self.fm_select, text='Candidate\nStructures', font=6)
         self.label_select.pack(anchor='nw')
 
-        # Display
+        self.label_top_three_0 = Label(self.fm_select, text='', font=6)
+        self.label_top_three_0.pack(side=BOTTOM, anchor='nw')
+        self.label_top_three_1 = Label(self.fm_select, text='Top 3 \nCandidates:', font=6)
+        self.label_top_three_1.pack(side=BOTTOM, anchor='nw')
 
-        self.fm_display = Frame(self)
-        self.fm_display.pack(side=LEFT)
-
-        self.stock_and_flow_diagram = SFDCanvas(self.fm_display)
+        self.stock_and_flow_diagram = SFDCanvas(self.fm_middle)
         self.stock_and_flow_diagram.pack(side=LEFT)
 
-        self.fm_display_structure_cld = Frame(self.fm_display)
-        # self.fm_display_structure.configure(width=500)
-        self.fm_display_structure_cld.pack(side=LEFT)
-
-        self.fm_display_behaviour = Frame(self.fm_display)
-        # self.fm_display_behaviour.configure(width=500)
+        self.fm_display_behaviour = Frame(self.fm_middle)
         self.fm_display_behaviour.pack(side=LEFT)
+
+        # Bottom widgets
+
+        self.fm_display_structure_cld = Frame(self)
+        self.fm_display_structure_cld.pack(side=TOP, fill=X)
 
         self.generate_candidate_structure_list()
 
         self.fm_logging = Frame(self)
         self.fm_logging.pack(side=BOTTOM)
-
-        self.label_top_three_0 = Label(self.fm_select, text='', font=6)
-        self.label_top_three_0.pack(side=BOTTOM, anchor='nw')
-        self.label_top_three_1 = Label(self.fm_select, text='Top 3 \nCandidates:', font=6)
-        self.label_top_three_1.pack(side=BOTTOM, anchor='nw')
 
     def accept_a_structure(self):
         # get the selected structure (entry) from listbox
@@ -987,11 +989,11 @@ class CandidateStructureWindow(Toplevel):
 
         self.candidate_structure_list_box = Listbox(self.fm_select)
         self.candidate_structure_list_box.configure(width=10, height=20)
-        self.candidate_structure_list_box.pack(side=TOP)
+        self.candidate_structure_list_box.pack(side=LEFT)
 
         self.candidate_structure_list_scrollbar = Scrollbar(self.fm_select, orient="vertical")
         self.candidate_structure_list_scrollbar.config(command=self.candidate_structure_list_box.yview)
-        self.candidate_structure_list_scrollbar.pack(side=RIGHT)
+        self.candidate_structure_list_scrollbar.pack(side=RIGHT, fill=Y)
 
         for u in list(self.tree.nodes):
             # print("adding entry", u)
@@ -1019,7 +1021,7 @@ class CandidateStructureWindow(Toplevel):
             self.candidate_structure_cld_canvas.get_tk_widget().destroy()
         except:
             pass
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(11, 9))
 
         node_attrs_function = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'function')
         node_attrs_value = nx.get_node_attributes(self.selected_candidate_structure.model_structure.sfd, 'value')
@@ -1030,7 +1032,8 @@ class CandidateStructureWindow(Toplevel):
                 attr = node_attrs_value[node][0]
             # when the element has a function
             else:
-                attr = [attr[0]] + [factor for factor in attr[1:]]
+                # attr = [attr[0]] + [factor for factor in attr[1:]]
+                attr = equation_to_text(attr)
             custom_node_labels[node] = "{}={}".format(node, attr)
 
         edge_attrs_polarity = nx.get_edge_attributes(self.selected_candidate_structure.model_structure.sfd, 'polarity')
@@ -1043,11 +1046,12 @@ class CandidateStructureWindow(Toplevel):
 
         nx.draw_networkx(G=self.selected_candidate_structure.model_structure.sfd,
                          labels=custom_node_labels,
-                         font_size=8,
+                         font_size=10,
+                         node_color='skyblue',
                          edge_color=custom_edge_colors)
         plt.axis('off')  # turn off axis for structure display
         self.candidate_structure_cld_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_structure_cld)
-        self.candidate_structure_cld_canvas.get_tk_widget().configure(width=550)
+        self.candidate_structure_cld_canvas.get_tk_widget().configure(height=450)
         self.candidate_structure_cld_canvas.get_tk_widget().pack(side=LEFT)
 
         # Display behavior
@@ -1068,7 +1072,7 @@ class CandidateStructureWindow(Toplevel):
             # names=['stock0'],
             rtn=True)
         self.simulation_result_canvas = FigureCanvasTkAgg(figure=result_figure, master=self.fm_display_behaviour)
-        self.simulation_result_canvas.get_tk_widget().configure(width=600)
+        self.simulation_result_canvas.get_tk_widget().configure(height=400, width=500)
         self.simulation_result_canvas.get_tk_widget().pack(side=LEFT)
 
         # Display result
@@ -1079,7 +1083,7 @@ class StructureModifier(Toplevel):
     def __init__(self, structure, width=1250, height=450, x=5, y=300):
         super().__init__()
         self.title("Structure Modifier")
-        self.geometry("{}x{}+{}+{}".format(width, height, x, y))
+        self.geometry("+{}+{}".format(x, y))
         self.structure = structure
         self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
 
@@ -1181,7 +1185,7 @@ class StructureModifier(Toplevel):
                 attr = node_attrs_value[node][0]
             # when the element has a function
             else:
-                attr = [attr[0]] + [factor for factor in attr[1:]]
+                attr = equation_to_text(attr)
             custom_node_labels[node] = "{}={}".format(node, attr)
 
         edge_attrs_polarity = nx.get_edge_attributes(self.structure.model_structure.sfd, 'polarity')
@@ -1195,10 +1199,11 @@ class StructureModifier(Toplevel):
         nx.draw_networkx(G=self.structure.model_structure.sfd,
                          labels=custom_node_labels,
                          font_size=8,
+                         node_color='skyblue',
                          edge_color=custom_edge_colors)
         plt.axis('off')  # turn off axis for structure display
         self.candidate_structure_canvas = FigureCanvasTkAgg(figure=fig, master=self.fm_display_cld)
-        self.candidate_structure_canvas.get_tk_widget().configure(width=550)
+        self.candidate_structure_canvas.get_tk_widget().configure(width=500, height=400)
         self.candidate_structure_canvas.get_tk_widget().pack(side=LEFT)
 
         # SFD
@@ -1243,9 +1248,10 @@ class StructureModifier(Toplevel):
 
     def modify_element(self):
         new_equation = self.entry_equation.get()
+        print("check0", new_equation)
         # decide if this new equation is a number or not (starting with a number)
         if new_equation[0].isdigit():
-            new_equation = float(new_equation)
+            new_equation = [float(new_equation)]
         else:
             new_equation = text_to_equation(equation_text=new_equation)
             print("new equation generated:", new_equation)

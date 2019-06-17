@@ -609,7 +609,7 @@ class Structure(object):
 
     # Draw graphs
     def draw_graphs(self, rtn=False):
-        self.figure1 = plt.figure(figsize=(5, 5))
+        self.figure1 = plt.figure(figsize=(5, 4))
         plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
         pos = nx.get_node_attributes(self.sfd, 'pos')
         nx.draw(self.sfd, with_labels=True, pos=pos)
