@@ -336,7 +336,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
 
     # Chances are there is no chain in target structure / there are multiple chains in target structure
     if len(chains_in_target) == 0:  # There is no chain in target, so do nothing
-        return new_base
+        return new_base  # by using 'return', we accommodate 'failure'.
     else:  # Use the concept CLD to instruct importing elements from target to base structure
         # Preparation
         print("    1. Which stock to start in the base structure? uid:", stock_uid_in_base_to_start_with)
@@ -349,7 +349,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             polarity = decide_chain_polarity(chain)
             # print("Chain polarity:", polarity)
             if polarity == concept_cld.graph['polarity']:
-                chosen_chain_in_target = chain
+                chosen_chain_in_target = chain  # use the first-met one
                 break
         print("       {}".format(chosen_chain_in_target))
         if chosen_chain_in_target is None:
@@ -357,14 +357,14 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             return new_base
 
         # Iterate over the concept CLD to import elements from target to base
-        current_node_in_concept_cld = concept_cld.graph['begin_with']  # TODO: need to update, because in a concept CLD there could be >1 nodes
+        current_node_in_concept_cld = concept_cld.graph['begin_with']  # TODO: need to update, because in a concept CLD there could be >1 stocks
         current_joint_in_target_chain = chosen_chain_in_target[0]
 
         # a dict storing the 3 currently focused joints/element
         structure_operating = {'concept': current_node_in_concept_cld,
-                             'target': current_joint_in_target_chain,
-                             'base': stock_uid_in_base_to_start_with,
-                             }
+                               'target': current_joint_in_target_chain,
+                               'base': stock_uid_in_base_to_start_with,
+                               }
 
         continue_mapping = True
         continue_building = True
@@ -372,6 +372,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
         while continue_mapping:
             # Check if current [element in base] fits current [joint in concept]
 
+            # Use this check to see if the element in base has the needed function in concept cld
             func = new_base.model_structure.get_element_by_uid(structure_operating['base'])['function']
             if func is None:
                 check = False
@@ -403,11 +404,12 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                 continue_mapping = False
 
         while continue_building:
-            # Iterate along the target chain to find a node that fits the current element in concept cld
+            # step 1 seeking: Iterate along the target chain to find a node that fits the current element in concept cld
             continue_seeking = True
             print("Here 1,", target_structure.model_structure.sfd.nodes[structure_operating['target'][0]])
             while continue_seeking:
 
+                # Use this check to see if the element in base has the needed function in concept cld
                 func = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]['function']
                 if func is None:
                     print("Here 1.5")
@@ -425,77 +427,88 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                     print("    Success 2: concept CLD's node matches the element in target structure.")
                     continue_seeking = False  # Time to build
                 else:
-                    # replace 'target' in structure_operating with the next joint in chain
+                    # replace 'target' in structure_operating with the next joint in chain / move forward on target chain
                     idx = chosen_chain_in_target.index(structure_operating['target']) + 1
                     try:
+                        # move forward on target chain.
                         structure_operating['target'] = chosen_chain_in_target[idx]
                     except IndexError:
                         # The chain has been looped up and no fitting element is found
                         print("    Failure: Cannot find a fitting element in target chain.")
                         return new_base
 
-            # Import the target chain's current element into base_structure
-            # Because we consider only loop/chain in this utility, so what imported must have a function #TODO: in future when there are >1 order loops, may be different
-            print("    Starting building new element in base...")
-            start_with_element_base = new_base.model_structure.get_element_name_by_uid(structure_operating['base'])
-            print("    **** Element in base to build on:", start_with_element_base)
-            chosen_var_in_target = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]
-            print("    **** Details of element to import:", chosen_var_in_target)
+            # In building, there are two possibilities: \
+            # 1) the needed element already exist as a result of other building activities (e.g. randomly importing) \
+            #    In this case, we don't import a new element but incorporate it in this new loop.
+            # 2) the needed element doesn't exist in this base structure. In this case, we have to import it.
+            # step 2a : Iterate in current 'base' to find if there has already been an 'stand alone' alement that fits.
 
-            x = chosen_var_in_target['pos'][0]
-            y = chosen_var_in_target['pos'][1]
+            already_existing = False
+            # TODO
+            # step 2b : If not found, import the target chain's current element into base_structure
+            if not already_existing:
+                # Because we consider only loop/chain in this utility, so what imported must have a function
+                # TODO: in future when there are >1 order loops, may be different
+                print("    Starting building new element in base...")
+                start_with_element_base = new_base.model_structure.get_element_name_by_uid(structure_operating['base'])
+                print("    **** Element in base to build on:", start_with_element_base)
+                chosen_var_in_target = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]
+                print("    **** Details of element to import:", chosen_var_in_target)
 
-            if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter  #TODO: now it's impossible for this to be Parameter, but save for later
-                equation = chosen_var_in_target['value'][0]
-            else:  # it has a function as equation
-                # Not just copy-paste the equation; but to modify its parameters to constants
+                x = chosen_var_in_target['pos'][0]
+                y = chosen_var_in_target['pos'][1]
 
-                equation = copy.deepcopy(chosen_var_in_target['function'])
+                if chosen_var_in_target['function'] is None:  # the chosen var is a constant => Parameter  #TODO: now it's impossible for this to be Parameter, but save for later
+                    equation = chosen_var_in_target['value'][0]
+                else:  # it has a function as equation
+                    # Not just copy-paste the equation; but to modify its parameters to constants
 
-                if equation[0] == ADDITION:
-                    equation[1] = start_with_element_base
-                    equation[2] = 0
-                    uid = new_base.build_aux(equation=equation, x=x, y=y)
-                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
-                                             polarity='positive')
+                    equation = copy.deepcopy(chosen_var_in_target['function'])
 
-                elif equation[0] == MULTIPLICATION:
-                    equation[1] = start_with_element_base
-                    equation[2] = 1
-                    uid = new_base.build_aux(equation=equation, x=x, y=y)
-                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
-                                             polarity='positive')
+                    if equation[0] == ADDITION:
+                        equation[1] = start_with_element_base
+                        equation[2] = 0
+                        uid = new_base.build_aux(equation=equation, x=x, y=y)
+                        element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                        new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                 polarity='positive')
 
-                elif equation[0] == SUBTRACTION:
-                    # TODO: mechanism to decide if a-b or b-a
-                    # factor = random.choice([1, 2])
-                    equation[1] = start_with_element_base
-                    equation[2] = 0
-                    uid = new_base.build_aux(equation=equation, x=x, y=y)
-                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
-                                             polarity='positive'
-                                             )
+                    elif equation[0] == MULTIPLICATION:
+                        equation[1] = start_with_element_base
+                        equation[2] = 1
+                        uid = new_base.build_aux(equation=equation, x=x, y=y)
+                        element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                        new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                 polarity='positive')
 
-                elif equation[0] == DIVISION:
-                    # TODO: mechanism to decide if a /b or b /a
-                    # factor = random.choice([1, 2])
-                    equation[1] = start_with_element_base
-                    equation[2] = 1
-                    uid = new_base.build_aux(equation=equation, x=x, y=y)
-                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
-                                             polarity='positive'
-                                             )
+                    elif equation[0] == SUBTRACTION:
+                        # TODO: mechanism to decide if a-b or b-a
+                        # factor = random.choice([1, 2])
+                        equation[1] = start_with_element_base
+                        equation[2] = 0
+                        uid = new_base.build_aux(equation=equation, x=x, y=y)
+                        element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                        new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                 polarity='positive'
+                                                 )
 
-                elif equation[0] == LINEAR:
-                    equation[1] = start_with_element_base
-                    uid = new_base.build_aux(equation=equation, x=x, y=y)
-                    element_name = new_base.model_structure.get_element_name_by_uid(uid)
-                    new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
-                                             polarity='positive')
+                    elif equation[0] == DIVISION:
+                        # TODO: mechanism to decide if a /b or b /a
+                        # factor = random.choice([1, 2])
+                        equation[1] = start_with_element_base
+                        equation[2] = 1
+                        uid = new_base.build_aux(equation=equation, x=x, y=y)
+                        element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                        new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                 polarity='positive'
+                                                 )
+
+                    elif equation[0] == LINEAR:
+                        equation[1] = start_with_element_base
+                        uid = new_base.build_aux(equation=equation, x=x, y=y)
+                        element_name = new_base.model_structure.get_element_name_by_uid(uid)
+                        new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                 polarity='positive')
 
             # move forward on base_structure
             structure_operating['base'] = uid
@@ -508,7 +521,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             # TODO: need to update for conditions with more than 1 stock
             if structure_operating['concept'] == concept_cld.graph['end_with']:
                 # close the loop by add connection from the last added var to stock
-                # 2 steps: 1. create a flow and 2. make it equivalent to the last added var
+                # 2 steps: 1) create a flow and 2) make it equivalent to the last added var
                 polarity_f_s = concept_cld.edges[list(concept_cld.in_edges(structure_operating['concept']))[0]]['polarity']
                 f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],
                                             flow_from=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'negative' else None,
