@@ -110,7 +110,7 @@ python3 controller.py
 
 **23 Dec 2018: v0.4.0**
 
-1.  Added stmxGenerator, a set of functions to add components to blank .stmx file.
+1.  Added stmxGenerator, a set of functions to confirm components to blank .stmx file.
 
 **15 Dec 2018: v0.3.1**
 

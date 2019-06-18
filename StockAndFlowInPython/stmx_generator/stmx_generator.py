@@ -16,7 +16,7 @@ def add_unit(where,name,alias1,alias2):
     new_node.appendChild(where.createElement("alias"))
     new_node.childNodes[2].appendChild(where.createTextNode(alias2))
 
-    # Then add it to: root/xmile/model_units
+    # Then confirm it to: root/xmile/model_units
     where.getElementsByTagName("xmile")[0].getElementsByTagName("model_units")[0].appendChild(new_node)
 
 

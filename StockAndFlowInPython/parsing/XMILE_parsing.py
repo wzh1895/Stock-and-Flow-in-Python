@@ -42,11 +42,20 @@ def parsing_subtract(equation):
 
 
 def is_number(text):
-    try:
-        float(text[0])
-        return True
+    outcome = True
+    for i in range(len(text)):  # filter out conditions like '0-0', '1-4', etc.
+        try:
+            float(text[i])
+        except ValueError:
+            outcome = False
+            break
+    try:  # filter in conditions like '0.05'
+        float(text)
+        outcome = True
     except ValueError:
-        return False
+        pass
+
+    return outcome
 
 
 def text_to_equation(equation_text):

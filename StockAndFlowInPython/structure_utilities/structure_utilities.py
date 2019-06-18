@@ -438,13 +438,40 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                         return new_base
 
             # In building, there are two possibilities: \
-            # 1) the needed element already exist as a result of other building activities (e.g. randomly importing) \
+            # 1) the needed element already exists as a result of other building activities (e.g. randomly importing) \
             #    In this case, we don't import a new element but incorporate it in this new loop.
             # 2) the needed element doesn't exist in this base structure. In this case, we have to import it.
-            # step 2a : Iterate in current 'base' to find if there has already been an 'stand alone' alement that fits.
-
+            # step 2a : Iterate in current 'base' to find if there has already been an 'stand alone' element that fits.
             already_existing = False
-            # TODO
+            print('Inc0', structure_operating['concept'])
+            if structure_operating['concept'] in element_types:
+                # we need to look for this type of element in base. TODO: we do not consider this part right now. Currently only focus on functions.
+                all_this_type_in_base = new_base.model_structure.all_certain_type(structure_operating['concept'])
+                if len(all_this_type_in_base) == 0:  # there still hasn't been an element in base of such type
+                    pass
+                else:  # there is at least one element in base of such type.
+                    pass
+            elif structure_operating['concept'] in functions:
+                # we need to look for this type of function in base.
+                element_functions = nx.get_node_attributes(new_base.model_structure.sfd, 'function')
+                print('Inc1', element_functions)
+                for element_name, element_function in element_functions.items():
+                    if type(element_function) == list:  # then it's not None
+                        if element_function[0] == structure_operating['concept']:  # this element has the function that demanded by the concept cld
+                            # Incorporate this element into the loop we are building, instead of importing from generic structue
+                            print("    Incorporating existing element in base into loop...")
+                            start_with_element_base = new_base.model_structure.get_element_name_by_uid(structure_operating['base'])
+                            new_base.model_structure.sfd.nodes[element_name]['function'][1] = start_with_element_base
+                            print('Inc2', element_name, new_base.model_structure.sfd.nodes[element_name])
+                            new_base.build_connector(from_var=start_with_element_base, to_var=element_name,
+                                                     polarity='positive'
+                                                     )
+                            # get the uid of this existing element, to let structure_operating to move forward on base
+                            uid = new_base.model_structure.sfd.nodes[element_name]['uid']
+                            # Change the flag 'already_existing' to True, so no need to import from generic structure
+                            already_existing = True
+                            break  # now that we have found what we need from base, stop this loop
+
             # step 2b : If not found, import the target chain's current element into base_structure
             if not already_existing:
                 # Because we consider only loop/chain in this utility, so what imported must have a function
@@ -520,7 +547,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             # if this element from the concept cld is identical to the starting
             # TODO: need to update for conditions with more than 1 stock
             if structure_operating['concept'] == concept_cld.graph['end_with']:
-                # close the loop by add connection from the last added var to stock
+                # close the loop by confirm connection from the last added var to stock
                 # 2 steps: 1) create a flow and 2) make it equivalent to the last added var
                 polarity_f_s = concept_cld.edges[list(concept_cld.in_edges(structure_operating['concept']))[0]]['polarity']
                 f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],

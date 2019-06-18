@@ -120,7 +120,7 @@ class ExpansionPanel(Frame):
         # Specify round to iterate
         self.iteration_time = ITERATION_TIMES
 
-        self.expansion_loop()
+        # self.expansion_loop()
 
     # TODO this is the basis for one agent's routine in the future
     def expansion_loop(self):
@@ -517,10 +517,10 @@ class SelectReferenceModeWindow(Toplevel):
 
         self.fm_buttons = Frame(self.fm_select)
         self.fm_buttons.pack(side=BOTTOM, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Add', command=self.add)
+        self.confirm_button = Button(self.fm_buttons, text='Add', command=self.confirm)
         self.confirm_button.pack(side=LEFT, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Close', command=self.close)
-        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.close_button = Button(self.fm_buttons, text='Close', command=self.close)
+        self.close_button.pack(side=LEFT, anchor='center')
 
     def display_reference_mode(self, evt):
         try:
@@ -537,7 +537,7 @@ class SelectReferenceModeWindow(Toplevel):
         self.reference_mode_graph.draw()
         self.reference_mode_graph.get_tk_widget().pack(side=LEFT)
 
-    def add(self):
+    def confirm(self):
         reference_mode_type = self.ref_md_type.get()
         selected_reference_mode = self.time_series_list.get(self.time_series_list.curselection())
         if reference_mode_type is not None and selected_reference_mode is not None:
@@ -545,8 +545,6 @@ class SelectReferenceModeWindow(Toplevel):
             print("Added reference mode for {} : {}".format(reference_mode_type, selected_reference_mode))
 
     def close(self):
-        # self.reference_mode_type = None
-        # self.selected_reference_mode = None
         self.destroy()
 
 
@@ -710,13 +708,11 @@ class StructureManager(object):
     def __init__(self, tree):
         self.tree = tree
         self.candidate_structure_uid = 0
-        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
-                                                 width=550, height=550, x=1100, y=50, attr='activity')
-        self.candidate_structure_window = CandidateStructureWindow(self.tree)
+        self.sorted_tree = list()
+        self.candidate_structure_window = CandidateStructureWindow(tree=self.tree, sorted_tree=self.sorted_tree)
         self.if_can_simulate = dict()
         self.those_can_simulate = list()
         self.those_cannot_simulate = list()
-        self.sorted_tree = list()
 
     def sort_by_activity(self):
         # sort all candidate structures by activity
@@ -755,7 +751,7 @@ class StructureManager(object):
 
     def derive_structure(self, base_structure, new_structure):
         """Derive a new structure from an existing one"""
-        # decide if this new_structure has been generated before. if so: add activity. if not: add it.
+        # decide if this new_structure has been generated before. if so: confirm activity. if not: confirm it.
         # 1. identical to base_structure it self
         # if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
         GM = iso.DiGraphMatcher(base_structure.model_structure.sfd, new_structure.model_structure.sfd,
@@ -787,7 +783,7 @@ class StructureManager(object):
                 print("    The new structure already exists in base structure's neighbours")
                 return
 
-        # add a new node
+        # confirm a new node
         new_uid = self.get_new_candidate_structure_uid()
         print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
         new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
@@ -874,22 +870,8 @@ class StructureManager(object):
                 distribution_list.append(u)
         return distribution_list
 
-    def update_tree_display(self):
-        tree_node_color = list()
-        if len(self.sorted_tree) > 3:  # when the sorted tree is generated
-            top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
-            for element in self.tree.nodes:
-                if element in top_three:
-                    tree_node_color.append('orangered')
-                else:
-                    tree_node_color.append('skyblue')
-        else:
-            tree_node_color = 'skyblue'
-        # print("HERE", tree_node_color)
-        self.tree_window.update_graph_network(node_color=tree_node_color)
-
     def update_candidate_structure_window(self):
-        self.update_tree_display()
+        self.candidate_structure_window.update_tree_display()
         self.candidate_structure_window.generate_candidate_structure_list()
 
     def purge_low_activity_structures(self):
@@ -909,12 +891,15 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, x=5, y=200):
+    def __init__(self, tree, sorted_tree, x=5, y=200):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("+{}+{}".format(x, y))
 
         self.tree = tree
+        self.sorted_tree = sorted_tree
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
+                                                 width=550, height=550, x=1100, y=50, attr='activity')
         self.selected_candidate_structure = None
 
         # Top widgets
@@ -959,6 +944,20 @@ class CandidateStructureWindow(Toplevel):
 
         self.fm_logging = Frame(self)
         self.fm_logging.pack(side=BOTTOM)
+
+    def update_tree_display(self):
+        tree_node_color = list()
+        if len(self.sorted_tree) > 3:  # when the sorted tree is generated
+            top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
+            for element in self.tree.nodes:
+                if element in top_three:
+                    tree_node_color.append('orangered')
+                else:
+                    tree_node_color.append('skyblue')
+        else:
+            tree_node_color = 'skyblue'
+        # print("HERE", tree_node_color)
+        self.tree_window.update_graph_network(node_color=tree_node_color)
 
     def accept_a_structure(self):
         # get the selected structure (entry) from listbox
@@ -1143,10 +1142,20 @@ class StructureModifier(Toplevel):
         self.variable_to_modify_combobox.bind("<<ComboboxSelected>>", self.on_select_var_to_modify)
         self.variable_to_modify_combobox.pack(side=TOP, anchor='w')
 
-        self.label_equation = Label(self.fm_actions_modify, text="Equation:")
+        self.label_equation = Label(self.fm_actions_modify, text="Equation")
         self.label_equation.pack(side=TOP, anchor='w')
         self.entry_equation = Entry(self.fm_actions_modify)
         self.entry_equation.pack(side=TOP)
+
+        self.label_x = Label(self.fm_actions_modify, text="X position")
+        self.label_x.pack(side=TOP, anchor='w')
+        self.entry_x = Entry(self.fm_actions_modify)
+        self.entry_x.pack(side=TOP)
+
+        self.label_y = Label(self.fm_actions_modify, text="Y position")
+        self.label_y.pack(side=TOP, anchor='w')
+        self.entry_y = Entry(self.fm_actions_modify)
+        self.entry_y.pack(side=TOP)
 
         self.btn_modify = Button(self.fm_actions_modify, text='Modify', command=self.modify_element)
         self.btn_modify.pack(side=TOP, anchor='w')
@@ -1239,6 +1248,7 @@ class StructureModifier(Toplevel):
         self.refresh_display_structure()
 
     def on_select_var_to_modify(self, evt):
+        print("Check,", self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()])
         original_equation = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['function']
         if original_equation is None:
             original_equation = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['value'][0]
@@ -1246,17 +1256,30 @@ class StructureModifier(Toplevel):
         self.entry_equation.delete(0, END)
         self.entry_equation.insert(0, original_equation_text)
 
+        x_pos = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['pos'][0]
+        self.entry_x.delete(0, END)
+        self.entry_x.insert(0, x_pos)
+
+        y_pos = self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['pos'][1]
+        self.entry_y.delete(0, END)
+        self.entry_y.insert(0, y_pos)
+
     def modify_element(self):
-        new_equation = self.entry_equation.get()
-        print("check0", new_equation)
-        # decide if this new equation is a number or not (starting with a number)
-        if new_equation[0].isdigit():
-            new_equation = [float(new_equation)]
-        else:
-            new_equation = text_to_equation(equation_text=new_equation)
-            print("new equation generated:", new_equation)
+        new_equation = text_to_equation(self.entry_equation.get())
+        # # decide if this new equation is a number or not (starting with a number)
+        # if new_equation[0].isdigit():
+        #     new_equation = [float(new_equation)]
+        # else:
+        #     new_equation = text_to_equation(equation_text=new_equation)
+        #     print("new equation generated:", new_equation)
         self.structure.model_structure.replace_equation(name=self.variable_to_modify_combobox.get(),
                                                         new_equation=new_equation)
+
+        new_x = float(self.entry_x.get())
+        new_y = float(self.entry_y.get())
+        self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['pos'][0] = new_x
+        self.structure.model_structure.sfd.nodes[self.variable_to_modify_combobox.get()]['pos'][1] = new_y
+
         self.refresh_display_structure()
 
 
@@ -1316,11 +1339,12 @@ class AddElementWindow(Toplevel):
 
     def confirm(self):
         try:
+            print("Here!!")
             self.element_name = self.entry_name.get()
-            self.value = float(self.entry_value.get())
+            self.value = text_to_equation(self.entry_value.get())
             self.x = int(self.entry_x.get())
             self.y = int(self.entry_y.get())
-            # print("name: {}, value: {}, x: {}, y:{}".format(self.element_name, self.value, self.x, self.y))
+            print("name: {}, value: {}, x: {}, y:{}".format(self.element_name, self.value, self.x, self.y))
             if self.element_type == FLOW:
                 self.flow_from = None if self.flow_from_variables_combobox.get() == '-' else self.flow_from_variables_combobox.get()
                 self.flow_to = None if self.flow_to_variables_combobox.get() == '-' else self.flow_to_variables_combobox.get()
@@ -1334,7 +1358,7 @@ class AddElementWindow(Toplevel):
                 self.structure.build_aux(name=self.element_name, equation=self.value, x=self.x, y=self.y)
 
             # simulate this modified structure
-            self.structure.simulation_handler(25)
+            # self.structure.simulation_handler(25)
             self.destroy()
 
         except ValueError:

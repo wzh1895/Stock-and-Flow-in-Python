@@ -3,7 +3,7 @@ Archetypes used as basic elements to suggest candidate structures
 2 types of archetypes are considered, but not necessarily to be different in nature
 
     1. Templates: stand alone models
-    2. Widgets:   add-ons to stand alone models
+    2. Widgets:   confirm-ons to stand alone models
 
 We use graph (Graph Theory) to store archetypes.
 

@@ -107,7 +107,7 @@ class Structure(object):
         self.sfd.add_node(element_name, uid=uid, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
         # print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
 
-        # # automatically add dependencies, if a function is used for this variable
+        # # automatically confirm dependencies, if a function is used for this variable
         # if function is not None and type(function) is not str:
         #     self.add_function_dependencies(element_name, function)
 
@@ -115,10 +115,10 @@ class Structure(object):
 
         return uid
 
-    def add_causality(self, from_element, to_element, uid=0, angle=None, polarity=None, display=True):  # add one causality
+    def add_causality(self, from_element, to_element, uid=0, angle=None, polarity=None, display=True):  # confirm one causality
         self.sfd.add_edge(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)  # display as a flag for to or not to display
 
-    def add_function_dependencies(self, element_name, function):  # add bunch of causality found in a function
+    def add_function_dependencies(self, element_name, function):  # confirm bunch of causality found in a function
         for from_variable in function[1:]:
             if type(from_variable) == str:
                 print('Graph: adding dependencies, from {} to {}'.format(from_variable, element_name))
@@ -226,7 +226,7 @@ class Structure(object):
             # However, if this variable is participating in mor than 1 calculation, its value could be extended twice.
             # use 'visited' to solve this problem.
             if name not in self.visited:
-                self.sfd.nodes[name]['value'].append(new_value)  # add this new value to this node's value list
+                self.sfd.nodes[name]['value'].append(new_value)  # confirm this new value to this node's value list
                 self.visited.append(name)
             return new_value  # return the new value to where it was called
 
@@ -289,7 +289,7 @@ class Structure(object):
 
         # updating affected stocks values
         for stock in affected_stocks.keys():
-            # calculate the new value for this stock and add it to the end of its value list
+            # calculate the new value for this stock and confirm it to the end of its value list
             self.sfd.nodes[stock]['value'].append(self.sfd.nodes[stock]['value'][-1] + affected_stocks[stock])
             # print('Stock ', stock, ': {:.4f}'.format(self.sfd.nodes[stock]['value'][-1]))
 
@@ -385,7 +385,7 @@ class Structure(object):
         """
         # step 1: remove all incoming connectors into this variable (node)
         # step 2: replace the equation of this variable in the graph representation
-        # step 3: add connectors based on the new equation (only when the new equation is a function instead of a number
+        # step 3: confirm connectors based on the new equation (only when the new equation is a function instead of a number
         print("Graph: Replacing equation of {}".format(name))
         # step 1:
         to_remove = list()

@@ -356,7 +356,7 @@ class SessionHandler(object):
         else:
             for linked_var in equation[1:]:  # loop all parameters the function takes
                 if type(linked_var) is list:  # it's a name+angle instead of a number
-                    linked_vars.append(linked_var[0])  # add the name to 'linked_vars'
+                    linked_vars.append(linked_var[0])  # confirm the name to 'linked_vars'
         print('    Building flow:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
@@ -518,7 +518,7 @@ class SessionHandler(object):
     def connect_stock_flow(self, flow_name, new_flow_from=None, new_flow_to=None):
         # step 1: remove connectors from this flow to those replaced
         # step 2: replace flow_from/flow_to by the new flow_from/to in the graph representation
-        # step 3: add connectors according to the new flow_from/to
+        # step 3: confirm connectors according to the new flow_from/to
         if new_flow_from is not None:
             self.model_structure.create_stock_flow_connection(flow_name, structure_name='default',
                                                               flow_from=new_flow_from)
