@@ -9,7 +9,7 @@ from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, IN
     PURGE_SWITCH, PURGE_THRESHOLD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
-    apply_a_concept_cld
+    apply_a_concept_cld, optimize_parameters
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
@@ -193,6 +193,13 @@ class ExpansionPanel(Frame):
                                           target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
                 self.task_list.append(3)
+                # print("Opti2", base, new)
+                #
+                new2 = optimize_parameters(base_structure=new,
+                                           reference_modes=self.reference_modes,
+                                           reference_mode_bindings=self.reference_mode_bindings)
+                # print("Opti3", new, new2)
+                self.structure_manager.derive_structure(base_structure=new, new_structure=new2)
 
             # STEP: adjust candidate structures' activity
             for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):
@@ -742,12 +749,12 @@ class StructureManager(object):
         self.update_candidate_structure_window()
 
     def get_uid_by_structure(self, structure):
+        # print(self.tree.nodes(data=True))
         for u in list(self.tree.nodes):
             if self.tree.nodes[u]['structure'] == structure:
                 return u
         print(
-            '    StructureManager: Can not find uid for given structure {}.'.format(
-                structure.sfd.graph['structure_name']))
+            '    StructureManager: Can not find uid for given structure {}.'.format(structure))
 
     def derive_structure(self, base_structure, new_structure):
         """Derive a new structure from an existing one"""

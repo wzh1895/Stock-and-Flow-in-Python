@@ -23,6 +23,10 @@ test5 = np.linspace(0, 50, 101)
 test6 = np.linspace(50, 0, 101)
 # test 2 with half height
 test7 = np.array([0, 5, 10, 15, 20, 25, 30, 25, 40, 45, 50]).reshape(-1, 1)
+#
+test8 = np.array([0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150]).reshape(-1, 1)
+#
+test9 = np.array([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]).reshape(-1, 1)
 
 
 def categorize_behavior(who_compare, compare_with='./StockAndFlowInPython/behaviour_utilities/basic_behaviors.csv'):
@@ -113,6 +117,7 @@ def similarity_calc_pattern(who_compare, compare_with):
 
 
 def similarity_calc_behavior(who_compare, compare_with):
+    plt.close()
     # print(who_compare)
     # print(compare_with)
     """
@@ -148,8 +153,15 @@ def similarity_calc_behavior(who_compare, compare_with):
 
     dist, cost, acc, path = dtw(x1, x2, dist=lambda x, y: np.linalg.norm(x - y, ord=1))
     # print(basic_behavior, dist)
-    comparison_plot.plot(x1)
-    comparison_plot.plot(x2)
+
+    # comparison_plot.plot(x1)
+    # comparison_plot.plot(x2)
+    plt.axis([0, 100, 0, 100])
+    plt.xlabel('DT')
+    plt.plot(x1, label='Behavior')
+    plt.plot(x2, label='Reference')
+    plt.show()
+
     # print("    Distance: {}".format(dist))
     return dist, comparison_figure
 
@@ -158,3 +170,5 @@ if __name__ == '__main__':
     # categorize_behavior(test1)
     # print(similarity_calc_pattern(test2, test7))
     print(similarity_calc_behavior(test2, test7))
+    print(similarity_calc_behavior(test2, test8))
+    print(similarity_calc_behavior(test2, test9))

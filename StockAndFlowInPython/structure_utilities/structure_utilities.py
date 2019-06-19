@@ -1,10 +1,13 @@
 import networkx as nx
 import copy
 import random
+import numpy as np
+import matplotlib.pyplot as plt
 from networkx.algorithms import chain_decomposition
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, \
     ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, LINEAR
 from StockAndFlowInPython.session_handler import SessionHandler
+from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_behavior, similarity_calc_pattern
 
 element_types = [STOCK, FLOW, VARIABLE, PARAMETER]
 functions = [ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, LINEAR]
@@ -82,9 +85,6 @@ def expand_structure(base_structure, target_structure):
 
 def new_expand_structure(base_structure, start_with_element_base, target_structure):
     print("    **** Building new structure...")
-    # new_base = copy.deepcopy(base_structure)
-    # print("    Base_structure: ", new_base.model_structure.sfd.nodes(data='function', default='Not available'))
-    # new_base = copy.deepcopy(base_structure)
     new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
                                     uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
                                     name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
@@ -183,7 +183,7 @@ def new_expand_structure(base_structure, start_with_element_base, target_structu
 
         print("    ****Equation for this new var:", equation)
 
-    # TODO: this mechanism need to be changed, using agent based algorithm
+    # TODO: this mechanism need to be updated, using agent based algorithm
     start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
     if start_with_element_base_type == STOCK:
         # only flows can influence it. we need to find a flow from target structure.
@@ -567,3 +567,116 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             print("Finally2,", new_base.model_structure.sfd.nodes(data='function'))
 
         return new_base
+
+
+class ParameterIdPosManager(object):
+    def __init__(self):
+        self.param_id = 0
+        self.param_x = 30
+        self.param_y = 30
+
+    def get_new_pid_pos(self):
+        self.param_id += 1
+        self.param_x += 80
+        return self.param_id, self.param_x, self.param_y
+
+
+def optimize_parameters(base_structure, reference_modes, reference_mode_bindings):
+    print("    **** Optimizing parameters...")
+    # create a new base structure to modify
+    new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                                    uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                                    name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                                    uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_model_structure)
+    print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+
+    parameter_id_pos_manager = ParameterIdPosManager()
+    parameter_id = dict()  # parameter_id : uid
+
+    # search all functions and derive parameters (standalone variables) for them
+    for element_name in list(new_base.model_structure.sfd.nodes):
+        element_properties = new_base.model_structure.sfd.nodes[element_name]
+        if element_properties['function'] is not None:
+            func = element_properties['function']
+            print("Opti0", func)
+            params = func[1:]  # this is a copy, so we need an additional step to change the original function[]
+
+            for i in range(len(params)):
+                print("Opti1", params[i])
+                if type(params[i]) in [int, float]:
+                    # 1) generate a new parameter
+                    pid, px, py = parameter_id_pos_manager.get_new_pid_pos()
+                    uid = new_base.build_aux(equation=params[i], x=px, y=py)
+
+                    # 2) index this new parameter by pid
+                    parameter_id[pid] = uid
+
+                    # 3) replace this parameter
+                    func[i+1] = new_base.model_structure.get_element_name_by_uid(uid)  # change func instead of params
+                    new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(uid),
+                                             to_var=element_name
+                                             )
+
+    # hyper params
+    rnd = 10
+    epoch = 5
+
+    distance_old = 100
+    distance_new = 0
+
+    param_history = dict()
+    param_alpha = {1: 1, 2: 0.2}
+
+    for param_id, param_element_uid in parameter_id.items():
+        param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]
+
+    for i in range(rnd):
+        print('\nRound {}'.format(i))
+        for param_id, param_element_uid in parameter_id.items():
+            print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(uid),
+                                                 new_base.model_structure.get_element_by_uid(uid)['value'][0]))
+            adjustment_direction = 1
+            # optimizing one parameter
+
+            for j in range(epoch):
+                print('\nEpoch', j)
+
+                print("Simulating...")
+                new_base.simulation_handler(25)
+
+                distance_new = 0
+
+                for reference_mode_name, reference_mode_property in reference_modes.items():
+                    bound_element_uid = reference_mode_bindings[reference_mode_name]
+                    who_compare = new_base.model_structure.get_element_by_uid(bound_element_uid)['value']
+                    compare_with = reference_mode_property[1]
+                    distance_new += similarity_calc_behavior(np.array(who_compare).reshape(-1, 1),
+                                                             np.array(compare_with).reshape(-1, 1))[0]
+
+                # if abs(distance_new - distance_old) < 0.00001:
+                #     print('    Distance small enough')
+                #     break
+
+                if distance_new <= distance_old:  # if getting closer to optimum
+                    print('    Getting closer {}\n'.format(distance_new))
+                else:
+                    print('    Getting farther {}\n'.format(distance_new))
+                    adjustment_direction *= (-1)  # change direction
+
+                distance_old = distance_new
+
+                print("here!", new_base.model_structure.get_element_name_by_uid(param_element_uid))
+                print("here!", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                new_param_value = new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] + param_alpha[param_id] * adjustment_direction
+                new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] = new_param_value
+                print("here!", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                param_history[param_id].append(new_param_value)
+
+        print("Opti6", "Distance", distance_old)
+
+    for param_id, p_history in param_history.items():
+        plt.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[param_id]))
+    plt.show()
+
+    return new_base
