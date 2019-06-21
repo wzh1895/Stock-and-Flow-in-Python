@@ -193,8 +193,8 @@ class ExpansionPanel(Frame):
                                           target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
                 self.task_list.append(3)
-                # print("Opti2", base, new)
-                #
+                print("Opti2", base, new)
+
                 new2 = optimize_parameters(base_structure=new,
                                            reference_modes=self.reference_modes,
                                            reference_mode_bindings=self.reference_mode_bindings)
@@ -1383,8 +1383,6 @@ class AddConnectorWindow(Toplevel):
         self.structure = structure
 
         self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
-        for stock in self.structure.model_structure.all_certain_type(STOCK):
-            self.variables_in_model.remove(stock)
 
         self.label_from = Label(self, text="From")
         self.label_from.pack(side=TOP, anchor='w')

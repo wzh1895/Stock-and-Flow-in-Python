@@ -373,6 +373,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             # Check if current [element in base] fits current [joint in concept]
 
             # Use this check to see if the element in base has the needed function in concept cld
+            print('bbb', structure_operating)
             func = new_base.model_structure.get_element_by_uid(structure_operating['base'])['function']
             if func is None:
                 check = False
@@ -398,7 +399,7 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                     continue_mapping = False
                 else:
                     # TODO: in future need to select when there are more loops. Consider chains/ paths.
-                    structure_operating['base'] = successors_in_base[0]
+                    structure_operating['base'] = new_base.model_structure.sfd.nodes[successors_in_base[0]]['uid']  #
             else:
                 print("    Not fit: {} and {}, stop mapping.".format(structure_operating['concept'], structure_operating['base']))
                 continue_mapping = False
