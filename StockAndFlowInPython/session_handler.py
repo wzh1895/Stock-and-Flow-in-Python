@@ -399,6 +399,12 @@ class SessionHandler(object):
 
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
 
+        # if points are not specified but positions are:
+        if len(points) == 0:
+            pts_0 = [x-50, y]
+            pts_1 = [x+50, y]
+            points = [pts_0, pts_1]
+
         uid = self.model_structure.add_flow(name=name,
                                             equation=equation,
                                             flow_from=flow_from,
@@ -520,46 +526,32 @@ class SessionHandler(object):
         # step 2: replace flow_from/flow_to by the new flow_from/to in the graph representation
         # step 3: confirm connectors according to the new flow_from/to
         if new_flow_from is not None:
-            self.model_structure.create_stock_flow_connection(flow_name, structure_name='default',
-                                                              flow_from=new_flow_from)
+            self.model_structure.create_stock_flow_connection(flow_name=flow_name, flow_from=new_flow_from)
             # Rearrange layout
             # pos
-            self.model_structure.sfd.nodes[flow_name]['pos'][0] = \
-                self.model_structure.sfd.nodes[new_flow_from]['pos'][0] + 109
-            self.model_structure.sfd.nodes[flow_name]['pos'][1] = \
-                self.model_structure.sfd.nodes[new_flow_from]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] = self.model_structure.sfd.nodes[new_flow_from]['pos'][0] + 109
+            self.model_structure.sfd.nodes[flow_name]['pos'][1] = self.model_structure.sfd.nodes[new_flow_from]['pos'][1]
             # points
             # left point
-            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
-            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = self.model_structure.sfd.nodes[flow_name]['pos'][1]
             # right point
-            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
-            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = self.model_structure.sfd.nodes[flow_name]['pos'][1]
 
         if new_flow_to is not None:
-            self.model_structure.create_stock_flow_connection(flow_name, structure_name='default',
-                                                              flow_to=new_flow_to)
+            self.model_structure.create_stock_flow_connection(flow_name=flow_name, flow_to=new_flow_to)
             # Rearrange layout
             # pos
-            self.model_structure.sfd.nodes[flow_name]['pos'][0] = \
-                self.model_structure.sfd.nodes[new_flow_to]['pos'][0] - 109
-            self.model_structure.sfd.nodes[flow_name]['pos'][1] = \
-                self.model_structure.sfd.nodes[new_flow_to]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['pos'][0] = self.model_structure.sfd.nodes[new_flow_to]['pos'][0] - 109
+            self.model_structure.sfd.nodes[flow_name]['pos'][1] = self.model_structure.sfd.nodes[new_flow_to]['pos'][1]
             # points
             # left point
-            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
-            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][0][0] = self.model_structure.sfd.nodes[flow_name]['pos'][0] - 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][0][1] = self.model_structure.sfd.nodes[flow_name]['pos'][1]
             # right point
-            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
-            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = \
-                self.model_structure.sfd.nodes[flow_name]['pos'][1]
+            self.model_structure.sfd.nodes[flow_name]['points'][1][0] = self.model_structure.sfd.nodes[flow_name]['pos'][0] + 85.5
+            self.model_structure.sfd.nodes[flow_name]['points'][1][1] = self.model_structure.sfd.nodes[flow_name]['pos'][1]
 
         self.refresh()
         time.sleep(SLEEP_TIME)

@@ -314,22 +314,21 @@ class Structure(object):
         # print('Graph: added flow:', name, 'to graph.')
         return uid
 
-    def create_stock_flow_connection(self, name=None, flow_from=None, flow_to=None):
+    def create_stock_flow_connection(self, flow_name=None, flow_from=None, flow_to=None):
         """
         Connect stock and flow.
-        :param name: The flow's name
-        :param structure_name: The structure to modify
+        :param flow_name: The flow's name
         :param flow_from: The stock this flow coming from
         :param flow_to: The stock this flow going into
         :return:
         """
         # If the flow influences a stock, create the causal link
         if flow_from is not None:  # Just set up
-            self.sfd.nodes[name]['flow_from'] = flow_from
-            self.add_causality(name, flow_from, display=False, polarity='negative')
+            self.sfd.nodes[flow_name]['flow_from'] = flow_from
+            self.add_causality(flow_name, flow_from, display=False, polarity='negative')
         if flow_to is not None:  # Just set up
-            self.sfd.nodes[name]['flow_to'] = flow_to
-            self.add_causality(name, flow_to, display=False, polarity='positive')
+            self.sfd.nodes[flow_name]['flow_to'] = flow_to
+            self.add_causality(flow_name, flow_to, display=False, polarity='positive')
 
     def add_aux(self, name=None, equation=None, x=0, y=0):
         # Decide if this aux is a parameter or variable

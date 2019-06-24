@@ -280,21 +280,21 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
     def generate_chains(structure):
         chains_generator = chain_decomposition(structure.model_structure.sfd.to_undirected())
         chains = list()
-        for chain in chains_generator:
-            chains.append(chain)
+        for chain_0 in chains_generator:
+            chains.append(chain_0)
         # print(structure.model_structure.sfd.edges)
         # print(chains)
 
         # making the chains directed
-        for chain in chains:
-            for i in range(len(chain)):
-                if structure.model_structure.sfd.has_edge(chain[i][0], chain[i][1]):
+        for chain_1 in chains:
+            for i in range(len(chain_1)):
+                if structure.model_structure.sfd.has_edge(chain_1[i][0], chain_1[i][1]):
                     # this edge is stored in the structure in the right direction
                     pass
-                elif structure.model_structure.sfd.has_edge(chain[i][1], chain[i][0]):  # just to be safe
+                elif structure.model_structure.sfd.has_edge(chain_1[i][1], chain_1[i][0]):  # just to be safe
                     # this edge is
-                    new_joint = (chain[i][1], chain[i][0])
-                    chain[i] = new_joint
+                    new_joint = (chain_1[i][1], chain_1[i][0])
+                    chain_1[i] = new_joint
 
         # making the chains start from stock
         for j in range(len(chains)):
@@ -440,10 +440,10 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
 
             # In building, there are two possibilities: \
             # 1) the needed element already exists as a result of other building activities (e.g. randomly importing) \
-            #    In this case, we don't import a new element but incorporate it in this new loop.
+            #    In this case, we don't import a new element but incorporate the existing one in this new loop.
             # 2) the needed element doesn't exist in this base structure. In this case, we have to import it.
             # step 2a : Iterate in current 'base' to find if there has already been an 'stand alone' element that fits.
-            already_existing = False
+            already_existing_variable = False
             print('Inc0', structure_operating['concept'])
             if structure_operating['concept'] in element_types:
                 # we need to look for this type of element in base. TODO: we do not consider this part right now. Currently only focus on functions.
@@ -469,12 +469,12 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
                                                      )
                             # get the uid of this existing element, to let structure_operating to move forward on base
                             uid = new_base.model_structure.sfd.nodes[element_name]['uid']
-                            # Change the flag 'already_existing' to True, so no need to import from generic structure
-                            already_existing = True
+                            # Change the flag 'already_existing_variable' to True, so no need to import from generic structure
+                            already_existing_variable = True
                             break  # now that we have found what we need from base, stop this loop
 
             # step 2b : If not found, import the target chain's current element into base_structure
-            if not already_existing:
+            if not already_existing_variable:
                 # Because we consider only loop/chain in this utility, so what imported must have a function
                 # TODO: in future when there are >1 order loops, may be different
                 print("    Starting building new element in base...")
@@ -549,22 +549,47 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
             # TODO: need to update for conditions with more than 1 stock
             if structure_operating['concept'] == concept_cld.graph['end_with']:
                 # close the loop by confirm connection from the last added var to stock
-                # 2 steps: 1) create a flow and 2) make it equivalent to the last added var
                 polarity_f_s = concept_cld.edges[list(concept_cld.in_edges(structure_operating['concept']))[0]]['polarity']
-                f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],
-                                            flow_from=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'negative' else None,
-                                            flow_to=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'positive' else None,
-                                            x=120 if polarity_f_s == 'positive' else 302,
-                                            y=172,
-                                            points=[[49, 172], [191, 172]] if polarity_f_s == 'positive' else [[236, 171], [392, 171]]
-                                            )
-                new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(structure_operating['base']),
-                                         to_var=new_base.model_structure.get_element_name_by_uid(f_uid),
-                                         polarity='positive')
+
+                # Check if there is already a flow to the ending stock that suffices
+                flow_not_existing = True  # a flag
+                in_edges_to_the_ending_stock = list(new_base.model_structure.sfd.in_edges(new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with)))
+                print("In edges to the ending stock,", in_edges_to_the_ending_stock)
+                if len(in_edges_to_the_ending_stock) == 0:  # there is no flow from/into this ending stock
+                    pass
+                else:  # there is already a flow from/into this ending stock
+                    for in_edge_to_the_ending_stock in in_edges_to_the_ending_stock:
+                        in_edge_to_the_ending_stock_polarity = new_base.model_structure.sfd.edges[in_edge_to_the_ending_stock]['polarity']
+                        print("Polarity of this in edge to the ending stock:", in_edge_to_the_ending_stock_polarity)
+                        if polarity_f_s == in_edge_to_the_ending_stock_polarity:
+                            print("This is the flow to the ending stock we want. it is {}".format(polarity_f_s))
+                            # TODO now we just use what we meet. This flow may already used for sth else. Need to check.
+                            flow_not_existing = False
+                            # incorporate this existing flow into the loop
+                            flow_name = in_edge_to_the_ending_stock[0]
+                            print("Flow's name:", flow_name)
+                            # change equation
+                            new_base.model_structure.sfd.nodes[flow_name]['function'] = [LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])]
+                            new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(structure_operating['base']),
+                                                     to_var=flow_name,
+                                                     polarity='positive')
+
+                # no satisfying flow existing. 2 steps: 1) create a flow and 2) make it equivalent to the last added var
+                if flow_not_existing:
+                    f_uid = new_base.build_flow(equation=[LINEAR, new_base.model_structure.get_element_name_by_uid(structure_operating['base'])],
+                                                flow_from=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'negative' else None,
+                                                flow_to=new_base.model_structure.get_element_name_by_uid(stock_uid_in_base_to_start_with) if polarity_f_s == 'positive' else None,
+                                                x=120 if polarity_f_s == 'positive' else 302,
+                                                y=172,
+                                                points=[[49, 172], [191, 172]] if polarity_f_s == 'positive' else [[236, 171], [392, 171]]
+                                                )
+                    new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(structure_operating['base']),
+                                             to_var=new_base.model_structure.get_element_name_by_uid(f_uid),
+                                             polarity='positive')
                 # stop building
                 continue_building = False
 
-            print("Finally,", structure_operating)
+            print("Finally1,", structure_operating)
             print("Finally2,", new_base.model_structure.sfd.nodes(data='function'))
 
         return new_base
@@ -632,6 +657,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     for param_id, param_element_uid in parameter_id.items():
         param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]
 
+    # store all figures generated in the optimization course
     optimization_figures = list()
 
     for i in range(rnd):
@@ -646,6 +672,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
             for j in range(epoch):
                 print('\nEpoch', j)
 
+                # figure generation
                 optimization_figures.append(plt.figure(figsize=(5, 7)))
                 ax_parameters = optimization_figures[-1].add_subplot(211)
                 ax_comparison = optimization_figures[-1].add_subplot(212)
@@ -665,6 +692,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                                                              comparison_axes=ax_comparison
                                                              )
 
+                # control iteration
                 if abs(distance_new - distance_old) < 0.0001:
                     print('    Distance small enough')
                     break
@@ -677,11 +705,11 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
 
                 distance_old = distance_new
 
-                print("Adjusting Param:   ", new_base.model_structure.get_element_name_by_uid(param_element_uid))
-                print("Param value before:", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                print("    Adjusting Param:   ", new_base.model_structure.get_element_name_by_uid(param_element_uid))
+                print("    Param value before:", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
                 new_param_value = new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] + param_alpha[param_id] * adjustment_direction
                 new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] = new_param_value
-                print("Param value after: ", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                print("    Param value after: ", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
                 param_history[param_id].append(new_param_value)
 
                 for p_id, p_history in param_history.items():
@@ -691,6 +719,6 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
 
                 plt.show()
 
-        print("Distance after round {} : {}".format(rnd, distance_old))
+        print("\nDistance after round {} : {}\n".format(rnd, distance_old))
 
     return new_base

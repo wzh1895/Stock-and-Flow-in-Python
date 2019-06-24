@@ -393,8 +393,6 @@ class ConceptCLDManager(object):
         concept_cld_decline_c.graph['end_with'] = STOCK
         self.concept_clds['decline_c'] = concept_cld_decline_c
 
-        # TODO: more concept CLDs to be added
-
     def get_concept_cld_by_name(self, concept_cld_name):
         for name, concept_cld in self.concept_clds.items():
             if name == concept_cld_name:
@@ -838,7 +836,7 @@ class StructureManager(object):
     def random_single(self):
         """Return one structure"""
         random_structure_uid = random.choice(self.generate_distribution_weighted())
-        print('    No.{} is chosen as base_structure;'.format(random_structure_uid))
+        print('\n    No.{} is chosen as base_structure;\n'.format(random_structure_uid))
         return self.tree.nodes[random_structure_uid]['structure']
 
     def random_pair_weighted(self):
@@ -1350,7 +1348,7 @@ class AddElementWindow(Toplevel):
 
     def confirm(self):
         try:
-            print("Here!!")
+            print("Manually adding element:")
             self.element_name = self.entry_name.get()
             self.value = text_to_equation(self.entry_value.get())
             self.x = int(self.entry_x.get())
@@ -1360,11 +1358,15 @@ class AddElementWindow(Toplevel):
                 self.flow_from = None if self.flow_from_variables_combobox.get() == '-' else self.flow_from_variables_combobox.get()
                 self.flow_to = None if self.flow_to_variables_combobox.get() == '-' else self.flow_to_variables_combobox.get()
                 # print("flow_from: {}, flow_to: {}".format(self.flow_from, self.flow_to))
+
             if self.element_type == STOCK:
                 self.structure.build_stock(name=self.element_name, initial_value=self.value, x=self.x, y=self.y)
             elif self.element_type == FLOW:
                 self.structure.build_flow(name=self.element_name, equation=self.value, x=self.x, y=self.y,
                                           flow_from=self.flow_from, flow_to=self.flow_to)
+                self.structure.connect_stock_flow(flow_name=self.element_name,
+                                                  new_flow_from=self.flow_from,
+                                                  new_flow_to=self.flow_to)
             elif self.element_type in [VARIABLE, PARAMETER]:
                 self.structure.build_aux(name=self.element_name, equation=self.value, x=self.x, y=self.y)
 
@@ -1444,8 +1446,8 @@ class GenericStructureManager(object):
     def __init__(self):
         self.generic_structures = dict()  # name:structure
         self.generic_structures_likelihood = dict()  # name:likelihood
-        # self.add_generic_structure(name='basic_stock_inflow')
-        # self.add_generic_structure(name='basic_stock_outflow')
+        self.add_generic_structure(name='basic_stock_inflow')
+        self.add_generic_structure(name='basic_stock_outflow')
         self.add_generic_structure(name='first_order_positive')
         self.add_generic_structure(name='first_order_negative')
 
@@ -1476,7 +1478,7 @@ class GenericStructureManager(object):
     def random_single(self):
         """Return one structure"""
         random_generic_structure_name = random.choice(self.generate_distribution())
-        print('    {} is chosen as target_structure;'.format(random_generic_structure_name))
+        print('\n    {} is chosen as target_structure;\n'.format(random_generic_structure_name))
         return self.generic_structures[random_generic_structure_name]
 
     def random_pair(self):
