@@ -132,7 +132,6 @@ class ExpansionPanel(Frame):
     # TODO this is the basis for one agent's routine in the future
     def expansion_loop(self):
 
-
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
@@ -192,14 +191,17 @@ class ExpansionPanel(Frame):
                                           concept_cld=concept_cld,
                                           target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-                self.task_list.append(3)
-                print("Opti2", base, new)
+                self.task_list.append(4)
 
-                new2 = optimize_parameters(base_structure=new,
-                                           reference_modes=self.reference_modes,
-                                           reference_mode_bindings=self.reference_mode_bindings)
-                # print("Opti3", new, new2)
-                self.structure_manager.derive_structure(base_structure=new, new_structure=new2)
+            elif chosen_task == 4:
+                """Optimize parameters in a candidate structure"""
+                base = self.structure_manager.random_single()
+
+                new = optimize_parameters(base_structure=base,
+                                          reference_modes=self.reference_modes,
+                                          reference_mode_bindings=self.reference_mode_bindings)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new)
+                self.task_list.append(3)
 
             # STEP: adjust candidate structures' activity
             for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):

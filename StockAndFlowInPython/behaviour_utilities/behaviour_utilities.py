@@ -116,8 +116,7 @@ def similarity_calc_pattern(who_compare, compare_with):
     return dist, comparison_figure
 
 
-def similarity_calc_behavior(who_compare, compare_with):
-    plt.close()
+def similarity_calc_behavior(who_compare, compare_with, comparison_axes):
     # print(who_compare)
     # print(compare_with)
     """
@@ -148,22 +147,28 @@ def similarity_calc_behavior(who_compare, compare_with):
     # factor_y2 = 100.0 / (compare_with.max() - compare_with.min()) if compare_with.max() != compare_with.min() else 1
     # series_2 = np.array([(i - compare_with.min()) * factor_y2 for i in x2]).reshape(-1, 1)
 
-    comparison_figure = Figure(figsize=(5, 4))
-    comparison_plot = comparison_figure.add_subplot(111)
+    # comparison_figure = Figure(figsize=(5, 4))
+    # comparison_plot = comparison_figure.add_subplot(111)
 
     dist, cost, acc, path = dtw(x1, x2, dist=lambda x, y: np.linalg.norm(x - y, ord=1))
     # print(basic_behavior, dist)
 
     # comparison_plot.plot(x1)
     # comparison_plot.plot(x2)
-    plt.axis([0, 100, 0, 100])
-    plt.xlabel('DT')
-    plt.plot(x1, label='Behavior')
-    plt.plot(x2, label='Reference')
-    plt.show()
+    # plt.axis([0, 100, 0, 100])
+    # plt.xlabel('DT')
+    # plt.plot(x1, label='Behavior')
+    # plt.plot(x2, label='Reference')
+    # plt.show()
 
+    behavior = comparison_axes.plot(x1, label='Behavior')
+    reference = comparison_axes.plot(x2, label='Reference')
+    comparison_axes.legend(loc='upper right')
+    comparison_axes.set_xlabel('DT')
+    comparison_axes.set_xlim(0, 100)
+    comparison_axes.set_ylim(0, 100)
     # print("    Distance: {}".format(dist))
-    return dist, comparison_figure
+    return dist
 
 
 if __name__ == '__main__':

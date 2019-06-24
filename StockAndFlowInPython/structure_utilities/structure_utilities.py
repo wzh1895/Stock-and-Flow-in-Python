@@ -632,16 +632,24 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     for param_id, param_element_uid in parameter_id.items():
         param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]
 
+    optimization_figures = list()
+
     for i in range(rnd):
         print('\nRound {}'.format(i))
+
         for param_id, param_element_uid in parameter_id.items():
             print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(uid),
-                                                 new_base.model_structure.get_element_by_uid(uid)['value'][0]))
+                                                   new_base.model_structure.get_element_by_uid(uid)['value'][0]))
             adjustment_direction = 1
             # optimizing one parameter
 
             for j in range(epoch):
                 print('\nEpoch', j)
+
+                optimization_figures.append(plt.figure(figsize=(5, 7)))
+                ax_parameters = optimization_figures[-1].add_subplot(211)
+                ax_comparison = optimization_figures[-1].add_subplot(212)
+                plt.figure(optimization_figures[-1].number)
 
                 print("Simulating...")
                 new_base.simulation_handler(25)
@@ -652,8 +660,10 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     bound_element_uid = reference_mode_bindings[reference_mode_name]
                     who_compare = new_base.model_structure.get_element_by_uid(bound_element_uid)['value']
                     compare_with = reference_mode_property[1]
-                    distance_new += similarity_calc_behavior(np.array(who_compare).reshape(-1, 1),
-                                                             np.array(compare_with).reshape(-1, 1))[0]
+                    distance_new += similarity_calc_behavior(who_compare=np.array(who_compare).reshape(-1, 1),
+                                                             compare_with=np.array(compare_with).reshape(-1, 1),
+                                                             comparison_axes=ax_comparison
+                                                             )
 
                 if abs(distance_new - distance_old) < 0.0001:
                     print('    Distance small enough')
@@ -667,17 +677,20 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
 
                 distance_old = distance_new
 
-                print("here!", new_base.model_structure.get_element_name_by_uid(param_element_uid))
-                print("here!", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                print("Adjusting Param:   ", new_base.model_structure.get_element_name_by_uid(param_element_uid))
+                print("Param value before:", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
                 new_param_value = new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] + param_alpha[param_id] * adjustment_direction
                 new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0] = new_param_value
-                print("here!", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
+                print("Param value after: ", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
                 param_history[param_id].append(new_param_value)
 
-        print("Opti6", "Distance", distance_old)
+                for p_id, p_history in param_history.items():
+                    ax_parameters.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
+                    ax_parameters.legend(loc='upper left')
+                    ax_parameters.set_xlabel('Iteration')
 
-    for param_id, p_history in param_history.items():
-        plt.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[param_id]))
-    plt.show()
+                plt.show()
+
+        print("Distance after round {} : {}".format(rnd, distance_old))
 
     return new_base
