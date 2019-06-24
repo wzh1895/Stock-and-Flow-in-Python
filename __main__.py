@@ -42,14 +42,6 @@ class ExpansionPanel(Frame):
         self.menubar.add_cascade(label='Reference', menu=self.reference_menu)
         self.reference_menu.add_command(label='Add reference mode', command=self.load_reference_mode_from_file)
 
-        # self.model_menu = Menu(self.menubar, tearoff=0)
-        # self.menubar.add_cascade(label='Model', menu=self.model_menu)
-        # self.model_menu.add_command(label='Add stock', command=self.add_stock)
-        # self.model_menu.add_command(label='Add flow', command=self.add_flow)
-        # self.model_menu.add_command(label='Add variable', command=self.add_variable)
-        # # TODO
-        # self.model_menu.add_command(label='Add connector', command=None)
-
         self.action_menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label='Action', menu=self.action_menu)
         self.action_menu.add_command(label='Expansion loop', command=self.expansion_loop)
@@ -63,6 +55,9 @@ class ExpansionPanel(Frame):
 
         self.btn_start_expansion = Button(self.control_bar, text='Start', command=self.expansion_loop)
         self.btn_start_expansion.pack(side=LEFT)
+
+        self.btn_build_element_for_ref_mode = Button(self.control_bar, text='Build ref mode', command=self.build_element_for_reference_modes)
+        self.btn_build_element_for_ref_mode.pack(side=LEFT)
 
         # self.btn_pause_expansion = Button(self.control_bar, text='Pause', command=self.pause_expansion)
         # self.btn_pause_expansion.pack(side=LEFT)
@@ -113,9 +108,21 @@ class ExpansionPanel(Frame):
         self.load_reference_mode_from_file()
 
         # Add a root structure
-        structure = SessionHandler()
-        self.structure_manager.add_structure(structure=structure)
+        structure_initial = SessionHandler()
+        self.structure_manager.add_structure(structure=structure_initial)
         self.binding_manager.update_combobox()
+
+        # Reset generic structure's likelihood
+        self.generic_structure_manager.reset_all_likelihood()
+
+        # Reset
+        self.generic_structure_manager.generate_distribution()
+
+        # Build element for each newly added reference mode in root structure
+        self.build_element_for_reference_modes()
+
+        # TODO: Check if all reference modes are built into all candidate structures. This is to allow that once adding
+        #  a new reference mode, all candidate structures can have this new ref mode's variable added.
 
         # Specify round to iterate
         self.iteration_time = ITERATION_TIMES
@@ -124,14 +131,7 @@ class ExpansionPanel(Frame):
 
     # TODO this is the basis for one agent's routine in the future
     def expansion_loop(self):
-        self.generic_structure_manager.reset_all_likelihood()
-        self.generic_structure_manager.generate_distribution()
 
-        # Build element for each newly added reference mode in root structure
-        self.build_element_for_reference_modes()
-
-        # TODO: Check if all reference modes are built into all candidate structures. This is to allow that once adding
-        #  a new reference mode, all candidate structures can have this new ref mode's variable added.
 
         i = 1
         while i <= self.iteration_time:
@@ -680,6 +680,8 @@ class BindingManager(Toplevel):
         self.update_combobox()
         selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
         selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
+        print()
+        print("Hereeee", self.tree.nodes(data=True))
         selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
             get_element_name_by_uid(selected_binding_element_uid)
         detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
@@ -898,7 +900,7 @@ class StructureManager(object):
 
 
 class CandidateStructureWindow(Toplevel):
-    def __init__(self, tree, sorted_tree, x=5, y=200):
+    def __init__(self, tree, sorted_tree, x=5, y=400):
         super().__init__()
         self.title("Candidate Structures")
         self.geometry("+{}+{}".format(x, y))

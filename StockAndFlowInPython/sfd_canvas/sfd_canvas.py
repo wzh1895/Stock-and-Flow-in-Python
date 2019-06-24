@@ -1,14 +1,6 @@
 from tkinter import *
-from tkinter import ttk
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from StockAndFlowInPython.sfd_canvas.session_handler import SessionHandler
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
-import xml.dom.minidom
-import shutil
-import os
-
 
 class SFDCanvas(Frame):
     def __init__(self, master, width=900):

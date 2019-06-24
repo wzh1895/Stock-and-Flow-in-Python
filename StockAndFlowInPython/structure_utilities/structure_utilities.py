@@ -655,9 +655,9 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     distance_new += similarity_calc_behavior(np.array(who_compare).reshape(-1, 1),
                                                              np.array(compare_with).reshape(-1, 1))[0]
 
-                # if abs(distance_new - distance_old) < 0.00001:
-                #     print('    Distance small enough')
-                #     break
+                if abs(distance_new - distance_old) < 0.0001:
+                    print('    Distance small enough')
+                    break
 
                 if distance_new <= distance_old:  # if getting closer to optimum
                     print('    Getting closer {}\n'.format(distance_new))
