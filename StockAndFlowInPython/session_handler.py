@@ -401,8 +401,8 @@ class SessionHandler(object):
 
         # if points are not specified but positions are:
         if len(points) == 0:
-            pts_0 = [x-50, y]
-            pts_1 = [x+50, y]
+            pts_0 = [x-40, y]
+            pts_1 = [x+40, y]
             points = [pts_0, pts_1]
 
         uid = self.model_structure.add_flow(name=name,

@@ -4,12 +4,10 @@ from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
-    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, \
-    CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES, \
-    PURGE_SWITCH, PURGE_THRESHOLD
+    COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, PURGE_SWITCH, PURGE_THRESHOLD
 from StockAndFlowInPython.session_handler import SessionHandler, SFDWindow, GraphNetworkWindow, NewGraphNetworkWindow
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
-    apply_a_concept_cld, optimize_parameters
+    apply_a_concept_cld, optimize_parameters, import_flow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
@@ -48,6 +46,20 @@ class ExpansionPanel(Frame):
 
         self.master.config(menu=self.menubar)
 
+        # Control Iteration
+
+        self.control_iteration = LabelFrame(self.master, text='Iteration Setting', font=5)
+        self.control_iteration.pack(side=TOP, anchor='w', fill=BOTH)
+
+        self.label_iteration = Label(self.control_iteration, text='Iteration')
+        self.label_iteration.pack(side=LEFT)
+
+        self.entry_iteration = Entry(self.control_iteration)
+        self.entry_iteration.pack(side=LEFT)
+
+        self.btn_set_iter_times = Button(self.control_iteration, text='Set', command=self.set_iteration_time)
+        self.btn_set_iter_times.pack(side=LEFT)
+
         # Control bar
 
         self.control_bar = LabelFrame(self.master, text='Expansion Control', font=5)
@@ -59,12 +71,6 @@ class ExpansionPanel(Frame):
         self.btn_build_element_for_ref_mode = Button(self.control_bar, text='Build ref mode', command=self.build_element_for_reference_modes)
         self.btn_build_element_for_ref_mode.pack(side=LEFT)
 
-        # self.btn_pause_expansion = Button(self.control_bar, text='Pause', command=self.pause_expansion)
-        # self.btn_pause_expansion.pack(side=LEFT)
-        #
-        # self.btn_resume_expansion = Button(self.control_bar, text='Resume', command=self.resume_expansion)
-        # self.btn_resume_expansion.pack(side=LEFT)
-
         # Bulletin board
         self.bulletin_board = LabelFrame(self.master, text='Information', font=5)
         self.bulletin_board.pack(side=TOP, anchor='w', fill=BOTH)
@@ -72,8 +78,11 @@ class ExpansionPanel(Frame):
         self.lb_iteration_round = Label(self.bulletin_board, text='Iter', font=10)
         self.lb_iteration_round.pack(side=LEFT)
 
-        # # Pause_resume control flag
-        # self.if_loop_paused = True
+        # Specify round to iterate
+        self.iteration_time = ITERATION_TIMES
+
+        self.entry_iteration.delete(0, END)
+        self.entry_iteration.insert(0, self.iteration_time)
 
         # Initialize concept CLDs
         self.concept_cld_manager = ConceptCLDManager()
@@ -102,7 +111,7 @@ class ExpansionPanel(Frame):
 
         # TODO this task list will be the predecessor of 'Code Rack'
         # Initialize task list
-        self.task_list = [3]
+        self.task_list = [4, 5]
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -121,13 +130,14 @@ class ExpansionPanel(Frame):
         # Build element for each newly added reference mode in root structure
         self.build_element_for_reference_modes()
 
-        # TODO: Check if all reference modes are built into all candidate structures. This is to allow that once adding
-        #  a new reference mode, all candidate structures can have this new ref mode's variable added.
-
-        # Specify round to iterate
-        self.iteration_time = ITERATION_TIMES
-
         # self.expansion_loop()
+
+    def set_iteration_time(self):
+        try:
+            self.iteration_time = int(self.entry_iteration.get())
+            print("Set iteration time to {}".format(self.iteration_time))
+        except ValueError:
+            print("Fail to set iteration time.")
 
     # TODO this is the basis for one agent's routine in the future
     def expansion_loop(self):
@@ -135,6 +145,7 @@ class ExpansionPanel(Frame):
         i = 1
         while i <= self.iteration_time:
             print('\n\nExpansion: Iterating {}'.format(i))
+            print('\nTask list: {}\n'.format(self.task_list))
             self.lb_iteration_round.configure(text='Iter ' + str(i))
             self.lb_iteration_round.update()
 
@@ -157,7 +168,8 @@ class ExpansionPanel(Frame):
                                            target_structure=target)
                 # new = expand_structure(base_structure=base, target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-                self.task_list.append(random.choice([1, 2]))
+                # self.task_list.append(random.choice([1, 2]))
+                self.task_list.append(4)
 
             elif chosen_task == 2:
                 """Create a new causal link in an existing candidate structure"""
@@ -200,12 +212,25 @@ class ExpansionPanel(Frame):
                 new = optimize_parameters(base_structure=base,
                                           reference_modes=self.reference_modes,
                                           reference_mode_bindings=self.reference_mode_bindings)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new, overwrite=True)
+                # self.task_list.append(5)
+
+            elif chosen_task == 5:
+                """Import a flow"""
+                base = self.structure_manager.random_single()
+                target = self.generic_structure_manager.random_single()
+                # get all elements in base structure
+                base_structure_stocks = list(base.model_structure.all_certain_type(STOCK))
+                # pick a stock from base_structure to start with. Now: randomly. Future: guided by activity.
+                start_with_element_base = random.choice(base_structure_stocks)
+                new = import_flow(base_structure=base,
+                                  start_with_element_base=start_with_element_base,
+                                  target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-                self.task_list.append(3)
+                # self.task_list.append(4)
 
             # STEP: adjust candidate structures' activity
-            for k in range(CANDIDATE_STRUCTURE_ACTIVITY_UPDATE_TIMES):
-                self.update_candidate_structure_activity_by_behavior()
+            self.update_candidate_structure_activity_by_behavior()
 
             # STEP: cool down those not simulatable structures
             if COOL_DOWN_SWITCH:
@@ -218,11 +243,12 @@ class ExpansionPanel(Frame):
 
             # STEP: sort candidate structures by activity
             # TODO: control this not only by number
-            if i > 4:  # get enough candidate structures to sort
+            if i > 3:  # get enough candidate structures to sort
                 self.structure_manager.sort_by_activity()
 
             # global display updates needed
             self.binding_manager.update_combobox()
+            print('\nTask list: {}\n'.format(self.task_list))
             i += 1
 
     def load_reference_mode_from_file(self):
@@ -246,22 +272,22 @@ class ExpansionPanel(Frame):
                 self.binding_manager.generate_binding_list_box()
         structure.simulation_handler(25)
 
-        self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
+        # self.structure_manager.if_can_simulate[self.structure_manager.get_current_candidate_structure_uid()] = True
 
     def update_candidate_structure_activity_by_behavior(self):
-        if len(self.structure_manager.those_can_simulate) > 2:  # when there are more than 2 simulable candidates
+        if len(list(self.structure_manager.tree.nodes)) > 3:  # when there are more than 2 simulable candidates
             # Make more comparisons as there are more candidate structures
-            iter_times = len(self.structure_manager.those_can_simulate) // 2
+            iter_times = len(list(self.structure_manager.tree.nodes)) // 3
             for i in range(iter_times):
                 # Get 2 random candidates
                 random_two_candidates = [None, None]
                 while random_two_candidates[0] == random_two_candidates[1]:
                     # Here we don't use the weighted random pair, to give those less active more opportunity
                     random_two_candidates = self.structure_manager.random_pair_even()
-                    while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and
-                               self.structure_manager.if_can_simulate[random_two_candidates[1]]):
-                        # we have to get two simulatable structures to compare their behaviors
-                        random_two_candidates = self.structure_manager.random_pair_even()
+                    # while not (self.structure_manager.if_can_simulate[random_two_candidates[0]] and
+                    #            self.structure_manager.if_can_simulate[random_two_candidates[1]]):
+                    #     # we have to get two simulatable structures to compare their behaviors
+                    #     random_two_candidates = self.structure_manager.random_pair_even()
                 print("    Two candidate structures chosen for comparison: ", random_two_candidates)
                 # Calculate their similarity to reference mode
                 candidate_0_distance = 0
@@ -474,7 +500,7 @@ class ReferenceModeManager(Toplevel):
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
         self.reference_mode_plot.plot(
             self.time_series[self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())], '*')
-        self.reference_mode_plot.set_xlabel("Time")
+        self.reference_mode_plot.set_xlabel("DT (Time * 4)")
         self.reference_mode_plot.set_ylabel(
             self.reference_mode_list_box.get(self.reference_mode_list_box.curselection()))
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
@@ -486,6 +512,7 @@ class ReferenceModeManager(Toplevel):
         selected_reference_mode = self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())
 
         # remove this reference mode from 1. ref mode list 2. binding list
+        print("reference modes", self.reference_modes)
         self.reference_modes.pop(selected_reference_mode)
         self.reference_modes_binding.pop(selected_reference_mode)
         self.generate_reference_mode_list_box()
@@ -681,7 +708,7 @@ class BindingManager(Toplevel):
         selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
         selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
         print()
-        print("Hereeee", self.tree.nodes(data=True))
+        print("Current expansion tree:", self.tree.nodes(data=True))
         selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
             get_element_name_by_uid(selected_binding_element_uid)
         detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
@@ -719,8 +746,8 @@ class StructureManager(object):
         self.candidate_structure_uid = 0
         self.sorted_tree = list()
         self.candidate_structure_window = CandidateStructureWindow(tree=self.tree, sorted_tree=self.sorted_tree)
-        self.if_can_simulate = dict()
-        self.those_can_simulate = list()
+        # self.if_can_simulate = dict()
+        # self.those_can_simulate = list()
         self.those_cannot_simulate = list()
 
     def sort_by_activity(self):
@@ -758,8 +785,15 @@ class StructureManager(object):
         print(
             '    StructureManager: Can not find uid for given structure {}.'.format(structure))
 
-    def derive_structure(self, base_structure, new_structure):
+    def derive_structure(self, base_structure, new_structure, overwrite=False):
         """Derive a new structure from an existing one"""
+        # # this is designed for 'optimization of parameters', cuz
+        if overwrite:
+            base_uid = self.get_uid_by_structure(structure=base_structure)
+            self.tree.nodes[base_uid]['structure'] = new_structure
+            base_structure.simulation_handler(25)
+            return
+
         # decide if this new_structure has been generated before. if so: confirm activity. if not: confirm it.
         # 1. identical to base_structure it self
         # if nx.is_isomorphic(base_structure.model_structure.sfd, new_structure.model_structure.sfd):
@@ -778,15 +812,17 @@ class StructureManager(object):
         for neighbour in self.tree.neighbors(self.get_uid_by_structure(base_structure)):
             GM = iso.DiGraphMatcher(self.tree.nodes[neighbour]['structure'].model_structure.sfd,
                                     new_structure.model_structure.sfd,
-                                    node_match=iso.categorical_node_match(attr=['function', 'flow_from', 'flow_to'],
+                                    node_match=iso.categorical_node_match(attr=['function', 'flow_from', 'flow_to', 'value'],
                                                                           # attr=['equation', 'value'],
-                                                                          default=[None, None, None],
+                                                                          default=[None, None, None, None],
                                                                           # default=[None, None]
                                                                           )
                                     )
             if GM.is_isomorphic():
                 # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
                 self.tree.nodes[neighbour]['activity'] += 1
+                if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] > 1:
+                    self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= 1
                 # print(self.tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
                 # print(new_structure.model_structure.sfd.nodes(data=True))
                 print("    The new structure already exists in base structure's neighbours")
@@ -795,16 +831,20 @@ class StructureManager(object):
         # confirm a new node
         new_uid = self.get_new_candidate_structure_uid()
         print('    Deriving structure from {} to {}'.format(self.get_uid_by_structure(base_structure), new_uid))
-        new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
+        # TODO: Activity dynamics
+        # 1. A newly derived structure should gain focus for a while
+        # 2. If it is not promising enough, its newly gained activity will be transferred to other candidates through comparison
+        # new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
+        new_activity = 40
         self.tree.add_node(new_uid,
                            structure=new_structure,
                            activity=new_activity
                            )
 
         # subtraction this part of activity from the base_structure
-        self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
-        if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
-            self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
+        # self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
+        # if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
+        #     self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
 
         # build a link from the old structure to the new structure
         self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
@@ -812,18 +852,21 @@ class StructureManager(object):
 
         new_structure.simulation_handler(25)
 
-        # TODO decide if this part still needs to be kept, for all candidate structures are supposed to be simulatable.
-        try:
-            new_structure.simulation_handler(25)
-            self.if_can_simulate[new_uid] = True
-            self.those_can_simulate.append(new_uid)
-        except KeyError:
-            self.if_can_simulate[new_uid] = False
-            self.those_cannot_simulate.append(new_uid)
-
-        print("Simulatable structures:", self.if_can_simulate)
+        # TODO: decide if this part still needs to be kept, for all candidate structures are supposed to be simulatable.
+        # try:
+        #     new_structure.simulation_handler(25)
+        #     self.if_can_simulate[new_uid] = True
+        #     self.those_can_simulate.append(new_uid)
+        # except KeyError:
+        #     self.if_can_simulate[new_uid] = False
+        #     self.those_cannot_simulate.append(new_uid)
+        #
+        # print("Simulatable structures:", self.if_can_simulate)
 
         self.update_candidate_structure_window()
+
+        # highlight the newly derived structure #Todo: why this is not working?
+        # self.candidate_structure_window.candidate_structure_list_box.activate(new_uid)
 
     def cool_down(self):
         """Cool down structures"""

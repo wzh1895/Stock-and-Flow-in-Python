@@ -116,13 +116,14 @@ def similarity_calc_pattern(who_compare, compare_with):
     return dist, comparison_figure
 
 
-def similarity_calc_behavior(who_compare, compare_with, comparison_axes):
+def similarity_calc_behavior(who_compare, compare_with, comparison_axes=None):
     # print(who_compare)
     # print(compare_with)
     """
     Compare two behaviors by their behaviors. There's therefore no adjustment on Y direction.
     :param who_compare:
     :param compare_with:
+    :param comparison_axes: the axes to draw on
     :return:
     """
     # stretch x0 to a length close to 100.
@@ -161,12 +162,13 @@ def similarity_calc_behavior(who_compare, compare_with, comparison_axes):
     # plt.plot(x2, label='Reference')
     # plt.show()
 
-    behavior = comparison_axes.plot(x1, label='Behavior')
-    reference = comparison_axes.plot(x2, label='Reference')
-    comparison_axes.legend(loc='upper right')
-    comparison_axes.set_xlabel('DT')
-    comparison_axes.set_xlim(0, 100)
-    comparison_axes.set_ylim(0, 100)
+    if comparison_axes is not None:
+        behavior = comparison_axes.plot(x1, label='Behavior')
+        reference = comparison_axes.plot(x2, label='Reference')
+        comparison_axes.legend(loc='upper right')
+        comparison_axes.set_xlabel('DT')
+        comparison_axes.set_xlim(0, 100)
+        comparison_axes.set_ylim(0, 100)
     # print("    Distance: {}".format(dist))
     return dist
 

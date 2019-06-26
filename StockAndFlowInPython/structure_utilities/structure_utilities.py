@@ -122,7 +122,10 @@ def new_expand_structure(base_structure, start_with_element_base, target_structu
             flow_from = start_with_element_base
             flow_to = None
         # TODO: there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
-        new_base.build_flow(equation=equation, x=x, y=y, flow_from=flow_from, flow_to=flow_to)
+        f_uid = new_base.build_flow(equation=equation, x=x, y=y, flow_from=flow_from, flow_to=flow_to)
+        new_base.connect_stock_flow(flow_name=new_base.model_structure.get_element_name_by_uid(f_uid),
+                                    new_flow_from=flow_from,
+                                    new_flow_to=flow_to)
 
     def import_flow_var_param_from_target():
         chosen_var_name_in_target = random.choice(
@@ -192,6 +195,77 @@ def new_expand_structure(base_structure, start_with_element_base, target_structu
     elif start_with_element_base_type in [FLOW, VARIABLE, PARAMETER]:
         # import a {flow, variable, parameter} from target structure
         import_flow_var_param_from_target()
+
+    return new_base
+
+
+def import_flow(base_structure, start_with_element_base, target_structure):
+    print("    **** Building new structure...")
+    new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
+                                    uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
+                                    name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
+                                    uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
+    new_base = SessionHandler(model_structure=new_model_structure)
+    print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
+
+    print("    **** {} in base structure is chosen to start with".format(start_with_element_base))
+    # print("    **** Details: ", new_base.model_structure.sfd.nodes[start_with_element_base])
+
+    def import_flow_from_target():
+        all_flows_in_target = target_structure.model_structure.all_certain_type(FLOW)
+        chosen_flow_name_in_target = random.choice(all_flows_in_target)
+        print("    **** {} in target_structure is chosen to import".format(chosen_flow_name_in_target))
+        chosen_flow_in_target = target_structure.model_structure.sfd.nodes[chosen_flow_name_in_target]
+        # print("    **** Details: ", chosen_flow_in_target)
+
+        # control that in base_structure there should not be 2 inflows or 2 outflows
+        # TODO update this flow number control mechanism
+        flows_connected_with_starting_stock = list(new_base.model_structure.sfd.in_edges(start_with_element_base))
+        print("Flows connected with starting stock", flows_connected_with_starting_stock)
+        if len(flows_connected_with_starting_stock) >= 2:
+            return new_base
+        else:
+            if chosen_flow_in_target['flow_from'] is None:  # it is an inflow
+                for flow_connected_with_starting_stock in flows_connected_with_starting_stock:
+                    if new_base.model_structure.sfd.edges[flow_connected_with_starting_stock]['polarity'] == 'positive':
+                        # there is already an inflow in base structure
+                        return new_base
+            elif chosen_flow_in_target['flow_to'] is None:  # it is an outflow
+                for flow_connected_with_starting_stock in flows_connected_with_starting_stock:
+                    if new_base.model_structure.sfd.edges[flow_connected_with_starting_stock]['polarity'] == 'negative':
+                        # there is already an outflow in base structure
+                        return new_base
+
+        x = chosen_flow_in_target['pos'][0]
+        y = chosen_flow_in_target['pos'][1]
+
+        if chosen_flow_in_target['function'] is None:  # the chosen flow is a constant one
+            equation = chosen_flow_in_target['value'][0]
+        else:  # it has an equation
+            # set this equation to 0: we don't put equation directly in flow. Instead, we build this equation elsewhere,
+            # then replace flow by it (or 'linear' flow from it).
+            # TODO: if put 0 here, a problem of 0 division may occur.
+            equation = 1
+
+        flow_from = None
+        flow_to = None
+        if chosen_flow_in_target['flow_from'] is None and chosen_flow_in_target['flow_to'] is not None:
+            flow_from = None
+            flow_to = start_with_element_base
+        elif chosen_flow_in_target['flow_from'] is not None and chosen_flow_in_target['flow_to'] is None:
+            flow_from = start_with_element_base
+            flow_to = None
+        # TODO: there is a third possibility: the chosen flow in target structure connects 2 stocks. Leave for later.
+        f_uid = new_base.build_flow(equation=equation, x=x, y=y, flow_from=flow_from, flow_to=flow_to)
+        new_base.connect_stock_flow(flow_name=new_base.model_structure.get_element_name_by_uid(f_uid),
+                                    new_flow_from=flow_from,
+                                    new_flow_to=flow_to)
+
+    # TODO: this mechanism need to be updated, using agent based algorithm
+    start_with_element_base_type = new_base.model_structure.sfd.nodes[start_with_element_base]['element_type']
+    if start_with_element_base_type == STOCK:
+        # only flows can influence it. we need to find a flow from target structure.
+        import_flow_from_target()
 
     return new_base
 
@@ -602,9 +676,13 @@ class ParameterIdPosManager(object):
         self.param_y = 30
 
     def get_new_pid_pos(self):
+        self.param_x += 80 * self.param_id
         self.param_id += 1
-        self.param_x += 80
         return self.param_id, self.param_x, self.param_y
+
+    def get_new_pid(self):
+        self.param_id += 1
+        return self.param_id
 
 
 def optimize_parameters(base_structure, reference_modes, reference_mode_bindings):
@@ -620,10 +698,16 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     parameter_id_pos_manager = ParameterIdPosManager()
     parameter_id = dict()  # parameter_id : uid
 
+    # search all existing parameters and add them to 'parameter_id'
+    parameters_in_base = base_structure.model_structure.all_certain_type(PARAMETER)
+    for parameter_in_base in parameters_in_base:  # all params in base
+        parameter_in_base_uid = base_structure.model_structure.sfd.nodes[parameter_in_base]['uid']
+        parameter_id[parameter_id_pos_manager.get_new_pid()] = parameter_in_base_uid
+
     # search all functions and derive parameters (standalone variables) for them
     for element_name in list(new_base.model_structure.sfd.nodes):
         element_properties = new_base.model_structure.sfd.nodes[element_name]
-        if element_properties['function'] is not None:
+        if element_properties['function'] is not None:  # if it has a function
             func = element_properties['function']
             print("Opti0", func)
             params = func[1:]  # this is a copy, so we need an additional step to change the original function[]
@@ -643,16 +727,26 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(uid),
                                              to_var=element_name
                                              )
+        elif element_properties['function'] is None and element_properties['element_type'] not in [STOCK, PARAMETER]:  # it does not have a function, and not a stock
+            pid, px, py = parameter_id_pos_manager.get_new_pid_pos()
+            uid = new_base.build_aux(equation=element_properties['value'][0], x=px, y=py)
+            parameter_id[pid] = uid
+            element_properties['function'] = [LINEAR, new_base.model_structure.get_element_name_by_uid(uid)]
+            new_base.build_connector(from_var=new_base.model_structure.get_element_name_by_uid(uid),
+                                     to_var=element_name
+                                     )
 
     # hyper params
-    rnd = 10
+    rnd = 4
     epoch = 5
 
     distance_old = 100
     distance_new = 0
 
+    plotting_switch = False
+
     param_history = dict()
-    param_alpha = {1: 1, 2: 0.2}
+    param_alpha = {1: 0.5, 2: 0.5}  # step length for adjustment
 
     for param_id, param_element_uid in parameter_id.items():
         param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]
@@ -660,23 +754,29 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     # store all figures generated in the optimization course
     optimization_figures = list()
 
+    # Before a new optimization loop, close all existing opt figures to save memory
+    for opt_fig in optimization_figures:
+        plt.close(opt_fig)
+    del optimization_figures[:]
+
     for i in range(rnd):
         print('\nRound {}'.format(i))
 
         for param_id, param_element_uid in parameter_id.items():
-            print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(uid),
-                                                   new_base.model_structure.get_element_by_uid(uid)['value'][0]))
+            print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(param_element_uid),
+                                                   new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]))
             adjustment_direction = 1
             # optimizing one parameter
 
             for j in range(epoch):
-                print('\nEpoch', j)
+                print('\nRound {} Epoch {}'.format(i, j))
 
                 # figure generation
-                optimization_figures.append(plt.figure(figsize=(5, 7)))
-                ax_parameters = optimization_figures[-1].add_subplot(211)
-                ax_comparison = optimization_figures[-1].add_subplot(212)
-                plt.figure(optimization_figures[-1].number)
+                if plotting_switch:
+                    optimization_figures.append(plt.figure(figsize=(5, 7)))
+                    ax_parameters = optimization_figures[-1].add_subplot(211)
+                    ax_comparison = optimization_figures[-1].add_subplot(212)
+                    plt.figure(optimization_figures[-1].number)
 
                 print("Simulating...")
                 new_base.simulation_handler(25)
@@ -689,12 +789,12 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     compare_with = reference_mode_property[1]
                     distance_new += similarity_calc_behavior(who_compare=np.array(who_compare).reshape(-1, 1),
                                                              compare_with=np.array(compare_with).reshape(-1, 1),
-                                                             comparison_axes=ax_comparison
+                                                             comparison_axes=ax_comparison if plotting_switch else None
                                                              )
 
                 # control iteration
                 if abs(distance_new - distance_old) < 0.0001:
-                    print('    Distance small enough')
+                    print('    Distance change small enough')
                     break
 
                 if distance_new <= distance_old:  # if getting closer to optimum
@@ -712,12 +812,17 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                 print("    Param value after: ", new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0])
                 param_history[param_id].append(new_param_value)
 
-                for p_id, p_history in param_history.items():
-                    ax_parameters.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
-                    ax_parameters.legend(loc='upper left')
-                    ax_parameters.set_xlabel('Iteration')
+                print("    \nParameter values:")
+                for a, b in param_history.items():
+                    print("    {}: {}".format(new_base.model_structure.get_element_name_by_uid(parameter_id[a]), b[-1]))
 
-                plt.show()
+                if plotting_switch:
+                    for p_id, p_history in param_history.items():
+                        ax_parameters.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
+                        ax_parameters.legend(loc='upper left')
+                        ax_parameters.set_xlabel('Iteration')
+
+                    plt.show()
 
         print("\nDistance after round {} : {}\n".format(rnd, distance_old))
 
