@@ -500,7 +500,7 @@ class ReferenceModeManager(Toplevel):
         self.reference_mode_plot = self.reference_mode_figure.add_subplot(111)
         self.reference_mode_plot.plot(
             self.time_series[self.reference_mode_list_box.get(self.reference_mode_list_box.curselection())], '*')
-        self.reference_mode_plot.set_xlabel("DT (Time * 4)")
+        self.reference_mode_plot.set_xlabel('Steps (Time: {} / Dt: {})'.format(25, 0.25))
         self.reference_mode_plot.set_ylabel(
             self.reference_mode_list_box.get(self.reference_mode_list_box.curselection()))
         self.reference_mode_graph = FigureCanvasTkAgg(self.reference_mode_figure, master=self.fm_display)
