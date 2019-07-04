@@ -111,7 +111,7 @@ class ExpansionPanel(Frame):
 
         # TODO this task list will be the predecessor of 'Code Rack'
         # Initialize task list
-        self.task_list = [4, 5]
+        self.task_list = [3, 4]
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -212,7 +212,7 @@ class ExpansionPanel(Frame):
                 new = optimize_parameters(base_structure=base,
                                           reference_modes=self.reference_modes,
                                           reference_mode_bindings=self.reference_mode_bindings)
-                self.structure_manager.derive_structure(base_structure=base, new_structure=new, overwrite=True)
+                self.structure_manager.derive_structure(base_structure=base, new_structure=new, overwrite=False)
                 # self.task_list.append(5)
 
             elif chosen_task == 5:
@@ -1003,11 +1003,11 @@ class CandidateStructureWindow(Toplevel):
             top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
             for element in self.tree.nodes:
                 if element in top_three:
-                    tree_node_color.append('orangered')
-                else:
                     tree_node_color.append('skyblue')
+                else:
+                    tree_node_color.append('orangered')
         else:
-            tree_node_color = 'skyblue'
+            tree_node_color = 'orangered'
         # print("HERE", tree_node_color)
         self.tree_window.update_graph_network(node_color=tree_node_color)
 
@@ -1589,7 +1589,7 @@ class GenericStructuresLikelihoodWindow(Toplevel):
 def main():
     root = Tk()
     root.geometry("+5+50")
-    root.wm_title("Expansion Panel")
+    root.wm_title("Platform Controller")
     root.configure(background='#fff')
     ExpansionPanel(root)
     root.mainloop()
