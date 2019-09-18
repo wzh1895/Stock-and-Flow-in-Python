@@ -743,10 +743,10 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     distance_old = 100
     distance_new = 0
 
-    plotting_switch = False
+    plotting_switch = True
 
     param_history = dict()
-    param_alpha = {1: 0.5, 2: 0.5}  # step length for adjustment
+    param_alpha = {1: 0.3, 2: 0.3}  # step length for adjustment
 
     for param_id, param_element_uid in parameter_id.items():
         param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]

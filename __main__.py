@@ -111,7 +111,7 @@ class ExpansionPanel(Frame):
 
         # TODO this task list will be the predecessor of 'Code Rack'
         # Initialize task list
-        self.task_list = [3, 4]
+        self.task_list = [5, 4]
 
         # TODO test
         self.load_reference_mode_from_file()
@@ -203,7 +203,7 @@ class ExpansionPanel(Frame):
                                           concept_cld=concept_cld,
                                           target_structure=target)
                 self.structure_manager.derive_structure(base_structure=base, new_structure=new)
-                self.task_list.append(4)
+                # self.task_list.append(4)
 
             elif chosen_task == 4:
                 """Optimize parameters in a candidate structure"""
@@ -1491,8 +1491,8 @@ class GenericStructureManager(object):
         self.generic_structures_likelihood = dict()  # name:likelihood
         self.add_generic_structure(name='basic_stock_inflow')
         self.add_generic_structure(name='basic_stock_outflow')
-        self.add_generic_structure(name='first_order_positive')
-        self.add_generic_structure(name='first_order_negative')
+        # self.add_generic_structure(name='first_order_positive')
+        # self.add_generic_structure(name='first_order_negative')
 
         self.generic_structures_likelihood_window = GenericStructuresLikelihoodWindow(
             generic_structures_likelihood=self.generic_structures_likelihood)
