@@ -90,7 +90,7 @@ class ExpansionPanel(Frame):
         # Initialize generic structures
         self.generic_structure_manager = GenericStructureManager()
 
-        # Initial expansion tree
+        # Initial expansion expansion_tree
         self.expansion_tree = nx.DiGraph()
 
         # Initialize structure manager
@@ -255,7 +255,7 @@ class ExpansionPanel(Frame):
         self.reference_mode_manager.load_reference_mode_from_file()
 
     def build_element_for_reference_modes(self):
-        # Get the first (also only) structure from expansion tree
+        # Get the first (also only) structure from expansion expansion_tree
         structure = self.structure_manager.tree.nodes[list(self.structure_manager.tree.nodes)[0]]['structure']
         for reference_mode_name, reference_mode_properties in self.reference_modes.items():
             # some ref mode may have been built, so we need to check with bindings.
@@ -653,7 +653,7 @@ class BindingManager(Toplevel):
     def add_binding(self):
         if self.selected_reference_mode is not None:
             if self.selected_variable is not None:
-                # print("Here!", self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes(data=True))
+                # print("Here!", self.expansion_tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes(data=True))
                 self.reference_modes_binding[self.selected_reference_mode] = \
                 self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes[
                     self.selected_variable]['uid']
@@ -708,7 +708,7 @@ class BindingManager(Toplevel):
         selected_binding_name = self.binding_list_box.get(self.binding_list_box.curselection())
         selected_binding_element_uid = self.reference_modes_binding[selected_binding_name]
         print()
-        print("Current expansion tree:", self.tree.nodes(data=True))
+        print("Current expansion expansion_tree:", self.tree.nodes(data=True))
         selected_binding_element_name = self.tree.nodes[int(self.selected_structure)]['structure'].model_structure. \
             get_element_name_by_uid(selected_binding_element_uid)
         detail_text = "Ref mode: {} ; Element No.{}, {}".format(selected_binding_name,
@@ -753,7 +753,7 @@ class StructureManager(object):
     def sort_by_activity(self):
         # sort all candidate structures by activity
         self.sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
-        print('Sorted tree:', self.sorted_tree)
+        print('Sorted expansion_tree:', self.sorted_tree)
         string = ''
         for i in range(3):
             string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
@@ -778,7 +778,7 @@ class StructureManager(object):
         self.update_candidate_structure_window()
 
     def get_uid_by_structure(self, structure):
-        # print(self.tree.nodes(data=True))
+        # print(self.expansion_tree.nodes(data=True))
         for u in list(self.tree.nodes):
             if self.tree.nodes[u]['structure'] == structure:
                 return u
@@ -819,11 +819,11 @@ class StructureManager(object):
                                                                           )
                                     )
             if GM.is_isomorphic():
-                # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
+                # if nx.is_isomorphic(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
                 self.tree.nodes[neighbour]['activity'] += 1
                 if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] > 1:
                     self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= 1
-                # print(self.tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
+                # print(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
                 # print(new_structure.model_structure.sfd.nodes(data=True))
                 print("    The new structure already exists in base structure's neighbours")
                 return
@@ -834,7 +834,7 @@ class StructureManager(object):
         # TODO: Activity dynamics
         # 1. A newly derived structure should gain focus for a while
         # 2. If it is not promising enough, its newly gained activity will be transferred to other candidates through comparison
-        # new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
+        # new_activity = self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
         new_activity = 40
         self.tree.add_node(new_uid,
                            structure=new_structure,
@@ -842,9 +842,9 @@ class StructureManager(object):
                            )
 
         # subtraction this part of activity from the base_structure
-        # self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
-        # if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
-        #     self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
+        # self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
+        # if self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
+        #     self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
 
         # build a link from the old structure to the new structure
         self.tree.add_edge(self.get_uid_by_structure(base_structure), new_uid)
@@ -950,7 +950,7 @@ class CandidateStructureWindow(Toplevel):
 
         self.tree = tree
         self.sorted_tree = sorted_tree
-        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion tree", node_color="skyblue",
+        self.tree_window = NewGraphNetworkWindow(self.tree, window_title="Expansion expansion_tree", node_color="skyblue",
                                                  width=550, height=550, x=1100, y=50, attr='activity')
         self.selected_candidate_structure = None
 
@@ -999,7 +999,7 @@ class CandidateStructureWindow(Toplevel):
 
     def update_tree_display(self):
         tree_node_color = list()
-        if len(self.sorted_tree) > 3:  # when the sorted tree is generated
+        if len(self.sorted_tree) > 3:  # when the sorted expansion_tree is generated
             top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
             for element in self.tree.nodes:
                 if element in top_three:
@@ -1015,7 +1015,7 @@ class CandidateStructureWindow(Toplevel):
         # get the selected structure (entry) from listbox
         selected_entry = self.candidate_structure_list_box.get(self.candidate_structure_list_box.curselection())
 
-        # remove all other nodes from the tree
+        # remove all other nodes from the expansion_tree
         elements = list(self.tree.nodes)
         elements.remove(selected_entry)
         self.tree.remove_nodes_from(elements)
@@ -1023,7 +1023,7 @@ class CandidateStructureWindow(Toplevel):
         # regenerate list box
         self.generate_candidate_structure_list()
 
-        # update tree display
+        # update expansion_tree display
         # TODO this needs mechanism like 'signal and slot', but Tkinter does not have. Will do in Qt.
 
     def modify_a_structure(self):

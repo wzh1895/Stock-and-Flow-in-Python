@@ -2,6 +2,7 @@ from tkinter import *
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS
 import math
 
+
 class SFDCanvas(Frame):
     def __init__(self, master, width=900):
         super().__init__(master, width=width)

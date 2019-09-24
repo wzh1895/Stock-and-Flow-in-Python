@@ -36,8 +36,11 @@ class SFDCanvas(QWidget):
         """
         Center x, Center y, width, height, label
         """
+        qp.setBrush(QColor(255, 255, 255))
         qp.drawRect(x, y, w, h)
-        qp.drawText(x, y+30, Qt.AlignCenter, label)
+        qp.drawText(QRect(x-30, y+30, w+60, h),
+                    Qt.AlignCenter,
+                    label)
 
     def create_flow(self, qp, x, y, pts, r, label):
         pass

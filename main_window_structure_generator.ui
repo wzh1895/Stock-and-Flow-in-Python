@@ -24,34 +24,35 @@
        <attribute name="title">
         <string>Stock and Flow Diagram</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_7">
-        <item>
-         <widget class="QFrame" name="frame_sfd">
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-         </widget>
-        </item>
+       <layout class="QVBoxLayout" name="layout_sfd">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
        </layout>
       </widget>
       <widget class="QWidget" name="tab_cld">
        <attribute name="title">
         <string>Causal Loop Diagram</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_8">
-        <item>
-         <widget class="QFrame" name="frame_cld">
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-         </widget>
-        </item>
+       <layout class="QVBoxLayout" name="layout_cld">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
        </layout>
       </widget>
      </widget>
@@ -516,7 +517,22 @@
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_tree"/>
+   <widget class="QWidget" name="dockWidgetContents_tree">
+    <layout class="QVBoxLayout" name="layout_tree">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+    </layout>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_simulation_result">
    <property name="windowTitle">

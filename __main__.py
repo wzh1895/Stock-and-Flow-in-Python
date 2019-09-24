@@ -43,9 +43,10 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         self.actionStartExpansion.triggered.connect(self.expansion_loop)
 
-        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_sfd)
-        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_cld)
-        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_behavior)
+        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure)
+        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_sfd)
+        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_cld)
+        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_behavior)
 
         self.pushButton_accept_candidate_structure.clicked.connect(self.accept_a_candidate_structure)
         self.pushButton_remove_candidate_structure.clicked.connect(self.remove_a_candidate_structure)
@@ -76,7 +77,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # Initialize generic structures
         self.initialize_generic_structures()
 
-        # Initial expansion tree
+        # Initial expansion expansion_tree
         self.expansion_tree = nx.DiGraph()
 
         # Initialize candidate structures
@@ -229,9 +230,9 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             i += 1
 
     def update_candidate_structure_activity_by_behavior(self):
-        if len(list(self.tree.nodes)) > 3:  # when there are more than 2 simulable candidates
+        if len(list(self.expansion_tree.nodes)) > 3:  # when there are more than 2 simulable candidates
             # Make more comparisons as there are more candidate structures
-            iter_times = len(list(self.tree.nodes)) // 3
+            iter_times = len(list(self.expansion_tree.nodes)) // 3
             for i in range(iter_times):
                 # Get 2 random candidates
                 random_two_candidates = [None, None]
@@ -251,12 +252,12 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 for reference_mode_name, reference_mode_property in self.reference_modes.items():
                     uid = self.reference_mode_bindings[reference_mode_name]
                     candidate_0_distance += self.behavioral_distance(
-                        self.tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
+                        self.expansion_tree.nodes[s_uid_0]['structure'].model_structure.get_element_by_uid(uid)[
                             'value'],
                         reference_mode_property[1]
                     )
                     candidate_1_distance += self.behavioral_distance(
-                        self.tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)[
+                        self.expansion_tree.nodes[s_uid_1]['structure'].model_structure.get_element_by_uid(uid)[
                             'value'],
                         reference_mode_property[1]
                     )
@@ -429,8 +430,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.refresh_reference_mode_list()
 
     def build_element_for_reference_modes(self):
-        # Get the first (also only) structure from expansion tree
-        structure = self.tree.nodes[list(self.tree.nodes)[0]]['structure']
+        # Get the first (also only) structure from expansion expansion_tree
+        structure = self.expansion_tree.nodes[list(self.expansion_tree.nodes)[0]]['structure']
         for reference_mode_name, reference_mode_properties in self.reference_modes.items():
             print("AAAA", reference_mode_name, reference_mode_properties)
             # some ref mode may have been built, so we need to check with bindings.
@@ -494,7 +495,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def put_time_series_to_detail_panel(self, time_series, time_series_name):
         self.layout_details.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.details_behavior_canvas = self.time_series_to_widget(time_series=time_series,
-                                                                  label=time_series_name)
+                                                                  label=time_series_name,
+                                                                  color='coral')
         self.details_behavior_canvas.setFixedSize(400, 320)
         self.layout_details.addWidget(self.details_behavior_canvas)
 
@@ -587,15 +589,59 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
 
     def initialize_candidate_structures(self):
-        self.tree = nx.DiGraph()
+        self.expansion_tree = nx.DiGraph()
         self.candidate_structure_uid = 0
         self.sorted_tree = list()
         self.those_cannot_simulate = list()
 
+    def refresh_expansion_tree(self):
+        # clear layoute
+        for i in reversed(range(self.layout_tree.count())):
+            self.layout_tree.itemAt(i).widget().setParent(None)
+
+        # setup the figure to operate
+        self.expansion_tree_fig = plt.figure(num='expansion_tree')
+        plt.clf()  # clear figure, otherwise multiple figures will overlap
+
+        # solve colors of nodes
+        tree_node_color = list()
+        if len(self.sorted_tree) > 3:  # when the sorted expansion_tree is generated
+            top_three = [self.sorted_tree[0][0], self.sorted_tree[1][0], self.sorted_tree[2][0]]
+            for element in self.expansion_tree.nodes:
+                if element in top_three:
+                    tree_node_color.append('skyblue')
+                else:
+                    tree_node_color.append('orangered')
+        else:
+            tree_node_color = 'orangered'
+        # print("HERE", tree_node_color)
+
+        # map colors with nodes
+        node_activity_mapping = nx.get_node_attributes(self.expansion_tree, 'activity')
+        for node, activity in node_activity_mapping.items():
+            node_activity_mapping[node] = "{} [{}]".format(node, activity)
+
+        # draw nodes to the figure
+        nx.draw(self.expansion_tree,
+                labels=node_activity_mapping,
+                font_size=9,
+                node_color=tree_node_color,
+                font_color='black',
+                # with_labels=True
+                )
+
+        # convert figure to widget then put it to layout
+        self.tree_widget = FigureCanvasQTAgg(figure=self.expansion_tree_fig)
+        self.tree_widget.setFixedSize(400, 320)
+        self.layout_tree.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.layout_tree.addWidget(self.tree_widget)
+
+
+
     def sort_candidate_structures_by_activity(self):
         # sort all candidate structures by activity
-        self.sorted_tree = sorted(list(self.tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
-        print('Sorted tree:', self.sorted_tree)
+        self.sorted_tree = sorted(list(self.expansion_tree.nodes(data='activity')), key=lambda x: x[1], reverse=True)
+        print('Sorted expansion_tree:', self.sorted_tree)
         string = ''
         for i in range(3):
             string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
@@ -603,7 +649,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.candidate_structure_window.label_top_three_0.update()
 
     def show_all_candidate_structures_activity(self):
-        all_activity = nx.get_node_attributes(self.tree, 'activity')
+        all_activity = nx.get_node_attributes(self.expansion_tree, 'activity')
         return all_activity
 
     def get_new_candidate_structure_uid(self):
@@ -616,12 +662,13 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def add_structure(self, structure):
         """Add a structure, usually as starting point"""
-        self.tree.add_node(self.get_new_candidate_structure_uid(), structure=structure, activity=INITIAL_ACTIVITY)
+        self.expansion_tree.add_node(self.get_new_candidate_structure_uid(), structure=structure, activity=INITIAL_ACTIVITY)
+        self.refresh_expansion_tree()
 
     def get_uid_by_candidate_structure(self, structure):
-        # print(self.tree.nodes(data=True))
-        for u in list(self.tree.nodes):
-            if self.tree.nodes[u]['structure'] == structure:
+        # print(self.expansion_tree.nodes(data=True))
+        for u in list(self.expansion_tree.nodes):
+            if self.expansion_tree.nodes[u]['structure'] == structure:
                 return u
         print(
             '    StructureManager: Can not find uid for given structure {}.'.format(structure))
@@ -631,7 +678,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # # this is designed for 'optimization of parameters', cuz
         if overwrite:
             base_uid = self.get_uid_by_structure(structure=base_structure)
-            self.tree.nodes[base_uid]['structure'] = new_structure
+            self.expansion_tree.nodes[base_uid]['structure'] = new_structure
             base_structure.simulation_handler(25)
             return
 
@@ -646,12 +693,12 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                                                                       )
                                 )
         if GM.is_isomorphic():
-            self.tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] += 1
+            self.expansion_tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] += 1
             print("    The new structure is identical to the base structure")
             return
         # 2. identical to a neighbor of the base_structure
-        for neighbour in self.tree.neighbors(self.get_uid_by_candidate_structure(base_structure)):
-            GM = iso.DiGraphMatcher(self.tree.nodes[neighbour]['structure'].model_structure.sfd,
+        for neighbour in self.expansion_tree.neighbors(self.get_uid_by_candidate_structure(base_structure)):
+            GM = iso.DiGraphMatcher(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd,
                                     new_structure.model_structure.sfd,
                                     node_match=iso.categorical_node_match(
                                         attr=['function', 'flow_from', 'flow_to', 'value'],
@@ -661,11 +708,11 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                                         )
                                     )
             if GM.is_isomorphic():
-                # if nx.is_isomorphic(self.tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
-                self.tree.nodes[neighbour]['activity'] += 1
-                if self.tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] > 1:
-                    self.tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] -= 1
-                # print(self.tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
+                # if nx.is_isomorphic(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
+                self.expansion_tree.nodes[neighbour]['activity'] += 1
+                if self.expansion_tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] > 1:
+                    self.expansion_tree.nodes[self.get_uid_by_candidate_structure(base_structure)]['activity'] -= 1
+                # print(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd.nodes(data=True))
                 # print(new_structure.model_structure.sfd.nodes(data=True))
                 print("    The new structure already exists in base structure's neighbours")
                 return
@@ -676,23 +723,25 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # TODO: Activity dynamics
         # 1. A newly derived structure should gain focus for a while
         # 2. If it is not promising enough, its newly gained activity will be transferred to other candidates through comparison
-        # new_activity = self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
+        # new_activity = self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] // ACTIVITY_DEMOMINATOR
         new_activity = 40
-        self.tree.add_node(new_uid,
-                           structure=new_structure,
-                           activity=new_activity
-                           )
+        self.expansion_tree.add_node(new_uid,
+                                     structure=new_structure,
+                                     activity=new_activity
+                                     )
 
         # subtraction this part of activity from the base_structure
-        # self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
-        # if self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
-        #     self.tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
+        # self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] -= new_activity
+        # if self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] < 1:
+        #     self.expansion_tree.nodes[self.get_uid_by_structure(base_structure)]['activity'] = 1
 
         # build a link from the old structure to the new structure
-        self.tree.add_edge(self.get_uid_by_candidate_structure(base_structure), new_uid)
+        self.expansion_tree.add_edge(self.get_uid_by_candidate_structure(base_structure), new_uid)
         # simulate this new structure
 
         new_structure.simulation_handler(25)
+
+        self.refresh_expansion_tree()
 
         # TODO: decide if this part still needs to be kept, for all candidate structures are supposed to be simulatable.
         # try:
@@ -712,17 +761,18 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def cool_down_candidate_structures(self):
         """Cool down structures"""
-        for u in self.tree.nodes:  # no matter it is simulatable or not
+        for u in self.expansion_tree.nodes:  # no matter it is simulatable or not
             # for u in self.those_cannot_simulate:
-            self.tree.nodes[u]['activity'] = self.tree.nodes[u]['activity'] - 1 if self.tree.nodes[u][
+            self.expansion_tree.nodes[u]['activity'] = self.expansion_tree.nodes[u]['activity'] - 1 if self.expansion_tree.nodes[u][
                                                                                        'activity'] > 1 else 1
         self.refresh_candidate_structure_list()
+        self.refresh_expansion_tree()
 
     def random_one_candidate_structure(self):
         """Return one structure"""
         random_structure_uid = random.choice(self.generate_candidate_structures_distribution_weighted())
         print('\n    No.{} is chosen as base_structure;\n'.format(random_structure_uid))
-        return self.tree.nodes[random_structure_uid]['structure']
+        return self.expansion_tree.nodes[random_structure_uid]['structure']
 
     def random_two_candidate_structures_weighted(self):
         """Return a pair of structures for competition"""
@@ -730,13 +780,13 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         return random_structures_uid
 
     def random_two_candidate_structures_even(self):
-        random_structures_uid = random.choices(list(self.tree.nodes), k=2)
+        random_structures_uid = random.choices(list(self.expansion_tree.nodes), k=2)
         return random_structures_uid
 
     def update_candidate_structures_activity_elo(self, winner, loser):
         """Update winner and loser's activity using Elo Rating System"""
-        r_winner = self.tree.nodes[winner]['activity']
-        r_loser = self.tree.nodes[loser]['activity']
+        r_winner = self.expansion_tree.nodes[winner]['activity']
+        r_loser = self.expansion_tree.nodes[loser]['activity']
         e_winner = 1 / (1 + 10 ** ((r_loser - r_winner) / 400))
         e_loser = 1 / (1 + 10 ** ((r_winner - r_loser) / 400))
         gain_winner = 1
@@ -753,45 +803,45 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 r = 1
             return r
 
-        self.tree.nodes[winner]['activity'] = round(normalize(r_winner))
-        self.tree.nodes[loser]['activity'] = round(normalize(r_loser))
+        self.expansion_tree.nodes[winner]['activity'] = round(normalize(r_winner))
+        self.expansion_tree.nodes[loser]['activity'] = round(normalize(r_loser))
 
     def generate_candidate_structures_distribution_weighted(self):
         """Generate a list, containing multiple uids of each structure with weighted distribution"""
         distribution_list = list()
-        for u in list(self.tree.nodes):
-            for i in range(self.tree.nodes[u]['activity']):
+        for u in list(self.expansion_tree.nodes):
+            for i in range(self.expansion_tree.nodes[u]['activity']):
                 distribution_list.append(u)
         return distribution_list
 
     def purge_low_activity_candidate_structures(self):
-        elements = list(self.tree.nodes)
+        elements = list(self.expansion_tree.nodes)
         for element in elements:
-            if self.tree.nodes[element]['activity'] <= PURGE_THRESHOLD:
+            if self.expansion_tree.nodes[element]['activity'] <= PURGE_THRESHOLD:
                 # TODO in the future, consider when edge has its attributes
-                in_edges_to_element = self.tree.in_edges(element)
+                in_edges_to_element = self.expansion_tree.in_edges(element)
                 print("In edges to 0 act ele:", in_edges_to_element)
-                out_edges_from_element = self.tree.out_edges(element)
+                out_edges_from_element = self.expansion_tree.out_edges(element)
                 print("Out edges from 0 act ele:", out_edges_from_element)
                 for in_edge in in_edges_to_element:
                     for out_edge in out_edges_from_element:
-                        self.tree.add_edge(in_edge[0], out_edge[1])
-                self.tree.remove_node(element)
+                        self.expansion_tree.add_edge(in_edge[0], out_edge[1])
+                self.expansion_tree.remove_node(element)
                 print("Low activity structure {} is purged.".format(element))
+                self.refresh_expansion_tree()
 
     def accept_a_candidate_structure(self):
         # get the selected structure (entry) from list
         selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
 
-        # remove all other nodes from the tree
-        elements = list(self.tree.nodes)
+        # remove all other nodes from the expansion_tree
+        elements = list(self.expansion_tree.nodes)
         elements.remove(selected_candidate_structure)
-        self.tree.remove_nodes_from(elements)
+        self.expansion_tree.remove_nodes_from(elements)
 
         # regenerate list box
         self.refresh_candidate_structure_list()
-
-        # TODO: update tree display
+        self.refresh_expansion_tree()
 
     def modify_a_candidate_structure(self):
         if self.listWidget_candidates.currentItem() is not None:
@@ -800,42 +850,68 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def remove_a_candidate_structure(self):
         selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
-        self.tree.remove_node(selected_candidate_structure)  # int as node, str as item in Listwidget
+        self.expansion_tree.remove_node(selected_candidate_structure)  # int as node, str as item in Listwidget
         self.listWidget_candidates.takeItem(self.listWidget_candidates.row(
             self.listWidget_candidates.findItems(
                 str(selected_candidate_structure), Qt.MatchExactly
             )[0]
         ))
+        self.refresh_expansion_tree()
 
     def refresh_candidate_structure_list(self):
         all_candidate_structure_names_in_list = [str(self.listWidget_candidates.item(i).text()) \
                                                  for i in range(self.listWidget_candidates.count())]
         # one way
-        for candidate_structure_name in list(self.tree.nodes):
+        for candidate_structure_name in list(self.expansion_tree.nodes):
             if str(candidate_structure_name) not in all_candidate_structure_names_in_list:
                 self.listWidget_candidates.addItem(str(candidate_structure_name))
         # the other way around
         for candidate_structure_name_in_list in all_candidate_structure_names_in_list:
-            if int(candidate_structure_name_in_list) not in list(self.tree.nodes):
+            if int(candidate_structure_name_in_list) not in list(self.expansion_tree.nodes):
                 self.listWidget_candidates.takeItem(self.listWidget_candidates.row(
                     self.listWidget_candidates.findItems(
                         candidate_structure_name_in_list, Qt.MatchExactly
                     )[0]
                 ))
 
+    def display_a_candidate_structure(self):
+        self.selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
+        self.display_a_candidate_structure_sfd()
+        self.display_a_candidate_structure_cld()
+        self.display_a_candidate_structure_behavior()
+
     def display_a_candidate_structure_sfd(self):
-        pass
+        # clear sfd tab
+        for i in reversed(range(self.layout_sfd.count())):
+            self.layout_sfd.itemAt(i).widget().setParent(None) #TODO
+
+        # create a SFD_Canvas widget
+        sfd_canvas = SFDCanvas()
+        sfd_canvas.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd)
+
+        # add this widget to layout_sfd
+        sfd_canvas.setFixedSize(880, 720)
+        self.layout_sfd.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.layout_sfd.addWidget(sfd_canvas)
 
     def display_a_candidate_structure_cld(self):
-        pass
+        # clear cld tab
+        for i in reversed(range(self.layout_cld.count())):
+            self.layout_cld.itemAt(i).widget().setParent(None)
+
+        # convert cld network graph to widget
+        cld_network_graph = self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.draw_graphs(rtn=True)
+        cld_network_widget = FigureCanvasQTAgg(figure=cld_network_graph)
+        cld_network_widget.setFixedSize(880, 720)
+        self.layout_cld.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.layout_cld.addWidget(cld_network_widget)
 
     def display_a_candidate_structure_behavior(self):
-        self.selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
         # clear combobox
         self.comboBox_elements.clear()
 
         # insert element names into combobox
-        self.comboBox_elements.addItems(list(self.tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes))
+        self.comboBox_elements.addItems(list(self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes))
 
     def display_an_element_behavior(self):
         # clear result panel
@@ -844,10 +920,11 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         if selected_element_of_structure != '':
             print("{} is selected for displaying behavior".format(selected_element_of_structure))
 
-            self.put_time_series_to_result_panel(time_series=self.tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes[selected_element_of_structure]['value'],
+            self.put_time_series_to_result_panel(time_series=self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes[selected_element_of_structure]['value'],
                                                  time_series_name=selected_element_of_structure)
         else:
             print("No element has been selected")
+
 
 
 
@@ -888,14 +965,17 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def refresh_binding_list(self):
         pass
 
-    def time_series_to_widget(self, time_series, label):
+    def time_series_to_widget(self, time_series, label, color=None):
         # plt.cla()
         fig = plt.figure(dpi=70)
         # ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax = fig.add_subplot(111)
         # ax.set_xlim([-1, 6])
         # ax.set_ylim([-1, 6])
-        ax.plot(time_series, '*')
+        if color is None:
+            ax.plot(time_series, '*')
+        else:
+            ax.plot(time_series, marker='*', color=color)
         ax.set_xlabel("Time")
         ax.set_ylabel(label)
         canvas = FigureCanvasQTAgg(fig)
