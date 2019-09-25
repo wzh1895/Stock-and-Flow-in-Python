@@ -672,8 +672,8 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
 class ParameterIdPosManager(object):
     def __init__(self):
         self.param_id = 0
-        self.param_x = 30
-        self.param_y = 30
+        self.param_x = 60
+        self.param_y = 60
 
     def get_new_pid_pos(self):
         self.param_x += 80 * self.param_id

@@ -11,7 +11,7 @@ from StockAndFlowInPython.structure_utilities.structure_utilities import new_exp
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
 from StockAndFlowInPython.graph_sd.graph_based_engine import function_names, STOCK, FLOW, VARIABLE, \
     PARAMETER, CONNECTOR, ALIAS, MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
-from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.sfd_canvas_tkinter import SFDCanvas
 from StockAndFlowInPython.parsing.XMILE_parsing import equation_to_text, text_to_equation
 import pandas as pd
 import numpy as np

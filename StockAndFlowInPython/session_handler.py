@@ -10,7 +10,7 @@ from tkinter import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
 from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation
-from StockAndFlowInPython.sfd_canvas.sfd_canvas import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.sfd_canvas_tkinter import SFDCanvas
 
 SLEEP_TIME = 0
 
