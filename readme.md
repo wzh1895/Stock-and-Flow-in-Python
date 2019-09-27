@@ -13,32 +13,20 @@ It contains the following functions:
 
 ## A quick glance
 
-**Display and simulate models**
+**Expanding model structure using time series and informed by generic structures**
 
-![ScreenShot](./screenshots/screenShot_11.png)
-
-**Suggest possible structure for a given reference mode**
-
-First order negative feedback structure:
-
-![ScreenShot](screenshots/screenShot_09.png)
-
-First order positive feedback structure:
-
-![ScreenShot](screenshots/screenShot_10.png)
-
-**Expand a model structure by adding components**
-
-![ScreenShot](./screenshots/screenShot_12.png)
+![ScreenShot](./screenshots/screenShot_13.png)
 
 ## How to use
 
 ```
-python3 controller.py
+python3 __main__.py
 ```
 
 ## Dependencies
 
+- PyQt5
+- grave
 - dtw
 - networkx
 - matplotlib
@@ -153,4 +141,3 @@ python3 controller.py
 ## Reference
 1. Barlas, Y., & Kanar, K. (2000). Structure-oriented behavior tests in model validation. In 18th international conference of the system dynamics society, Bergen, Norway (pp. 33-34).
 2. Keogh, E., & Ratanamahatana, C. A. (2005). Exact indexing of dynamic time warping. Knowledge and information systems, 7(3), 358-386.
-3. Manning, C., Surdeanu, M., Bauer, J., Finkel, J., Bethard, S., & McClosky, D. (2014). The Stanford CoreNLP natural language processing toolkit. In Proceedings of 52nd annual meeting of the association for computational linguistics: system demonstrations (pp. 55-60).

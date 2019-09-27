@@ -1004,19 +1004,22 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def on_select_an_element_of_a_candidate_structure(self):
         selected_element = self.comboBox_elements_in_selected_structure.currentText()
-        original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['function']
-        if original_equation is None:
-            original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['value'][0]
-        original_equation_text = equation_to_text(original_equation)
-        self.lineEdit_equation.setText(original_equation_text)
+        try:
+            original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['function']
+            if original_equation is None:
+                original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['value'][0]
+            original_equation_text = equation_to_text(original_equation)
+            self.lineEdit_equation.setText(original_equation_text)
 
-        x_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
-            selected_element]['pos'][0]
-        self.lineEdit_x_pos.setText(str(x_pos))
+            x_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                selected_element]['pos'][0]
+            self.lineEdit_x_pos.setText(str(x_pos))
 
-        y_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
-            selected_element]['pos'][1]
-        self.lineEdit_y_pos.setText(str(y_pos))
+            y_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                selected_element]['pos'][1]
+            self.lineEdit_y_pos.setText(str(y_pos))
+        except KeyError:
+            pass
 
 
     def confirm_modification(self):
