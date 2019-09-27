@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1440</width>
-    <height>900</height>
+    <width>1600</width>
+    <height>1200</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,200 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QWidget" name="widget_structure_modifier" native="true">
+      <layout class="QHBoxLayout" name="layout_structure_modifier">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="groupBox_add">
+         <property name="title">
+          <string>Add</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="pushButton_add_stock">
+            <property name="text">
+             <string>Stock</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_add_flow">
+            <property name="text">
+             <string>Flow</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_add_aux">
+            <property name="text">
+             <string>Aux</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_add_connector">
+            <property name="text">
+             <string>Connector</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_select">
+         <property name="title">
+          <string>Select Element</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QComboBox" name="comboBox_elements_in_selected_structure"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_modify">
+         <property name="title">
+          <string>Remove / Modify</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <property name="spacing">
+           <number>-1</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="pushButton_remove">
+            <property name="text">
+             <string>Remove</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_eqn">
+            <property name="text">
+             <string>Eqn:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_equation"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_x_pos">
+            <property name="text">
+             <string>X pos:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_x_pos">
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_y_pos">
+            <property name="text">
+             <string>Y pos:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_y_pos">
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_confirm">
+            <property name="text">
+             <string>Confirm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
@@ -81,6 +275,9 @@
        <item>
         <widget class="QWidget" name="widget_simulation_buttons" native="true">
          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="spacing">
+           <number>1</number>
+          </property>
           <property name="leftMargin">
            <number>0</number>
           </property>
@@ -141,7 +338,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1440</width>
+     <width>1600</width>
      <height>22</height>
     </rect>
    </property>
@@ -149,13 +346,8 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen"/>
-    <addaction name="actionClose"/>
     <addaction name="separator"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_as"/>
     <addaction name="separator"/>
-    <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -179,8 +371,8 @@
   <widget class="QDockWidget" name="dockWidget_browse_time_series">
    <property name="minimumSize">
     <size>
-     <width>215</width>
-     <height>274</height>
+     <width>258</width>
+     <height>281</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -218,7 +410,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_time_series">
         <attribute name="title">
@@ -226,16 +418,19 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <property name="leftMargin">
-          <number>0</number>
+          <number>12</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>12</number>
+         </property>
+         <property name="bottomMargin">
+          <number>12</number>
          </property>
          <item alignment="Qt::AlignHCenter">
           <widget class="QListWidget" name="listWidget_time_series">
            <property name="maximumSize">
             <size>
-             <width>200</width>
+             <width>1000000</width>
              <height>16777215</height>
             </size>
            </property>
@@ -243,7 +438,7 @@
          </item>
          <item alignment="Qt::AlignHCenter">
           <widget class="QWidget" name="widget_3" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <layout class="QVBoxLayout" name="verticalLayout_7">
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -260,7 +455,7 @@
              <widget class="QFrame" name="frame_ref_type">
               <property name="maximumSize">
                <size>
-                <width>120</width>
+                <width>1000000</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -270,7 +465,19 @@
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_11">
+              <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QRadioButton" name="radioButton_stock">
                  <property name="maximumSize">
@@ -313,20 +520,20 @@
               </layout>
              </widget>
             </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_add_ref">
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Add as Ref</string>
-              </property>
-             </widget>
-            </item>
            </layout>
+          </widget>
+         </item>
+         <item alignment="Qt::AlignHCenter">
+          <widget class="QPushButton" name="pushButton_add_ref">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Add as Ref</string>
+           </property>
           </widget>
          </item>
         </layout>
@@ -336,6 +543,15 @@
          <string>Reference</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_10">
+         <property name="leftMargin">
+          <number>12</number>
+         </property>
+         <property name="rightMargin">
+          <number>12</number>
+         </property>
+         <property name="bottomMargin">
+          <number>12</number>
+         </property>
          <item>
           <widget class="QListWidget" name="listWidget_reference_modes"/>
          </item>
@@ -386,8 +602,8 @@
   <widget class="QDockWidget" name="dockWidget_details">
    <property name="minimumSize">
     <size>
-     <width>62</width>
-     <height>38</height>
+     <width>82</width>
+     <height>172</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -423,7 +639,7 @@
    <property name="minimumSize">
     <size>
      <width>264</width>
-     <height>159</height>
+     <height>166</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -440,11 +656,20 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_candidates">
     <layout class="QVBoxLayout" name="verticalLayout_4">
+     <property name="leftMargin">
+      <number>12</number>
+     </property>
+     <property name="rightMargin">
+      <number>12</number>
+     </property>
+     <property name="bottomMargin">
+      <number>12</number>
+     </property>
      <item alignment="Qt::AlignHCenter">
       <widget class="QListWidget" name="listWidget_candidates">
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>1000000</width>
          <height>16777215</height>
         </size>
        </property>
@@ -488,19 +713,6 @@
          <widget class="QPushButton" name="pushButton_remove_candidate_structure">
           <property name="text">
            <string>Remove</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_modify_candidate_structure">
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Modify</string>
           </property>
          </widget>
         </item>
@@ -584,7 +796,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_elements"/>
+         <widget class="QComboBox" name="comboBox_elements">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -614,7 +833,7 @@
    <property name="minimumSize">
     <size>
      <width>173</width>
-     <height>159</height>
+     <height>190</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -631,13 +850,29 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_bindings">
     <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="leftMargin">
+      <number>12</number>
+     </property>
+     <property name="rightMargin">
+      <number>12</number>
+     </property>
+     <property name="bottomMargin">
+      <number>12</number>
+     </property>
      <item alignment="Qt::AlignHCenter|Qt::AlignTop">
       <widget class="QListWidget" name="listWidget_bindings">
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>1000000</width>
          <height>16777215</height>
         </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_bound_to">
+       <property name="text">
+        <string>Bound to: </string>
        </property>
       </widget>
      </item>
@@ -645,7 +880,7 @@
       <widget class="QWidget" name="widget_binding_actions" native="true">
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>1000000</width>
          <height>16777215</height>
         </size>
        </property>
@@ -706,7 +941,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget_settings">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_iteration">
         <attribute name="title">
@@ -745,13 +980,13 @@
   <widget class="QDockWidget" name="dockWidget_generic_structures">
    <property name="minimumSize">
     <size>
-     <width>150</width>
-     <height>117</height>
+     <width>102</width>
+     <height>124</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
-     <width>260</width>
+     <width>100000</width>
      <height>524287</height>
     </size>
    </property>
@@ -763,11 +998,14 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_generic_structures">
     <layout class="QVBoxLayout" name="verticalLayout_6">
+     <property name="leftMargin">
+      <number>12</number>
+     </property>
      <item alignment="Qt::AlignHCenter|Qt::AlignTop">
       <widget class="QTableWidget" name="tableWidget_generic_structure">
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>1000000</width>
          <height>16777215</height>
         </size>
        </property>
@@ -810,31 +1048,6 @@
    </property>
    <property name="text">
     <string>Exit</string>
-   </property>
-  </action>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open...</string>
-   </property>
-  </action>
-  <action name="actionClose">
-   <property name="text">
-    <string>Close</string>
-   </property>
-  </action>
-  <action name="actionSave">
-   <property name="text">
-    <string>Save</string>
-   </property>
-  </action>
-  <action name="actionSave_as">
-   <property name="text">
-    <string>Save as...</string>
-   </property>
-  </action>
-  <action name="actionQuit">
-   <property name="text">
-    <string>Quit</string>
    </property>
   </action>
   <zorder>dockWidget_browse_time_series</zorder>

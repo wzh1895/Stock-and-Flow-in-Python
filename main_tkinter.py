@@ -725,7 +725,7 @@ class BindingManager(Toplevel):
             structures = ['structure']
         self.structure_list["values"] = structures
 
-        # This int() is very important, because what get() from combobox is 'str.
+        # This int() is very important, because what get() from combobox is 'str'.
         try:
             variables_in_selected_structure = list(
                 self.tree.nodes[int(self.selected_structure)]['structure'].model_structure.sfd.nodes)
@@ -1386,8 +1386,8 @@ class AddElementWindow(Toplevel):
         self.fm_buttons.pack(side=TOP, anchor='center')
         self.confirm_button = Button(self.fm_buttons, text='Confirm', command=self.confirm)
         self.confirm_button.pack(side=LEFT, anchor='center')
-        self.confirm_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
-        self.confirm_button.pack(side=LEFT, anchor='center')
+        self.cancel_button = Button(self.fm_buttons, text='Cancel', command=self.cancel)
+        self.cancel_button.pack(side=LEFT, anchor='center')
 
     def confirm(self):
         try:

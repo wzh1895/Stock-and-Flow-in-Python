@@ -26,14 +26,16 @@ class SFDCanvas(QWidget):
         self.sfd = sfd
         self.repaint()
 
-    def reset_canvas(self):
-        pass
-
     def locate_var(self, name):
+        for element in self.sfd.nodes:
+            if element == name:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                return [float(x), float(y)]
+
+        # if nothing is found (return is not triggered), try replace ' ' with '_'
         name = self.name_handler(name)
-        # print("locating...")
-        # print(name)
-        # print(self.session_handler1.model_structure.sfd.nodes)
+
         for element in self.sfd.nodes:
             if element == name:
                 x = self.sfd.nodes[element]['pos'][0]
@@ -46,7 +48,7 @@ class SFDCanvas(QWidget):
         """
         qp.setBrush(QColor(255, 255, 255))
         qp.drawRect(x - w * 0.5, y - h * 0.5, w, h)
-        qp.drawText(QRect(x - 30 - w * 0.5, y + 30 - h * 0.5, w + 60, h),
+        qp.drawText(QRect(x - 50 - w * 0.5, y + 30 - h * 0.5, w + 100, h),
                     Qt.AlignCenter,
                     label)
 
@@ -54,6 +56,7 @@ class SFDCanvas(QWidget):
         """
         Starting point x, y, ending point x, y, length, circle radius, label
         """
+        qp.setBrush(QColor(255, 255, 255))
         for i in range(len(pts) - 1):
             source = QPointF(pts[i][0], pts[i][1])
             dest = QPointF(pts[i + 1][0], pts[i + 1][1])
@@ -64,26 +67,28 @@ class SFDCanvas(QWidget):
                 self.create_arrow(qp, source.x(), source.y(), dest.x(), dest.y())
 
         qp.drawEllipse(QRect(x - r, y - r, r*2, r*2))
-        qp.drawText(QRect(x-30, y+7, 60, 30), Qt.AlignCenter, label)
+        qp.drawText(QRect(x-50, y+7, 100, 30), Qt.AlignCenter, label)
 
     def create_aux(self, qp, x, y, r, label):
         """
         Central point x, y, radius, label
         """
+        qp.setBrush(QColor(255, 255, 255))
         qp.drawEllipse(QRect(x - r, y - r, r*2, r*2))
-        qp.drawText(QRect(x-30, y+7, 60, 30), Qt.AlignCenter, label)
+        qp.drawText(QRect(x-50, y+7, 100, 30), Qt.AlignCenter, label)
 
     def create_alias(self, qp, x, y, r, label):
         """
         Central point x, y, radius, label
         """
+        qp.setBrush(QColor(255, 255, 255))
         qp.drawEllipse(QRect(x - r, y - r, r * 2, r * 2))
 
         # dealing with the italic style of an alias' label
         font_0 = qp.font()
         font_0.setItalic(True)
         qp.setFont(font_0)
-        qp.drawText(QRect(r - 30, y + 7, 60, 30), Qt.AlignCenter, label)
+        qp.drawText(QRect(r - 50, y + 7, 100, 30), Qt.AlignCenter, label)
         font_0.setItalic(False)
         qp.setFont(font_0)
 
@@ -249,23 +254,10 @@ class SFDCanvas(QWidget):
         height_stock = 35
         radius1 = 8
 
-        # draw stocks
-        for element in self.sfd.nodes:
-            if self.sfd.nodes[element]['element_type'] == STOCK:
-                print("    SFD Canvas is drawing stock {}".format(element))
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
-                # print(x,y)
-                self.create_stock(qp, x, y, width_stock, height_stock, element)
-                if x > self.xmost:
-                    self.xmost = x
-                if y > self.ymost:
-                    self.ymost = y
-
         # draw flows
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] == FLOW:
-                print("    SFD Canvas is drawing flow {}".format(element))
+                print("    drawing flow {}".format(element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 points = self.sfd.nodes[element]['points']
@@ -278,7 +270,7 @@ class SFDCanvas(QWidget):
         # draw auxs
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
-                print("    SFD Canvas is drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
+                print("    drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
                 x = self.sfd.nodes[element]['pos'][0]
                 y = self.sfd.nodes[element]['pos'][1]
                 self.create_aux(qp, x, y, radius1, element)
@@ -305,14 +297,27 @@ class SFDCanvas(QWidget):
             to_element = connector[1]
             if self.sfd[from_element][to_element]['display']:
                 # Only draw when 'display' == True, avoid FLOW--->STOCK
-                print('    SFD Canvas is drawing connector from {} to {}'.format(from_element, to_element))
+                print('    drawing connector from {} to {}'.format(from_element, to_element))
                 from_cord = self.locate_var(from_element)
-                # print(from_cord)
+                print("From cord", from_cord)
                 to_cord = self.locate_var(to_element)
-                # print(to_cord)
+                print("To cord", to_cord)
                 angle = self.sfd[from_element][to_element]['angle']
                 # print('angle:', angle)
                 self.create_connector(qp, from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)
+
+        # draw stocks (comes the last, so they can cover the connectors)
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] == STOCK:
+                print("    drawing stock {}".format(element))
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                # print(x,y)
+                self.create_stock(qp, x, y, width_stock, height_stock, element)
+                if x > self.xmost:
+                    self.xmost = x
+                if y > self.ymost:
+                    self.ymost = y
 
         self.xmost += 150
         self.ymost += 100

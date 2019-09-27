@@ -3,7 +3,6 @@ from main_window_structure_generator import Ui_MainWindow
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
     COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, PURGE_SWITCH, PURGE_THRESHOLD
@@ -28,37 +27,48 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         super(IntegratedWindow, self).__init__()
         self.setupUi(self)
 
-        self.listWidget_time_series.itemClicked.connect(self.show_time_series)
+        # Toolbar
+        self.actionStartExpansion.triggered.connect(self.expansion_loop)
 
+        # Time series - references
         self.button_group_ref_type = QButtonGroup(self)
         self.button_group_ref_type.addButton(self.radioButton_stock, 1)
         self.button_group_ref_type.addButton(self.radioButton_flow, 2)
         self.button_group_ref_type.addButton(self.radioButton_aux, 3)
 
         self.pushButton_add_ref.clicked.connect(self.add_reference_mode_from_time_series)
-
         self.pushButton_remove_ref.clicked.connect(self.remove_reference_mode)
 
-        self.listWidget_reference_modes.itemClicked.connect(self.show_reference_mode)
+        # List widgets
+        self.listWidget_time_series.itemClicked.connect(self.display_time_series)
+        self.listWidget_reference_modes.itemClicked.connect(self.display_reference_mode)
+        self.listWidget_candidates.itemClicked.connect(self.select_a_candidate_structure)  # comes first
+        self.listWidget_candidates.itemClicked.connect(self.initialize_modifier)  # comes 2nd
+        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure)  # comes 3rd
+        self.listWidget_bindings.itemClicked.connect(self.display_bound_element)
 
-        self.actionStartExpansion.triggered.connect(self.expansion_loop)
-
-        self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure)
-        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_sfd)
-        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_cld)
-        # self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure_behavior)
-
+        # candidate structures
         self.pushButton_accept_candidate_structure.clicked.connect(self.accept_a_candidate_structure)
         self.pushButton_remove_candidate_structure.clicked.connect(self.remove_a_candidate_structure)
-        self.pushButton_modify_candidate_structure.clicked.connect(self.modify_a_candidate_structure)
 
+        # bindings
         self.pushButton_add_binding.clicked.connect(self.add_binding)
         self.pushButton_remove_binding.clicked.connect(self.remove_binding)
 
+        # settings
         self.pushButton_apply.clicked.connect(self.set_iteration_time)  # TODO move all 'settings' to one place
 
+        # result
         self.comboBox_elements.currentIndexChanged.connect(self.display_an_element_behavior)
 
+        # UI - modification part
+        self.pushButton_add_stock.clicked.connect(self.add_stock)
+        self.pushButton_add_flow.clicked.connect(self.add_flow)
+        self.pushButton_add_aux.clicked.connect(self.add_auxiliary)
+        self.pushButton_add_connector.clicked.connect(self.add_connector)
+        self.pushButton_remove.clicked.connect(self.remove_element)
+        self.pushButton_confirm.clicked.connect(self.confirm_modification)
+        self.comboBox_elements_in_selected_structure.currentIndexChanged.connect(self.on_select_an_element_of_a_candidate_structure)
 
         # Specify round to iterate
 
@@ -103,7 +113,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # Reset
         self.generate_generic_structures_distribution()
 
-
+        # first time introducing a ref
+        self.flag_first_ref = True
 
 
     def set_iteration_time(self):
@@ -114,9 +125,6 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def expansion_loop(self):
         i = 1
         while i <= self.iteration_time:
-
-            if i == 1:
-                self.build_element_for_reference_modes()
 
             print('\n\nExpansion: Iterating {}'.format(i))
             print('\nTask list: {}\n'.format(self.task_list))
@@ -399,7 +407,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.time_series[column] = self.numerical_data[column].tolist()
         self.listWidget_time_series.addItems(self.time_series)
 
-    def show_time_series(self):
+    def display_time_series(self):
         selected_time_series_name = self.listWidget_time_series.currentItem().text()
         selected_time_series = self.time_series[selected_time_series_name]
 
@@ -429,11 +437,16 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             # Sync UI with ref_mode_list
             self.refresh_reference_mode_list()
 
+            # Build this reference to candidate structure
+            if self.flag_first_ref:
+                self.build_element_for_reference_modes()
+                self.flag_first_ref = False
+
     def build_element_for_reference_modes(self):
         # Get the first (also only) structure from expansion expansion_tree
         structure = self.expansion_tree.nodes[list(self.expansion_tree.nodes)[0]]['structure']
         for reference_mode_name, reference_mode_properties in self.reference_modes.items():
-            print("AAAA", reference_mode_name, reference_mode_properties)
+            print("Reference: ", reference_mode_name, reference_mode_properties)
             # some ref mode may have been built, so we need to check with bindings.
             if reference_mode_name not in self.reference_mode_bindings.keys():  # not yet built
                 if reference_mode_properties[0] == STOCK:
@@ -445,8 +458,12 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 elif reference_mode_properties[0] in [VARIABLE, PARAMETER]:
                     uid = structure.build_aux(name=reference_mode_name, equation=0, x=302, y=278)
                 self.reference_mode_bindings[reference_mode_name] = uid
-                # self.binding_manager.generate_binding_list_box()  # TODO: What is this?
+                self.refresh_binding_list()  # manually do it, cuz we are not calling 'add_binding', since add_binding could not
+                # have arguments, since the pyqt connect mechanism will pass a 'False' to it even if there is no args.
+                # God damn it!
         structure.simulation_handler(25)
+
+
 
 
 
@@ -454,11 +471,12 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def initialize_reference_modes(self):
         # Reference modes
         self.reference_modes = dict()  # name : [type, time_series]
+        self.selected_reference_mode = None
 
     def refresh_reference_mode_list(self):
         # Sync UI with ref_mode_list
         all_ref_mode_names_in_list = [str(self.listWidget_reference_modes.item(i).text()) \
-                                    for i in range(self.listWidget_reference_modes.count())]
+                                      for i in range(self.listWidget_reference_modes.count())]
         for ref_mode_name in list(self.reference_modes.keys()):
             if ref_mode_name not in all_ref_mode_names_in_list:
                 self.listWidget_reference_modes.addItem(ref_mode_name)
@@ -471,8 +489,9 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # logic: text matches item --> get the row of this item --> take item from the listWidget by row
         # could done in another way: just re-generate all items in the list widget over again once any change is made
 
-    def show_reference_mode(self):
+    def display_reference_mode(self):
         selected_reference_mode_name = self.listWidget_reference_modes.currentItem().text()
+        self.selected_reference_mode = selected_reference_mode_name
         selected_reference_mode_type = self.reference_modes[selected_reference_mode_name][0]
         selected_reference_mode_time_series = self.reference_modes[selected_reference_mode_name][1]
 
@@ -593,6 +612,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.candidate_structure_uid = 0
         self.sorted_tree = list()
         self.those_cannot_simulate = list()
+        self.selected_candidate_structure_uid = None
 
     def refresh_expansion_tree(self):
         # clear layoute
@@ -614,7 +634,6 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                     tree_node_color.append('orangered')
         else:
             tree_node_color = 'orangered'
-        # print("HERE", tree_node_color)
 
         # map colors with nodes
         node_activity_mapping = nx.get_node_attributes(self.expansion_tree, 'activity')
@@ -663,6 +682,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def add_structure(self, structure):
         """Add a structure, usually as starting point"""
         self.expansion_tree.add_node(self.get_new_candidate_structure_uid(), structure=structure, activity=INITIAL_ACTIVITY)
+        self.refresh_candidate_structure_list()
         self.refresh_expansion_tree()
 
     def get_uid_by_candidate_structure(self, structure):
@@ -831,22 +851,14 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 self.refresh_expansion_tree()
 
     def accept_a_candidate_structure(self):
-        # get the selected structure (entry) from list
-        selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
-
         # remove all other nodes from the expansion_tree
         elements = list(self.expansion_tree.nodes)
-        elements.remove(selected_candidate_structure)
+        elements.remove(self.selected_candidate_structure_uid)
         self.expansion_tree.remove_nodes_from(elements)
 
         # regenerate list box
         self.refresh_candidate_structure_list()
         self.refresh_expansion_tree()
-
-    def modify_a_candidate_structure(self):
-        if self.listWidget_candidates.currentItem() is not None:
-            pass
-        # TODO: Structure modifier should be built elsewhere and imported as a widget
 
     def remove_a_candidate_structure(self):
         selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
@@ -859,7 +871,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.refresh_expansion_tree()
 
     def refresh_candidate_structure_list(self):
-        all_candidate_structure_names_in_list = [str(self.listWidget_candidates.item(i).text()) \
+        all_candidate_structure_names_in_list = [str(self.listWidget_candidates.item(i).text())
                                                  for i in range(self.listWidget_candidates.count())]
         # one way
         for candidate_structure_name in list(self.expansion_tree.nodes):
@@ -874,20 +886,22 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                     )[0]
                 ))
 
+    def select_a_candidate_structure(self):
+        self.selected_candidate_structure_uid = int(self.listWidget_candidates.currentItem().text())
+
     def display_a_candidate_structure(self):
-        self.selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
         self.display_a_candidate_structure_sfd()
         self.display_a_candidate_structure_cld()
-        self.display_a_candidate_structure_behavior()
+        self.display_a_candidate_structure_elements()
 
     def display_a_candidate_structure_sfd(self):
         # clear sfd tab
         for i in reversed(range(self.layout_sfd.count())):
-            self.layout_sfd.itemAt(i).widget().setParent(None) #TODO
+            self.layout_sfd.itemAt(i).widget().setParent(None)  #TODO
 
         # create a SFD_Canvas widget
         sfd_canvas = SFDCanvas()
-        sfd_canvas.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd)
+        sfd_canvas.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd)
 
         # add this widget to layout_sfd
         sfd_canvas.setFixedSize(880, 720)
@@ -900,18 +914,20 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.layout_cld.itemAt(i).widget().setParent(None)
 
         # convert cld network graph to widget
-        cld_network_graph = self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.draw_graphs(rtn=True)
+        cld_network_graph = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.draw_graphs(rtn=True)
         cld_network_widget = FigureCanvasQTAgg(figure=cld_network_graph)
         cld_network_widget.setFixedSize(880, 720)
         self.layout_cld.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_cld.addWidget(cld_network_widget)
 
-    def display_a_candidate_structure_behavior(self):
+    def display_a_candidate_structure_elements(self):
         # clear combobox
         self.comboBox_elements.clear()
 
         # insert element names into combobox
-        self.comboBox_elements.addItems(list(self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes))
+        # self.comboBox_elements.addItems(list(self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes))
+        self.comboBox_elements.addItems(self.elements_in_selected_structure)
+
 
     def display_an_element_behavior(self):
         # clear result panel
@@ -920,11 +936,100 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         if selected_element_of_structure != '':
             print("{} is selected for displaying behavior".format(selected_element_of_structure))
 
-            self.put_time_series_to_result_panel(time_series=self.expansion_tree.nodes[self.selected_candidate_structure]['structure'].model_structure.sfd.nodes[selected_element_of_structure]['value'],
+            self.put_time_series_to_result_panel(time_series=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element_of_structure]['value'],
                                                  time_series_name=selected_element_of_structure)
         else:
-            print("No element has been selected")
+            print("No element is selected")
 
+
+
+
+    def initialize_modifier(self):
+        self.elements_in_selected_structure = list(
+            self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes
+        )
+        # clear combobox
+        self.comboBox_elements_in_selected_structure.clear()
+
+        # insert element names into combobox
+        self.comboBox_elements_in_selected_structure.addItems(self.elements_in_selected_structure)
+
+
+
+    def add_stock(self):
+        if self.selected_candidate_structure_uid is None:
+            msg = QMessageBox.warning(self, "Oops", "Please select a candidate \nstructure to modify.", QMessageBox.Ok)
+        else:
+            selected_candidate_structure = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure']
+            add_stock_dialog = AddElementDialog(element_type=STOCK, structure=selected_candidate_structure)
+            add_stock_dialog.exec_()
+
+            self.display_a_candidate_structure()
+
+    def add_flow(self):
+        if self.selected_candidate_structure_uid is None:
+            msg = QMessageBox.warning(self, "Oops", "Please select a candidate \nstructure to modify.", QMessageBox.Ok)
+        else:
+            selected_candidate_structure = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure']
+            add_stock_dialog = AddElementDialog(element_type=FLOW, structure=selected_candidate_structure)
+            add_stock_dialog.exec_()
+
+            self.display_a_candidate_structure()
+
+    def add_auxiliary(self):
+        if self.selected_candidate_structure_uid is None:
+            msg = QMessageBox.warning(self, "Oops", "Please select a candidate \nstructure to modify.", QMessageBox.Ok)
+        else:
+            selected_candidate_structure = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure']
+            add_stock_dialog = AddElementDialog(element_type=VARIABLE, structure=selected_candidate_structure)
+            add_stock_dialog.exec_()
+
+            self.display_a_candidate_structure()
+
+    def add_connector(self):
+        if self.selected_candidate_structure_uid is None:
+            msg = QMessageBox.warning(self, "Oops", "Please select a candidate \nstructure to modify.", QMessageBox.Ok)
+        else:
+            selected_candidate_structure = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure']
+            add_connector_dialog = AddConnectorDialog(structure=selected_candidate_structure)
+            add_connector_dialog.exec_()
+
+            self.display_a_candidate_structure()
+
+    def remove_element(self):
+        element_to_remove = self.comboBox_elements_in_selected_structure.currentText()
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].delete_variable(name=element_to_remove)
+        self.display_a_candidate_structure()
+        # TODO this part needs improvement: the consequences of removing an element: e.g. bindings?
+
+    def on_select_an_element_of_a_candidate_structure(self):
+        selected_element = self.comboBox_elements_in_selected_structure.currentText()
+        original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['function']
+        if original_equation is None:
+            original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['value'][0]
+        original_equation_text = equation_to_text(original_equation)
+        self.lineEdit_equation.setText(original_equation_text)
+
+        x_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+            selected_element]['pos'][0]
+        self.lineEdit_x_pos.setText(str(x_pos))
+
+        y_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+            selected_element]['pos'][1]
+        self.lineEdit_y_pos.setText(str(y_pos))
+
+
+    def confirm_modification(self):
+        new_equation = text_to_equation(self.lineEdit_equation.text())
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].replace_equation(name=self.comboBox_elements_in_selected_structure.currentText(),
+                                                        new_equation=new_equation)
+
+        new_x = float(self.lineEdit_x_pos.text())
+        new_y = float(self.lineEdit_y_pos.text())
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[self.comboBox_elements_in_selected_structure.currentText()]['pos'][0] = new_x
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[self.comboBox_elements_in_selected_structure.currentText()]['pos'][1] = new_y
+
+        self.display_a_candidate_structure()
 
 
 
@@ -932,38 +1037,70 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def initialize_bindings(self):
         self.reference_mode_bindings = dict()  # reference_mode_name : uid of element
 
-    def display_a_binding(self):
-        pass
+    def display_bound_element(self):
+        label_text = 'Bound to: '
+        reference_mode_name_in_binding = self.listWidget_bindings.currentItem().text()
+        bound_element = self.get_binding_element_name_by_ref_name(reference_mode_name_in_binding)
+        label_text += bound_element
+        self.label_bound_to.setText(label_text)
 
     def add_binding(self):
-        pass
+        """
+        :param reference_mode_name: key
+        :param uid: uid of element in a candidate structure, value
+        :return:
+        """
+        reference_mode_name = self.selected_reference_mode
+
+        selected_element_in_candidate_structure = self.comboBox_elements_in_selected_structure.currentText()
+        uid = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+            selected_element_in_candidate_structure
+        ]['uid']
+
+        if (reference_mode_name is not None) and (uid is not None):
+            print("Now binding ref mode {} with {}".format(reference_mode_name, uid))
+            self.reference_mode_bindings[reference_mode_name] = uid
+            self.refresh_binding_list()
+        else:
+            print("{} and {} could not be bound.".format(reference_mode_name, uid))
 
     def remove_binding(self):
-        pass
+        selected_ref_name = self.listWidget_bindings.currentItem().text()
+        bound_element_name = self.get_binding_element_name_by_ref_name(selected_ref_name)
+        self.reference_mode_bindings.pop(selected_ref_name)
+        print("Removed binding between ref mode '{}' and variable '{}'".format(selected_ref_name, bound_element_name))
+        self.refresh_binding_list()
 
-    def get_binding_element_name_by_ref_name(self):
-        pass
+    def get_binding_element_name_by_ref_name(self, ref_name=None):
+        # Check if a candidate structure is selected; if not, select the last one. # Todo: improve
+        if self.selected_candidate_structure_uid is None:
+            self.selected_candidate_structure_uid = self.candidate_structure_uid
 
-    def select_candidate_structure(self):
-        pass
-
-    def select_variable(self):
-        pass
-
-    def select_reference_mode(self):
-        pass
-
-    def generate_binding_list_box(self):
-        pass
-
-    def show_binding_details(self):
-        pass
-
-    def update_combobox(self):
-        pass
+        if ref_name is None:
+            ref_name = self.listWidget_bindings.currentItem().text()
+        selected_binding_element_uid = self.reference_mode_bindings[ref_name]
+        selected_binding_element_name = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure. \
+            get_element_name_by_uid(selected_binding_element_uid)
+        return selected_binding_element_name
 
     def refresh_binding_list(self):
-        pass
+        # Sync UI with ref_binding list
+        all_bound_ref_names_in_list = [str(self.listWidget_bindings.item(i).text())
+                                       for i in range(self.listWidget_bindings.count())]
+
+        # consider removing items no longer in list from the UI
+        for bound_ref_name in all_bound_ref_names_in_list:
+            if bound_ref_name not in list(self.reference_mode_bindings.keys()):
+                self.listWidget_bindings.takeItem(self.listWidget_bindings.row(
+                    self.listWidget_bindings.findItems(
+                        bound_ref_name, Qt.MatchExactly
+                    )[0]
+                ))
+
+        # adding newly created bindings to UI
+        for bound_ref_name in list(self.reference_mode_bindings.keys()):
+            if bound_ref_name not in all_bound_ref_names_in_list:
+                self.listWidget_bindings.addItem(bound_ref_name)
 
     def time_series_to_widget(self, time_series, label, color=None):
         # plt.cla()
@@ -980,6 +1117,197 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         ax.set_ylabel(label)
         canvas = FigureCanvasQTAgg(fig)
         return canvas
+
+
+class AddConnectorDialog(QDialog):
+    def __init__(self, structure):  # the adding connector part is done in this new object
+        super(AddConnectorDialog, self).__init__()
+        self.setWindowTitle("Add Connector")
+        self.setGeometry(600, 600, 200, 200)
+        self.structure = structure
+
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.setLayout(self.main_layout)
+
+        self.variables_in_model = list(self.structure.model_structure.sfd.nodes)
+
+        self.label_from = QLabel(self)
+        self.label_from.setText("From:")
+        self.main_layout.addWidget(self.label_from)
+
+        self.from_var_combobox = QComboBox(self)
+        self.from_var_combobox.addItems(self.variables_in_model)
+        self.from_var_combobox.setCurrentIndex(0)
+        self.main_layout.addWidget(self.from_var_combobox)
+
+        self.label_to = QLabel(self)
+        self.label_to.setText("To:")
+        self.main_layout.addWidget(self.label_to)
+
+        self.to_var_combobox = QComboBox(self)
+        self.to_var_combobox.addItems(self.variables_in_model)
+        self.to_var_combobox.setCurrentIndex(0)
+        self.main_layout.addWidget(self.to_var_combobox)
+
+        self.label_polarity = QLabel(self)
+        self.label_polarity.setText("Polarity:")
+        self.main_layout.addWidget(self.label_polarity)
+
+        self.polarity_combobox = QComboBox(self)
+        self.polarity_combobox.addItems(['-', 'positive', 'negative'])
+        self.polarity_combobox.setCurrentIndex(0)
+        self.main_layout.addWidget(self.polarity_combobox)
+
+        self.layout_buttons = QHBoxLayout()
+        self.layout_buttons.setAlignment(Qt.AlignHCenter)
+
+        self.confirm_button = QPushButton(text='Confirm')
+        self.confirm_button.clicked.connect(self.confirm)
+        self.layout_buttons.addWidget(self.confirm_button)
+
+        self.cancel_button = QPushButton(text='Cancel')
+        self.cancel_button.clicked.connect(self.cancel)
+        self.layout_buttons.addWidget(self.cancel_button)
+
+        self.widget_buttons = QWidget()
+        self.widget_buttons.setLayout(self.layout_buttons)
+        self.main_layout.addWidget(self.widget_buttons)
+
+    def confirm(self):
+        try:
+            print("Manually adding connector:")
+            from_var = self.from_var_combobox.currentText()
+            to_var = self.to_var_combobox.currentText()
+            polarity = self.polarity_combobox.currentText() if self.polarity_combobox.currentText() != '-' else None
+            print("from var: {}, to var: {}, polarity: {}".format(from_var, to_var, polarity))
+            # print(self.structure.model_structure.sfd.nodes)
+            self.structure.build_connector(from_var=from_var, to_var=to_var, polarity=polarity)
+
+            # simulate this modified structure
+            # self.structure.simulation_handler(25)
+            self.close()
+
+        except ValueError:
+            pass
+
+    def cancel(self):
+        self.close()
+
+
+class AddElementDialog(QDialog):
+    def __init__(self, element_type, structure):  # the adding structure part is done in this new object
+        super(AddElementDialog, self).__init__()
+        self.setWindowTitle("Add " + element_type)
+        self.setGeometry(600, 600, 200, 200)
+        self.element_type = element_type
+        self.structure = structure
+
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.setLayout(self.main_layout)
+
+        self.label_name = QLabel(self)
+        self.label_name.setText("Name:")
+        self.main_layout.addWidget(self.label_name)
+
+        self.entry_name = QLineEdit(self)
+        self.main_layout.addWidget(self.entry_name)
+
+        self.label_value = QLabel(self)
+        self.label_value.setText("Value:")
+        self.main_layout.addWidget(self.label_value)
+
+        self.entry_value = QLineEdit(self)
+        self.main_layout.addWidget(self.entry_value)
+
+        self.label_x = QLabel(self)
+        self.label_x.setText("x:")
+        self.main_layout.addWidget(self.label_x)
+
+        self.entry_x = QLineEdit(self)
+        self.main_layout.addWidget(self.entry_x)
+
+        self.label_y = QLabel(self)
+        self.label_y.setText("y:")
+        self.main_layout.addWidget(self.label_y)
+
+        self.entry_y = QLineEdit(self)
+        self.main_layout.addWidget(self.entry_y)
+
+        if self.element_type == FLOW:
+            self.variables_in_model = ['-'] + self.structure.model_structure.all_certain_type(STOCK)
+
+            self.label_flow_to = QLabel(self)
+            self.label_flow_to.setText("Flow to:")
+            self.main_layout.addWidget(self.label_flow_to)
+
+            self.flow_to_variables_combobox = QComboBox(self)
+            self.flow_to_variables_combobox.addItems(self.variables_in_model)
+            self.flow_to_variables_combobox.setCurrentIndex(0)
+            self.main_layout.addWidget(self.flow_to_variables_combobox)
+
+            self.label_flow_from = QLabel(self)
+            self.label_flow_from.setText("Flow from:")
+            self.main_layout.addWidget(self.label_flow_from)
+
+            self.flow_from_variables_combobox = QComboBox(self)
+            self.flow_from_variables_combobox.addItems(self.variables_in_model)
+            self.flow_from_variables_combobox.setCurrentIndex(0)
+            self.main_layout.addWidget(self.flow_from_variables_combobox)
+
+        self.layout_buttons = QHBoxLayout()
+        self.layout_buttons.setAlignment(Qt.AlignHCenter)
+
+        self.confirm_button = QPushButton(text='Confirm')
+        self.confirm_button.clicked.connect(self.confirm)
+        self.layout_buttons.addWidget(self.confirm_button)
+
+        self.cancel_button = QPushButton(text='Cancel')
+        self.cancel_button.clicked.connect(self.cancel)
+        self.layout_buttons.addWidget(self.cancel_button)
+
+        self.widget_buttons = QWidget()
+        self.widget_buttons.setLayout(self.layout_buttons)
+        self.main_layout.addWidget(self.widget_buttons)
+
+    def confirm(self):
+        try:
+            print("Manually adding element:")
+            self.element_name = self.entry_name.text()
+            self.value = text_to_equation(self.entry_value.text())
+            self.x = int(self.entry_x.text())
+            self.y = int(self.entry_y.text())
+            print("name: {}, value: {}, x: {}, y:{}".format(self.element_name, self.value, self.x, self.y))
+            if self.element_type == FLOW:
+                self.flow_from = None if self.flow_from_variables_combobox.currentText() == '-' else self.flow_from_variables_combobox.currentText()
+                self.flow_to = None if self.flow_to_variables_combobox.currentText() == '-' else self.flow_to_variables_combobox.currentText()
+                # print("flow_from: {}, flow_to: {}".format(self.flow_from, self.flow_to))
+
+            if self.element_type == STOCK:
+                self.structure.build_stock(name=self.element_name, initial_value=self.value, x=self.x, y=self.y)
+            elif self.element_type == FLOW:
+                self.structure.build_flow(name=self.element_name, equation=self.value, x=self.x, y=self.y,
+                                          flow_from=self.flow_from, flow_to=self.flow_to)
+                self.structure.connect_stock_flow(flow_name=self.element_name,
+                                                  new_flow_from=self.flow_from,
+                                                  new_flow_to=self.flow_to)
+            elif self.element_type in [VARIABLE, PARAMETER]:
+                self.structure.build_aux(name=self.element_name, equation=self.value, x=self.x, y=self.y)
+
+            # simulate this modified structure
+            # self.structure.simulation_handler(25)
+            self.close()
+
+        except ValueError:
+            pass
+
+    def cancel(self):
+        self.close()
+
+
+
+
 
 
 if __name__ == '__main__':

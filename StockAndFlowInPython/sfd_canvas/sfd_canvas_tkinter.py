@@ -51,10 +51,15 @@ class SFDCanvas(Frame):
         self.canvas.config(width=self.xmost, height=self.ymost, scrollregion=(0, 0, self.xmost, self.ymost))
 
     def locate_var(self, name):
+        for element in self.sfd.nodes:
+            if element == name:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                return [float(x), float(y)]
+
+        # if nothing is found (return is not triggered), try replace ' ' with '_'
         name = self.name_handler(name)
-        # print("locating...")
-        # print(name)
-        # print(self.session_handler1.model_structure.sfd.nodes)
+
         for element in self.sfd.nodes:
             if element == name:
                 x = self.sfd.nodes[element]['pos'][0]

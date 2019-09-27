@@ -90,12 +90,12 @@ def text_to_equation(equation_text):
 
 def equation_to_text(equation):
     if type(equation) == int or type(equation) == float:
-        return equation
+        return str(equation)
     try:
         equation[0].isdigit()  # if it's a number
-        return equation
+        return str(equation)
     except AttributeError:
         if equation[0] in [ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION]:
             return str(equation[1]) + name_operator_mapping[equation[0]] + str(equation[2])
         elif equation[0] == LINEAR:
-            return equation[1]
+            return str(equation[1])
