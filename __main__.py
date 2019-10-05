@@ -70,6 +70,18 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_confirm.clicked.connect(self.confirm_modification)
         self.comboBox_elements_in_selected_structure.currentIndexChanged.connect(self.on_select_an_element_of_a_candidate_structure)
 
+        ## hide these four until a flow is selected
+        self.label_mod_from.hide()
+        self.comboBox_mod_from.hide()
+        self.label_mod_to.hide()
+        self.comboBox_mod_to.hide()
+
+        # UI - Simulation control
+        self.pushButton_start.clicked.connect(self.simulate)
+        self.pushButton_pause.clicked.connect(self.pause)
+        self.pushButton_reset.clicked.connect(self.reset)
+
+
         # Specify round to iterate
 
         self.iteration_time = ITERATION_TIMES
@@ -516,7 +528,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.details_behavior_canvas = self.time_series_to_widget(time_series=time_series,
                                                                   label=time_series_name,
                                                                   color='coral')
-        self.details_behavior_canvas.setFixedSize(400, 320)
+        # self.details_behavior_canvas.setFixedSize(400, 320)
+        self.details_behavior_canvas.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
         self.layout_details.addWidget(self.details_behavior_canvas)
 
     def clear_result_panel(self):
@@ -527,8 +540,10 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.layout_show_behavior.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.result_behavior_canvas = self.time_series_to_widget(time_series=time_series,
                                                                  label=time_series_name)
-        self.result_behavior_canvas.setFixedSize(400, 320)
+        # self.result_behavior_canvas.setFixedSize(400, 320)
+        self.result_behavior_canvas.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
         self.layout_show_behavior.addWidget(self.result_behavior_canvas)
+
 
 
 
@@ -537,18 +552,27 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def initialize_generic_structures(self):
         self.generic_structures = dict()  # name:structure
         self.generic_structures_likelihood = dict()  # name:likelihood
+
+        # UI
+        self.treeWidget_generic_structures.setColumnWidth(0, 170)
+        self.generic_structures_tree_item_widgets = dict()  # name:widget reference
+
         self.add_generic_structure(name='basic_stock_inflow')
         self.add_generic_structure(name='basic_stock_outflow')
         # self.add_generic_structure(name='first_order_positive')
         # self.add_generic_structure(name='first_order_negative')
 
     def add_generic_structure(self, name, likelihood=INITIAL_LIKELIHOOD):
-        a = SessionHandler()
-        a.model_structure.set_predefined_structure[name]()
-        a.model_structure.simulate(simulation_time=25)
-        # a.model_structure.sfd.graph['likelihood'] = likelihood
-        self.generic_structures[name] = a
+        generic_structure_session_handler = SessionHandler()
+        generic_structure_session_handler.model_structure.set_predefined_structure[name]()
+        generic_structure_session_handler.simulation_handler(simulation_time=25)
+        # generic_structure_session_handler.model_structure.sfd.graph['likelihood'] = likelihood
+        self.generic_structures[name] = generic_structure_session_handler
         self.generic_structures_likelihood[name] = likelihood
+
+        # UI
+        self.generic_structures_tree_item_widgets[name] = QTreeWidgetItem(self.treeWidget_generic_structures, [name, str(self.generic_structures_likelihood[name])])
+
 
     def reset_all_generic_structures_likelihood(self):
         for generic_structure in self.generic_structures_likelihood.keys():
@@ -599,7 +623,9 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.refresh_generic_structures_list()
 
     def refresh_generic_structures_list(self):
-        pass
+        # since we don't consider automatically adding/removing generic structures, there's no entry operation.
+        for name, likelihood in self.generic_structures_likelihood.items():
+            self.generic_structures_tree_item_widgets[name].setText(1, str(likelihood))
 
 
 
@@ -620,7 +646,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.layout_tree.itemAt(i).widget().setParent(None)
 
         # setup the figure to operate
-        self.expansion_tree_fig = plt.figure(num='expansion_tree')
+        self.expansion_tree_fig = plt.figure(num='expansion_tree', figsize=(4, 4))
         plt.clf()  # clear figure, otherwise multiple figures will overlap
 
         # solve colors of nodes
@@ -649,9 +675,10 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 # with_labels=True
                 )
 
-        # convert figure to widget then put it to layout
+        # convert figure to widget then add it to layout
         self.tree_widget = FigureCanvasQTAgg(figure=self.expansion_tree_fig)
-        self.tree_widget.setFixedSize(400, 320)
+        # self.tree_widget.setFixedSize(400, 320)
+        self.tree_widget.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout_tree.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_tree.addWidget(self.tree_widget)
 
@@ -904,7 +931,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         sfd_canvas.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd)
 
         # add this widget to layout_sfd
-        sfd_canvas.setFixedSize(880, 720)
+        # sfd_canvas.setFixedSize(880, 720)
+        sfd_canvas.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout_sfd.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_sfd.addWidget(sfd_canvas)
 
@@ -914,9 +942,10 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.layout_cld.itemAt(i).widget().setParent(None)
 
         # convert cld network graph to widget
-        cld_network_graph = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.draw_graphs(rtn=True)
+        cld_network_graph = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.draw_graphs_with_function_value_polarity(rtn=True)
         cld_network_widget = FigureCanvasQTAgg(figure=cld_network_graph)
-        cld_network_widget.setFixedSize(880, 720)
+        # cld_network_widget.setFixedSize(880, 720)
+        cld_network_widget.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout_cld.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_cld.addWidget(cld_network_widget)
 
@@ -953,8 +982,6 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         # insert element names into combobox
         self.comboBox_elements_in_selected_structure.addItems(self.elements_in_selected_structure)
-
-
 
     def add_stock(self):
         if self.selected_candidate_structure_uid is None:
@@ -1003,34 +1030,79 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # TODO this part needs improvement: the consequences of removing an element: e.g. bindings?
 
     def on_select_an_element_of_a_candidate_structure(self):
-        selected_element = self.comboBox_elements_in_selected_structure.currentText()
-        try:
-            original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['function']
-            if original_equation is None:
-                original_equation = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element]['value'][0]
-            original_equation_text = equation_to_text(original_equation)
-            self.lineEdit_equation.setText(original_equation_text)
+        selected_element_text = self.comboBox_elements_in_selected_structure.currentText()
+        if selected_element_text != '':
+            selected_element = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[selected_element_text]  # TODO: model and view should be more tightly coupled
 
-            x_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
-                selected_element]['pos'][0]
-            self.lineEdit_x_pos.setText(str(x_pos))
+            try:
+                if selected_element['element_type'] == FLOW:
+                    stocks_in_selected_structure = ['-'] + self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.all_certain_type(STOCK)
 
-            y_pos = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
-                selected_element]['pos'][1]
-            self.lineEdit_y_pos.setText(str(y_pos))
-        except KeyError:
-            pass
+                    self.label_mod_from.show()
+                    self.comboBox_mod_from.show()
+                    self.comboBox_mod_from.clear()
+                    self.comboBox_mod_from.addItems(stocks_in_selected_structure)
 
+                    self.label_mod_to.show()
+                    self.comboBox_mod_to.show()
+                    self.comboBox_mod_to.clear()
+                    self.comboBox_mod_to.addItems(stocks_in_selected_structure)
+                else:
+                    self.label_mod_from.hide()
+                    self.comboBox_mod_from.hide()
+                    self.label_mod_to.hide()
+                    self.comboBox_mod_to.hide()
+
+                original_equation = selected_element['function']
+                if original_equation is None:
+                    original_equation = selected_element['value'][0]
+                original_equation_text = equation_to_text(original_equation)
+                self.lineEdit_equation.setText(original_equation_text)
+
+                x_pos = selected_element['pos'][0]
+                self.lineEdit_x_pos.setText(str(x_pos))
+
+                y_pos = selected_element['pos'][1]
+                self.lineEdit_y_pos.setText(str(y_pos))
+            except KeyError:
+                pass
 
     def confirm_modification(self):
         new_equation = text_to_equation(self.lineEdit_equation.text())
         self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].replace_equation(name=self.comboBox_elements_in_selected_structure.currentText(),
-                                                        new_equation=new_equation)
+                                                                                                       new_equation=new_equation)
 
         new_x = float(self.lineEdit_x_pos.text())
         new_y = float(self.lineEdit_y_pos.text())
         self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[self.comboBox_elements_in_selected_structure.currentText()]['pos'][0] = new_x
         self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[self.comboBox_elements_in_selected_structure.currentText()]['pos'][1] = new_y
+
+        if self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[self.comboBox_elements_in_selected_structure.currentText()]['element_type'] == FLOW:
+            current_flow_from = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                self.comboBox_elements_in_selected_structure.currentText()]['flow_from']
+            current_flow_to = self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                self.comboBox_elements_in_selected_structure.currentText()]['flow_to']
+
+            new_flow_from = self.comboBox_mod_from.currentText() if self.comboBox_mod_from.currentText() != '-' else None
+            new_flow_to = self.comboBox_mod_to.currentText() if self.comboBox_mod_to.currentText() != '-' else None
+
+            if current_flow_from != new_flow_from:
+                if current_flow_from is not None:
+                    self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].disconnect_stock_flow(flow_name=self.comboBox_elements_in_selected_structure.currentText(),
+                                                                                                                        stock_name=current_flow_from)
+                self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                    self.comboBox_elements_in_selected_structure.currentText()]['flow_from'] = new_flow_from
+
+            if current_flow_to != new_flow_to:
+                if current_flow_to is not None:
+                    self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].disconnect_stock_flow(flow_name=self.comboBox_elements_in_selected_structure.currentText(),
+                                                                                                                        stock_name=current_flow_to)
+                self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd.nodes[
+                    self.comboBox_elements_in_selected_structure.currentText()]['flow_to'] = new_flow_to
+
+            self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].connect_stock_flow(flow_name=self.comboBox_elements_in_selected_structure.currentText(),
+                                                                                                             new_flow_from=new_flow_from,
+                                                                                                             new_flow_to=new_flow_to)
 
         self.display_a_candidate_structure()
 
@@ -1122,6 +1194,21 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         return canvas
 
 
+
+
+    # Simulation control
+    def simulate(self):
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].simulation_handler(25)
+
+    def pause(self):
+        pass
+
+    def reset(self):
+        pass
+
+
+
+
 class AddConnectorDialog(QDialog):
     def __init__(self, structure):  # the adding connector part is done in this new object
         super(AddConnectorDialog, self).__init__()
@@ -1187,8 +1274,6 @@ class AddConnectorDialog(QDialog):
             # print(self.structure.model_structure.sfd.nodes)
             self.structure.build_connector(from_var=from_var, to_var=to_var, polarity=polarity)
 
-            # simulate this modified structure
-            # self.structure.simulation_handler(25)
             self.close()
 
         except ValueError:

@@ -16,200 +16,6 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QWidget" name="widget_structure_modifier" native="true">
-      <layout class="QHBoxLayout" name="layout_structure_modifier">
-       <property name="spacing">
-        <number>5</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QGroupBox" name="groupBox_add">
-         <property name="title">
-          <string>Add</string>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_9">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QPushButton" name="pushButton_add_stock">
-            <property name="text">
-             <string>Stock</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_add_flow">
-            <property name="text">
-             <string>Flow</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_add_aux">
-            <property name="text">
-             <string>Aux</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_add_connector">
-            <property name="text">
-             <string>Connector</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_select">
-         <property name="title">
-          <string>Select Element</string>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_10">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QComboBox" name="comboBox_elements_in_selected_structure"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_modify">
-         <property name="title">
-          <string>Remove / Modify</string>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_11">
-          <property name="spacing">
-           <number>-1</number>
-          </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QPushButton" name="pushButton_remove">
-            <property name="text">
-             <string>Remove</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_eqn">
-            <property name="text">
-             <string>Eqn:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_equation"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_x_pos">
-            <property name="text">
-             <string>X pos:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_x_pos">
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_y_pos">
-            <property name="text">
-             <string>Y pos:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_y_pos">
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_confirm">
-            <property name="text">
-             <string>Confirm</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>
@@ -349,7 +155,25 @@
     <addaction name="separator"/>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -600,10 +424,16 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_details">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
-     <width>82</width>
-     <height>172</height>
+     <width>62</width>
+     <height>38</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -621,13 +451,13 @@
    <widget class="QWidget" name="dockWidgetContents_details">
     <layout class="QVBoxLayout" name="layout_details">
      <property name="leftMargin">
-      <number>3</number>
+      <number>0</number>
      </property>
      <property name="topMargin">
       <number>3</number>
      </property>
      <property name="rightMargin">
-      <number>3</number>
+      <number>0</number>
      </property>
      <property name="bottomMargin">
       <number>3</number>
@@ -639,7 +469,7 @@
    <property name="minimumSize">
     <size>
      <width>264</width>
-     <height>166</height>
+     <height>167</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -723,6 +553,24 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_expansion_tree">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>524287</width>
+     <height>524287</height>
+    </size>
+   </property>
    <property name="windowTitle">
     <string>Expansion tree</string>
    </property>
@@ -747,6 +595,18 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_simulation_result">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>204</width>
+     <height>58</height>
+    </size>
+   </property>
    <property name="windowTitle">
     <string>Simulation result</string>
    </property>
@@ -756,13 +616,13 @@
    <widget class="QWidget" name="dockWidgetContents_result">
     <layout class="QVBoxLayout" name="layout_result">
      <property name="leftMargin">
-      <number>12</number>
+      <number>0</number>
      </property>
      <property name="topMargin">
       <number>0</number>
      </property>
      <property name="rightMargin">
-      <number>12</number>
+      <number>0</number>
      </property>
      <property name="bottomMargin">
       <number>0</number>
@@ -833,7 +693,7 @@
    <property name="minimumSize">
     <size>
      <width>173</width>
-     <height>190</height>
+     <height>191</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -930,6 +790,12 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_settings">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="windowTitle">
     <string>Settings</string>
    </property>
@@ -980,8 +846,8 @@
   <widget class="QDockWidget" name="dockWidget_generic_structures">
    <property name="minimumSize">
     <size>
-     <width>102</width>
-     <height>124</height>
+     <width>103</width>
+     <height>125</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -1001,14 +867,247 @@
      <property name="leftMargin">
       <number>12</number>
      </property>
-     <item alignment="Qt::AlignHCenter|Qt::AlignTop">
-      <widget class="QTableWidget" name="tableWidget_generic_structure">
+     <item>
+      <widget class="QTreeWidget" name="treeWidget_generic_structures">
        <property name="maximumSize">
         <size>
          <width>1000000</width>
          <height>16777215</height>
         </size>
        </property>
+       <property name="indentation">
+        <number>5</number>
+       </property>
+       <column>
+        <property name="text">
+         <string>Structure</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Likelihood</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_structure_modifier">
+   <property name="windowTitle">
+    <string>Structure modification</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_structure_modifier">
+    <layout class="QHBoxLayout" name="horizontalLayout_12">
+     <property name="leftMargin">
+      <number>3</number>
+     </property>
+     <property name="topMargin">
+      <number>3</number>
+     </property>
+     <property name="rightMargin">
+      <number>3</number>
+     </property>
+     <property name="bottomMargin">
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QGroupBox" name="groupBox_add">
+       <property name="title">
+        <string>Add</string>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushButton_add_stock">
+          <property name="text">
+           <string>Stock</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_add_flow">
+          <property name="text">
+           <string>Flow</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_add_aux">
+          <property name="text">
+           <string>Aux</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_add_connector">
+          <property name="text">
+           <string>Connector</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_select">
+       <property name="title">
+        <string>Select Element</string>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QComboBox" name="comboBox_elements_in_selected_structure"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_modify">
+       <property name="title">
+        <string>Remove / Modify</string>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <property name="spacing">
+         <number>-1</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushButton_remove">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_x_pos">
+          <property name="text">
+           <string>X pos:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_x_pos">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_y_pos">
+          <property name="text">
+           <string>Y pos:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_y_pos">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mod_from">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>From:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBox_mod_from"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_mod_to">
+          <property name="text">
+           <string>To:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBox_mod_to"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_eqn">
+          <property name="text">
+           <string>Eqn:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_equation"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_confirm">
+          <property name="text">
+           <string>Confirm</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
@@ -1058,6 +1157,7 @@
   <zorder>dockWidget_bindings</zorder>
   <zorder>dockWidget_settings</zorder>
   <zorder>dockWidget_generic_structures</zorder>
+  <zorder>dockWidget_structure_modifier</zorder>
  </widget>
  <resources/>
  <connections/>

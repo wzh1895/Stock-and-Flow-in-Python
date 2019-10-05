@@ -412,6 +412,19 @@ class SessionHandler(object):
                                             x=x,
                                             y=y,
                                             points=points)
+
+        # connectors also need to be build
+        if flow_from is not None:
+            self.model_structure.add_connector(from_element=name,
+                                               to_element=flow_from,
+                                               polarity='negative',
+                                               display=False)
+        if flow_to is not None:
+            self.model_structure.add_connector(from_element=name,
+                                               to_element=flow_to,
+                                               polarity='positive',
+                                               display=False)
+
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
@@ -563,7 +576,7 @@ class SessionHandler(object):
         :param stock_name:
         :return:
         """
-        self.model_structure.remove_stock_flow_connection(flow_name, structure_name='default', stock_name=stock_name)
+        self.model_structure.remove_stock_flow_connection(flow_name, stock_name=stock_name)
         # Rearrange layout by 1) decide flow is on which side of the stock 2) increase the distance
         stock_x = self.model_structure.get_coordinate(stock_name)[0]
         flow_x = self.model_structure.get_coordinate(flow_name)[0]

@@ -43,6 +43,23 @@ MULTIPLICATION = multiplication
 function_names = [LINEAR, SUBTRACTION, DIVISION, ADDITION, MULTIPLICATION]
 
 
+# Define equation-text converter
+
+name_operator_mapping = {ADDITION: '+', SUBTRACTION: '-', MULTIPLICATION: '*', DIVISION: '/'}
+
+def equation_to_text(equation):
+    if type(equation) == int or type(equation) == float:
+        return str(equation)
+    try:
+        equation[0].isdigit()  # if it's a number
+        return str(equation)
+    except AttributeError:
+        if equation[0] in [ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION]:
+            return str(equation[1]) + name_operator_mapping[equation[0]] + str(equation[2])
+        elif equation[0] == LINEAR:
+            return str(equation[1])
+
+
 class UidManager(object):
     def __init__(self):
         self.uid = 0
@@ -618,6 +635,45 @@ class Structure(object):
             return self.figure1
         else:
             plt.show()
+
+    # Draw graphs with customized labels and colored connectors
+    def draw_graphs_with_function_value_polarity(self, rtn=False):
+        self.figure2 = plt.figure(num='cld')
+        plt.clf()
+        # generate node labels
+        node_attrs_function = nx.get_node_attributes(self.sfd, 'function')
+        node_attrs_value = nx.get_node_attributes(self.sfd, 'value')
+        custom_node_labels = dict()
+        for node, attr in node_attrs_function.items():
+            # when element only has a value but no function
+            if attr is None:
+                attr = node_attrs_value[node][0]
+            # when the element has a function
+            else:
+                attr = equation_to_text(attr)
+            custom_node_labels[node] = "{}={}".format(node, attr)
+
+        # generate edge polarities
+        edge_attrs_polarity = nx.get_edge_attributes(self.sfd, 'polarity')
+        custom_edge_colors = list()
+        for edge, attr in edge_attrs_polarity.items():
+            color = 'k'  # black
+            if attr == 'negative':
+                color = 'b'  # blue
+            custom_edge_colors.append(color)
+
+        nx.draw_networkx(G=self.sfd,
+                         labels=custom_node_labels,
+                         font_size=10,
+                         node_color='skyblue',
+                         edge_color=custom_edge_colors)
+        plt.axis('off')  # turn off axis for structure display
+
+        if rtn:
+            return self.figure2
+        else:
+            plt.show()
+
 
     # Draw network with FancyArrowPatch
     # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
