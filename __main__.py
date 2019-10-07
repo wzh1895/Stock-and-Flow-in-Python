@@ -113,7 +113,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         # TODO this task list will be the predecessor of 'Code Rack'
         # Initialize task list
-        self.task_list = [5, 4]
+        self.task_list = [5, 4, 3]
 
         # TODO test
         # self.load_reference_mode_from_file()
@@ -247,7 +247,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
             # STEP: sort candidate structures by activity
             # TODO: control this not only by number
-            if i > 3:  # get enough candidate structures to sort
+            if i > 5:  # get enough candidate structures to sort
                 self.sort_candidate_structures_by_activity()
 
             # global display updates needed
@@ -576,8 +576,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         self.add_generic_structure(name='basic_stock_inflow')
         self.add_generic_structure(name='basic_stock_outflow')
-        # self.add_generic_structure(name='first_order_positive')
-        # self.add_generic_structure(name='first_order_negative')
+        self.add_generic_structure(name='first_order_positive')
+        self.add_generic_structure(name='first_order_negative')
 
     def add_generic_structure(self, name, likelihood=INITIAL_LIKELIHOOD):
         generic_structure_session_handler = SessionHandler()
@@ -711,8 +711,6 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         string = ''
         for i in range(3):
             string += str(self.sorted_tree[i][0]) + '[{}] '.format(self.sorted_tree[i][1])
-        self.candidate_structure_window.label_top_three_0.configure(text=string)
-        self.candidate_structure_window.label_top_three_0.update()
 
     def show_all_candidate_structures_activity(self):
         all_activity = nx.get_node_attributes(self.expansion_tree, 'activity')
