@@ -200,12 +200,13 @@ def new_expand_structure(base_structure, start_with_element_base, target_structu
 
 
 def import_flow(base_structure, start_with_element_base, target_structure):
-    print("    **** Building new structure...")
+    print("    **** Building new structure by importing flow...")
     new_model_structure = Structure(sfd=copy.deepcopy(base_structure.model_structure.sfd),
                                     uid_manager=copy.deepcopy(base_structure.model_structure.uid_manager),
                                     name_manager=copy.deepcopy(base_structure.model_structure.name_manager),
                                     uid_element_name=copy.deepcopy(base_structure.model_structure.uid_element_name))
     new_base = SessionHandler(model_structure=new_model_structure)
+    print('here9', new_base.model_structure.sfd.nodes)
     print("    **** Base_structure: ", new_base.model_structure.sfd.nodes(data='function'))
 
     print("    **** {} in base structure is chosen to start with".format(start_with_element_base))
@@ -481,16 +482,13 @@ def apply_a_concept_cld(base_structure, stock_uid_in_base_to_start_with, concept
         while continue_building:
             # step 1 seeking: Iterate along the target chain to find a node that fits the current element in concept cld
             continue_seeking = True
-            print("Here 1,", target_structure.model_structure.sfd.nodes[structure_operating['target'][0]])
             while continue_seeking:
 
                 # Use this check to see if the element in base has the needed function in concept cld
                 func = target_structure.model_structure.sfd.nodes[structure_operating['target'][0]]['function']
                 if func is None:
-                    print("Here 1.5")
                     check = False
                 else:
-                    print("Here 2,", func[0], structure_operating['concept'])
                     if func[0] == structure_operating['concept']:
                         check = True
                     else:
@@ -751,16 +749,32 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     for param_id, param_element_uid in parameter_id.items():
         param_history[param_id] = [new_base.model_structure.get_element_by_uid(param_element_uid)['value'][0]]
 
-    # store all figures generated in the optimization course
-    optimization_figures = list()
+    # # store all figures generated in the optimization course
+    # optimization_figures = list()
+    #
+    # # Before a new optimization loop, close all existing opt figures to save memory
+    # for opt_fig in optimization_figures:
+    #     plt.close(opt_fig)
+    # del optimization_figures[:]
 
-    # Before a new optimization loop, close all existing opt figures to save memory
-    for opt_fig in optimization_figures:
-        plt.close(opt_fig)
-    del optimization_figures[:]
+    optim_fig = plt.figure(figsize=(5, 7))
+    ax1 = optim_fig.add_subplot(211)  # comparison
+    ax1.legend(loc='upper right')
+    ax1.set_xlabel('DT')
+    ax1.set_xlim(0, 100)
+    ax1.set_ylim(0, 100)
+
+    ax2 = optim_fig.add_subplot(212)  # parameter history
+    ax2.legend(loc='upper left')
+    ax2.set_xlabel('Iteration')
+    ax2.set_ylabel('Parameter history')
+
 
     for i in range(rnd):
         print('\nRound {}'.format(i))
+
+        ax1.clear()
+        ax2.clear()
 
         for param_id, param_element_uid in parameter_id.items():
             print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(param_element_uid),
@@ -772,11 +786,11 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                 print('\nRound {} Epoch {}'.format(i, j))
 
                 # figure generation
-                if plotting_switch:
-                    optimization_figures.append(plt.figure(figsize=(5, 7)))
-                    ax_parameters = optimization_figures[-1].add_subplot(211)
-                    ax_comparison = optimization_figures[-1].add_subplot(212)
-                    plt.figure(optimization_figures[-1].number)
+                # if plotting_switch:
+                    # optimization_figures.append(plt.figure(figsize=(5, 7)))
+                    # ax_parameters = optimization_figures[-1].add_subplot(211)
+                    # ax_comparison = optimization_figures[-1].add_subplot(212)
+                    # plt.figure(optimization_figures[-1].number)
 
                 print("Simulating...")
                 new_base.simulation_handler(25)
@@ -789,7 +803,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     compare_with = reference_mode_property[1]
                     distance_new += similarity_calc_behavior(who_compare=np.array(who_compare).reshape(-1, 1),
                                                              compare_with=np.array(compare_with).reshape(-1, 1),
-                                                             comparison_axes=ax_comparison if plotting_switch else None
+                                                             comparison_axes=ax1 if plotting_switch else None
                                                              )
 
                 # control iteration
@@ -818,9 +832,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
 
                 if plotting_switch:
                     for p_id, p_history in param_history.items():
-                        ax_parameters.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
-                        ax_parameters.legend(loc='upper left')
-                        ax_parameters.set_xlabel('Iteration')
+                        ax2.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
 
                     plt.show()
 

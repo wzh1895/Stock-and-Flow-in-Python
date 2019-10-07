@@ -154,6 +154,8 @@
     </property>
     <addaction name="separator"/>
     <addaction name="separator"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionClose"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -186,6 +188,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpen_2"/>
+   <addaction name="separator"/>
    <addaction name="actionStartExpansion"/>
    <addaction name="actionStopExpansion"/>
    <addaction name="actionSaveModel"/>
@@ -195,8 +199,8 @@
   <widget class="QDockWidget" name="dockWidget_browse_time_series">
    <property name="minimumSize">
     <size>
-     <width>258</width>
-     <height>281</height>
+     <width>243</width>
+     <height>240</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -468,7 +472,7 @@
   <widget class="QDockWidget" name="dockWidget_browse_candidates">
    <property name="minimumSize">
     <size>
-     <width>264</width>
+     <width>197</width>
      <height>167</height>
     </size>
    </property>
@@ -495,13 +499,16 @@
      <property name="bottomMargin">
       <number>12</number>
      </property>
-     <item alignment="Qt::AlignHCenter">
+     <item>
       <widget class="QListWidget" name="listWidget_candidates">
        <property name="maximumSize">
         <size>
          <width>1000000</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
        </property>
       </widget>
      </item>
@@ -692,8 +699,8 @@
   <widget class="QDockWidget" name="dockWidget_bindings">
    <property name="minimumSize">
     <size>
-     <width>173</width>
-     <height>191</height>
+     <width>0</width>
+     <height>0</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -846,8 +853,8 @@
   <widget class="QDockWidget" name="dockWidget_generic_structures">
    <property name="minimumSize">
     <size>
-     <width>103</width>
-     <height>125</height>
+     <width>0</width>
+     <height>0</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -1147,6 +1154,25 @@
    </property>
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open ...</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close ...</string>
+   </property>
+  </action>
+  <action name="actionOpen_2">
+   <property name="icon">
+    <iconset>
+     <normaloff>icons/open.png</normaloff>icons/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
    </property>
   </action>
   <zorder>dockWidget_browse_time_series</zorder>

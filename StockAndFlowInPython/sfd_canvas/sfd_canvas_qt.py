@@ -299,9 +299,9 @@ class SFDCanvas(QWidget):
                 # Only draw when 'display' == True, avoid FLOW--->STOCK
                 print('    drawing connector from {} to {}'.format(from_element, to_element))
                 from_cord = self.locate_var(from_element)
-                print("From cord", from_cord)
+                # print("From cord", from_cord)
                 to_cord = self.locate_var(to_element)
-                print("To cord", to_cord)
+                # print("To cord", to_cord)
                 angle = self.sfd[from_element][to_element]['angle']
                 # print('angle:', angle)
                 self.create_connector(qp, from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)

@@ -413,17 +413,19 @@ class SessionHandler(object):
                                             y=y,
                                             points=points)
 
-        # connectors also need to be build
-        if flow_from is not None:
-            self.model_structure.add_connector(from_element=name,
-                                               to_element=flow_from,
-                                               polarity='negative',
-                                               display=False)
-        if flow_to is not None:
-            self.model_structure.add_connector(from_element=name,
-                                               to_element=flow_to,
-                                               polarity='positive',
-                                               display=False)
+        # connectors also need to be build  # this part was wrong for 2 reasons: 1) add_flow already dealt with connectors; 2) this part doesn't check names, so 'None' was added
+        # if flow_from is not None:
+        #     print('here14.1', name, flow_from)
+        #     self.model_structure.add_connector(from_element=name,
+        #                                        to_element=flow_from,
+        #                                        polarity='negative',
+        #                                        display=False)
+        # if flow_to is not None:
+        #     print('here14.2', name, flow_to)
+        #     self.model_structure.add_connector(from_element=name,
+        #                                        to_element=flow_to,
+        #                                        polarity='positive',
+        #                                        display=False)
 
         self.refresh()
         time.sleep(SLEEP_TIME)

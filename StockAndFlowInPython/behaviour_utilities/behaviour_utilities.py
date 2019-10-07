@@ -165,10 +165,6 @@ def similarity_calc_behavior(who_compare, compare_with, comparison_axes=None):
     if comparison_axes is not None:
         behavior = comparison_axes.plot(x1, label='Behavior')
         reference = comparison_axes.plot(x2, label='Reference')
-        comparison_axes.legend(loc='upper right')
-        comparison_axes.set_xlabel('DT')
-        comparison_axes.set_xlim(0, 100)
-        comparison_axes.set_ylim(0, 100)
     # print("    Distance: {}".format(dist))
     return dist
 

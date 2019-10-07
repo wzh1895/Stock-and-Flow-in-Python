@@ -1,4 +1,8 @@
+
+# Icons made by <a href="https://www.flaticon.com/authors/dave-gandy" title="Dave Gandy">Dave Gandy</a> from <a href="https://www.flaticon.com/"             title="Flaticon">www.flaticon.com</a></div>
+
 import sys
+import os
 from main_window_structure_generator import Ui_MainWindow
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -29,31 +33,31 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         # Toolbar
         self.actionStartExpansion.triggered.connect(self.expansion_loop)
+        self.actionOpen.triggered.connect(self.open_a_time_series_file)
+        self.actionOpen_2.triggered.connect(self.open_a_time_series_file)
 
         # Time series - references
         self.button_group_ref_type = QButtonGroup(self)
         self.button_group_ref_type.addButton(self.radioButton_stock, 1)
         self.button_group_ref_type.addButton(self.radioButton_flow, 2)
         self.button_group_ref_type.addButton(self.radioButton_aux, 3)
+        self.listWidget_time_series.itemClicked.connect(self.display_time_series)
 
         self.pushButton_add_ref.clicked.connect(self.add_reference_mode_from_time_series)
         self.pushButton_remove_ref.clicked.connect(self.remove_reference_mode)
-
-        # List widgets
-        self.listWidget_time_series.itemClicked.connect(self.display_time_series)
         self.listWidget_reference_modes.itemClicked.connect(self.display_reference_mode)
+
+        # candidate structures
         self.listWidget_candidates.itemClicked.connect(self.select_a_candidate_structure)  # comes first
         self.listWidget_candidates.itemClicked.connect(self.initialize_modifier)  # comes 2nd
         self.listWidget_candidates.itemClicked.connect(self.display_a_candidate_structure)  # comes 3rd
-        self.listWidget_bindings.itemClicked.connect(self.display_bound_element)
-
-        # candidate structures
         self.pushButton_accept_candidate_structure.clicked.connect(self.accept_a_candidate_structure)
         self.pushButton_remove_candidate_structure.clicked.connect(self.remove_a_candidate_structure)
 
         # bindings
         self.pushButton_add_binding.clicked.connect(self.add_binding)
         self.pushButton_remove_binding.clicked.connect(self.remove_binding)
+        self.listWidget_bindings.itemClicked.connect(self.display_bound_element)
 
         # settings
         self.pushButton_apply.clicked.connect(self.set_iteration_time)  # TODO move all 'settings' to one place
@@ -61,7 +65,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # result
         self.comboBox_elements.currentIndexChanged.connect(self.display_an_element_behavior)
 
-        # UI - modification part
+        # UI - structure modification modification
         self.pushButton_add_stock.clicked.connect(self.add_stock)
         self.pushButton_add_flow.clicked.connect(self.add_flow)
         self.pushButton_add_aux.clicked.connect(self.add_auxiliary)
@@ -81,9 +85,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_pause.clicked.connect(self.pause)
         self.pushButton_reset.clicked.connect(self.reset)
 
-
         # Specify round to iterate
-
         self.iteration_time = ITERATION_TIMES
         self.lineEdit_iteration.setText(str(self.iteration_time))
 
@@ -91,9 +93,10 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.initialize_concept_CLDs()
 
         # Initialize time series
-        self.load_time_series_from_file()
+        # self.load_time_series_from_file()  # disabled to manually use the 'open' button
 
         # Initialize reference modes
+        self.reference_mode_path = REFERENCE_MODE_PATH
         self.initialize_reference_modes()
 
         # Initialize generic structures
@@ -162,6 +165,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                                            start_with_element_base=start_with_element_base,
                                            target_structure=target)
                 # new = expand_structure(base_structure=base, target_structure=target)
+                new.simulation_handler(25)
                 self.derive_new_candidate_structure(base_structure=base, new_structure=new)
                 # self.task_list.append(random.choice([1, 2]))
                 self.task_list.append(4)
@@ -170,6 +174,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 """Create a new causal link in an existing candidate structure"""
                 base = self.random_one_candidate_structure()
                 new = create_causal_link(base_structure=base)
+                new.simulation_handler(25)
                 self.derive_new_candidate_structure(base_structure=base, new_structure=new)
                 self.task_list.append(random.choice([1, 2]))
 
@@ -198,6 +203,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                                           stock_uid_in_base_to_start_with=chosen_stock_uid,
                                           concept_cld=concept_cld,
                                           target_structure=target)
+                new.simulation_handler(25)
                 self.derive_new_candidate_structure(base_structure=base, new_structure=new)
                 # self.task_list.append(4)
 
@@ -208,6 +214,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 new = optimize_parameters(base_structure=base,
                                           reference_modes=self.reference_modes,
                                           reference_mode_bindings=self.reference_mode_bindings)
+                new.simulation_handler(25)
                 self.derive_new_candidate_structure(base_structure=base, new_structure=new, overwrite=False)
                 # self.task_list.append(5)
 
@@ -222,13 +229,14 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 new = import_flow(base_structure=base,
                                   start_with_element_base=start_with_element_base,
                                   target_structure=target)
+                new.simulation_handler(25)
                 self.derive_new_candidate_structure(base_structure=base, new_structure=new)
                 # self.task_list.append(4)
 
             # STEP: adjust candidate structures' activity
             self.update_candidate_structure_activity_by_behavior()
 
-            # STEP: cool down those not simulatable structures
+            # STEP: cool down those not simulable structures
             if COOL_DOWN_SWITCH:
                 for k in range(COOL_DOWN_TIMES):
                     self.cool_down_candidate_structures()
@@ -331,17 +339,17 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         else:
             self.update_generic_structures_likelihood_elo(random_two_generic_structures[1],
                                                           random_two_generic_structures[0])
-        print(self.generic_structures_likelihood)
+        # print(self.generic_structures_likelihood)
 
     def behavioral_distance(self, who_compare, compare_with):
-        print("    Expansion: Calculating similarity...")
+        # print("    Expansion: Calculating similarity...")
         distance, comparison_figure = similarity_calc_pattern(np.array(who_compare).reshape(-1, 1),
                                                               np.array(compare_with).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return distance
 
     def categorize(self, behavior):
-        print("    Expansion: Categorizing a behavior...")
+        # print("    Expansion: Categorizing a behavior...")
         pattern, comparison_figure = categorize_behavior(np.array(behavior).reshape(-1, 1))
         # ComparisonWindow(comparison_figure)
         return pattern
@@ -403,12 +411,20 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
 
 
+    def open_a_time_series_file(self):
+        self.listWidget_time_series.clear()
+        path = os.getcwd()+'/StockAndFlowInPython/case/'
+        self.reference_mode_path, file_type = QFileDialog.getOpenFileName(self,
+                                                               "Open reference mode",
+                                                               path,
+                                                               "Data Files (*.csv);;Excel Sheets (*.xls *.xlsx)")
+        self.load_time_series_from_file()
+
     def load_time_series_from_file(self):
         """
         The logic is: file -> file in memory (numerical data) -> time series --selection--> reference mode
         :return:
         """
-        self.reference_mode_path = REFERENCE_MODE_PATH
         self.numerical_data = None
         self.time_series = dict()
 
@@ -436,7 +452,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 reference_mode_type = FLOW
             elif self.button_group_ref_type.checkedId() == 3:
                 reference_mode_type = VARIABLE  # TODO: Parameter?
-            print(reference_mode_type)
+            # print(reference_mode_type)
         else:
             print("Reference mode type is not indicated. Please indicate one.")
 
@@ -461,6 +477,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             print("Reference: ", reference_mode_name, reference_mode_properties)
             # some ref mode may have been built, so we need to check with bindings.
             if reference_mode_name not in self.reference_mode_bindings.keys():  # not yet built
+                uid = None
                 if reference_mode_properties[0] == STOCK:
                     uid = structure.build_stock(name=reference_mode_name, initial_value=reference_mode_properties[1][0],
                                                 x=213,
@@ -657,9 +674,9 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                 if element in top_three:
                     tree_node_color.append('skyblue')
                 else:
-                    tree_node_color.append('orangered')
+                    tree_node_color.append('orange')
         else:
-            tree_node_color = 'orangered'
+            tree_node_color = 'orange'
 
         # map colors with nodes
         node_activity_mapping = nx.get_node_attributes(self.expansion_tree, 'activity')
@@ -667,14 +684,17 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             node_activity_mapping[node] = "{} [{}]".format(node, activity)
 
         # draw nodes to the figure
-        nx.draw(self.expansion_tree,
-                labels=node_activity_mapping,
-                font_size=9,
-                node_color=tree_node_color,
-                font_color='black',
-                # with_labels=True
-                )
-
+        nx.draw_networkx(self.expansion_tree,
+                         labels=node_activity_mapping,
+                         font_size=9,
+                         node_color=tree_node_color,
+                         font_color='black',
+                         # with_labels=True
+                         ax=plt.gca()
+                         )
+        plt.axis('off')
+        plt.gcf().tight_layout()  # for some reason, directly using tight_layout() on figures doesn't work. must gcf().
+        # self.expansion_tree_fig.tight_layout()
         # convert figure to widget then add it to layout
         self.tree_widget = FigureCanvasQTAgg(figure=self.expansion_tree_fig)
         # self.tree_widget.setFixedSize(400, 320)
@@ -745,7 +765,8 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             return
         # 2. identical to a neighbor of the base_structure
         for neighbour in self.expansion_tree.neighbors(self.get_uid_by_candidate_structure(base_structure)):
-            GM = iso.DiGraphMatcher(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd,
+            neighbour_sfd = self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd
+            GM = iso.DiGraphMatcher(neighbour_sfd,
                                     new_structure.model_structure.sfd,
                                     node_match=iso.categorical_node_match(
                                         attr=['function', 'flow_from', 'flow_to', 'value'],
@@ -754,6 +775,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
                                         # default=[None, None]
                                         )
                                     )
+            print('here', new_structure.model_structure.sfd.nodes(data=True), '\n', neighbour_sfd.nodes(data=True))
             if GM.is_isomorphic():
                 # if nx.is_isomorphic(self.expansion_tree.nodes[neighbour]['structure'].model_structure.sfd, new_structure.model_structure.sfd):
                 self.expansion_tree.nodes[neighbour]['activity'] += 1
@@ -884,37 +906,39 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.expansion_tree.remove_nodes_from(elements)
 
         # regenerate list box
-        self.refresh_candidate_structure_list()
         self.refresh_expansion_tree()
+        self.refresh_candidate_structure_list()
 
     def remove_a_candidate_structure(self):
-        selected_candidate_structure = int(self.listWidget_candidates.currentItem().text())
-        self.expansion_tree.remove_node(selected_candidate_structure)  # int as node, str as item in Listwidget
-        self.listWidget_candidates.takeItem(self.listWidget_candidates.row(
-            self.listWidget_candidates.findItems(
-                str(selected_candidate_structure), Qt.MatchExactly
-            )[0]
-        ))
+        self.expansion_tree.remove_node(self.selected_candidate_structure)  # int as node, str as item in Listwidget
+        # self.listWidget_candidates.removeItemWidget(
+        #     self.listWidget_candidates.findItems(
+        #         str(selected_candidate_structure), Qt.MatchExactly
+        #     )[0]
+        # )
+        self.listWidget_candidates.takeItem(self.listWidget_candidates.currentIndex())
         self.refresh_expansion_tree()
 
     def refresh_candidate_structure_list(self):
-        all_candidate_structure_names_in_list = [str(self.listWidget_candidates.item(i).text())
-                                                 for i in range(self.listWidget_candidates.count())]
+        all_candidate_structure_names_in_list_widget = [str(self.listWidget_candidates.item(i).text())
+                                                        for i in range(self.listWidget_candidates.count())]
         # one way
-        for candidate_structure_name in list(self.expansion_tree.nodes):
-            if str(candidate_structure_name) not in all_candidate_structure_names_in_list:
+        node_activity_mapping = nx.get_node_attributes(self.expansion_tree, 'activity')
+        for candidate_structure_name, activity in node_activity_mapping.items():
+            if str(candidate_structure_name) not in all_candidate_structure_names_in_list_widget:
                 self.listWidget_candidates.addItem(str(candidate_structure_name))
         # the other way around
-        for candidate_structure_name_in_list in all_candidate_structure_names_in_list:
-            if int(candidate_structure_name_in_list) not in list(self.expansion_tree.nodes):
-                self.listWidget_candidates.takeItem(self.listWidget_candidates.row(
-                    self.listWidget_candidates.findItems(
-                        candidate_structure_name_in_list, Qt.MatchExactly
-                    )[0]
-                ))
+        for candidate_structure_name_in_list_widget in all_candidate_structure_names_in_list_widget:
+            if int(candidate_structure_name_in_list_widget) not in list(self.expansion_tree.nodes):
+                self.listWidget_candidates.takeItem(
+                    self.listWidget_candidates.row(
+                        self.listWidget_candidates.findItems(candidate_structure_name_in_list_widget, Qt.MatchExactly)[0]
+                    )
+                )
 
     def select_a_candidate_structure(self):
         self.selected_candidate_structure_uid = int(self.listWidget_candidates.currentItem().text())
+        self.selected_candidata_tableWidgetItem_count = self.listWidget_candidates.currentIndex()
 
     def display_a_candidate_structure(self):
         self.display_a_candidate_structure_sfd()
@@ -1392,10 +1416,6 @@ class AddElementDialog(QDialog):
 
     def cancel(self):
         self.close()
-
-
-
-
 
 
 if __name__ == '__main__':

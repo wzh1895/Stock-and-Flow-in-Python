@@ -122,7 +122,7 @@ class Structure(object):
         # this 'function' is a list, containing the function it self and its parameters
         # this 'value' is also a list, containing historical value throughout this simulation
         self.sfd.add_node(element_name, uid=uid, element_type=element_type, flow_from=flow_from, flow_to=flow_to, pos=[x, y], function=function, value=value, points=points)
-        # print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
+        print('Graph: adding element:', element_name, 'function:', function, 'value:', value)
 
         # # automatically confirm dependencies, if a function is used for this variable
         # if function is not None and type(function) is not str:
@@ -599,46 +599,47 @@ class Structure(object):
         else:  # otherwise, show the figure.
             plt.show()
 
-    # Draw graphs
-    def draw_graphs(self, rtn=False):
-        self.figure1 = plt.figure(figsize=(5, 4))
-        plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
-        pos = nx.get_node_attributes(self.sfd, 'pos')
-        nx.draw(self.sfd, with_labels=True, pos=pos)
-
-        if rtn:  # if called from external, return the figure without show it.
-            return self.figure1
-        else:  # otherwise, show the figure.
-            plt.show()
-
-    # Draw graphs with curve
-    def draw_graphs_with_curve(self, rtn=False):
-        self.figure1 = plt.figure(figsize=(8, 6))
-        ax = plt.gca()
-        ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
-
-        # disable all frames/borders
-        ax.axes.get_yaxis().set_visible(False)
-        ax.axes.get_xaxis().set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-
-        pos = nx.get_node_attributes(self.sfd, 'pos')
-        # print("Graph: The graph contains elements with their positions:", pos)
-        self.draw_network(self.sfd, pos, ax)
-        ax.autoscale()
-
-        if rtn:  # if figure needs to be returned
-            # print('Graph: Engine is returning graph figure.')
-            return self.figure1
-        else:
-            plt.show()
+    # # Draw graphs
+    # def draw_graphs(self, rtn=False):
+    #     self.figure1 = plt.figure(figsize=(5, 4))
+    #     plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
+    #     pos = nx.get_node_attributes(self.sfd, 'pos')
+    #     nx.draw(self.sfd, with_labels=True, pos=pos)
+    #
+    #     if rtn:  # if called from external, return the figure without show it.
+    #         return self.figure1
+    #     else:  # otherwise, show the figure.
+    #         plt.show()
+    #
+    # # Draw graphs with curve
+    # def draw_graphs_with_curve(self, rtn=False):
+    #     self.figure1 = plt.figure(figsize=(8, 6))
+    #     ax = plt.gca()
+    #     ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
+    #
+    #     # disable all frames/borders
+    #     ax.axes.get_yaxis().set_visible(False)
+    #     ax.axes.get_xaxis().set_visible(False)
+    #     ax.spines['top'].set_visible(False)
+    #     ax.spines['right'].set_visible(False)
+    #     ax.spines['bottom'].set_visible(False)
+    #     ax.spines['left'].set_visible(False)
+    #
+    #     pos = nx.get_node_attributes(self.sfd, 'pos')
+    #     # print("Graph: The graph contains elements with their positions:", pos)
+    #     self.draw_network(self.sfd, pos, ax)
+    #     ax.autoscale()
+    #
+    #     if rtn:  # if figure needs to be returned
+    #         # print('Graph: Engine is returning graph figure.')
+    #         return self.figure1
+    #     else:
+    #         plt.show()
 
     # Draw graphs with customized labels and colored connectors
     def draw_graphs_with_function_value_polarity(self, rtn=False):
         self.figure2 = plt.figure(num='cld')
+
         plt.clf()
         # generate node labels
         node_attrs_function = nx.get_node_attributes(self.sfd, 'function')
@@ -662,11 +663,18 @@ class Structure(object):
                 color = 'b'  # blue
             custom_edge_colors.append(color)
 
+        # generate node positions
+        pos = nx.get_node_attributes(self.sfd, 'pos')
+
         nx.draw_networkx(G=self.sfd,
                          labels=custom_node_labels,
                          font_size=10,
                          node_color='skyblue',
-                         edge_color=custom_edge_colors)
+                         edge_color=custom_edge_colors,
+                         pos=pos,
+                         ax=plt.gca())
+
+        plt.gca().invert_yaxis()
         plt.axis('off')  # turn off axis for structure display
 
         if rtn:
@@ -675,40 +683,40 @@ class Structure(object):
             plt.show()
 
 
-    # Draw network with FancyArrowPatch
-    # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
-    @staticmethod
-    def draw_network(G, pos, ax):
-        for n in G:
-            # print('Graph: Engine is drawing network element for', n)
-            circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
-            # ax.add_patch(circle)
-            G.node[n]['patch'] = circle
-            x, y = pos[n]
-            ax.text(x, y, n, fontsize=11, horizontalalignment='left', verticalalignment='center')
-        seen = {}
-        # TODO: Undertsand what happens here and rewrite it in a straight forward way
-        if len(list(G.edges)) != 0:  # when there's only one stock in the model, don't draw edges
-            for (u, v, d) in G.edges(data=True):
-                n1 = G.node[u]['patch']
-                n2 = G.node[v]['patch']
-                rad = - 0.5
-                if (u, v) in seen:
-                    rad = seen.get((u, v))
-                    rad = (rad + np.sign(rad)*0.1)*-1
-                alpha = 0.5
-                color = 'r'
-
-                edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
-                                       arrowstyle='-|>',
-                                       connectionstyle='arc3,rad=%s' % rad,
-                                       mutation_scale=15.0,
-                                       linewidth=1,
-                                       alpha=alpha,
-                                       color=color)
-                seen[(u, v)] = rad
-                ax.add_patch(edge)
-            return edge
+    # # Draw network with FancyArrowPatch
+    # # Thanks to https://groups.google.com/d/msg/networkx-discuss/FwYk0ixLDuY/dtNnJcOAcugJ
+    # @staticmethod
+    # def draw_network(G, pos, ax):
+    #     for n in G:
+    #         # print('Graph: Engine is drawing network element for', n)
+    #         circle = Circle(pos[n], radius=5, alpha=0.2, color='c')
+    #         # ax.add_patch(circle)
+    #         G.node[n]['patch'] = circle
+    #         x, y = pos[n]
+    #         ax.text(x, y, n, fontsize=11, horizontalalignment='left', verticalalignment='center')
+    #     seen = {}
+    #     # TODO: Undertsand what happens here and rewrite it in a straight forward way
+    #     if len(list(G.edges)) != 0:  # when there's only one stock in the model, don't draw edges
+    #         for (u, v, d) in G.edges(data=True):
+    #             n1 = G.node[u]['patch']
+    #             n2 = G.node[v]['patch']
+    #             rad = - 0.5
+    #             if (u, v) in seen:
+    #                 rad = seen.get((u, v))
+    #                 rad = (rad + np.sign(rad)*0.1)*-1
+    #             alpha = 0.5
+    #             color = 'r'
+    #
+    #             edge = FancyArrowPatch(n1.center, n2.center, patchA=n1, patchB=n2,
+    #                                    arrowstyle='-|>',
+    #                                    connectionstyle='arc3,rad=%s' % rad,
+    #                                    mutation_scale=15.0,
+    #                                    linewidth=1,
+    #                                    alpha=alpha,
+    #                                    color=color)
+    #             seen[(u, v)] = rad
+    #             ax.add_patch(edge)
+    #         return edge
 
 
 def main():
