@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1600</width>
-    <height>1200</height>
+    <width>1280</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,14 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_sfd">
        <attribute name="title">
@@ -54,6 +60,12 @@
          <number>0</number>
         </property>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_interactive_sfd">
+       <attribute name="title">
+        <string>Interactive SFD</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_8"/>
       </widget>
      </widget>
     </item>
@@ -144,8 +156,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1600</width>
-     <height>22</height>
+     <width>1280</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -197,15 +209,21 @@
    <addaction name="separator"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_browse_time_series">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
-     <width>243</width>
-     <height>240</height>
+     <width>202</width>
+     <height>221</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
-     <width>300</width>
+     <width>524287</width>
      <height>524287</height>
     </size>
    </property>
@@ -230,10 +248,16 @@
       <number>12</number>
      </property>
      <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-      <widget class="QTabWidget" name="tabWidget_2">
+      <widget class="QTabWidget" name="tabWidget_time_series_ref_modes">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="maximumSize">
         <size>
-         <width>260</width>
+         <width>16777215</width>
          <height>16777215</height>
         </size>
        </property>
@@ -254,12 +278,18 @@
          <property name="bottomMargin">
           <number>12</number>
          </property>
-         <item alignment="Qt::AlignHCenter">
+         <item>
           <widget class="QListWidget" name="listWidget_time_series">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="maximumSize">
             <size>
              <width>1000000</width>
-             <height>16777215</height>
+             <height>1000000</height>
             </size>
            </property>
           </widget>
@@ -381,7 +411,14 @@
           <number>12</number>
          </property>
          <item>
-          <widget class="QListWidget" name="listWidget_reference_modes"/>
+          <widget class="QListWidget" name="listWidget_reference_modes">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
          <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
           <widget class="QWidget" name="widget_ref_actions" native="true">
@@ -429,14 +466,14 @@
   </widget>
   <widget class="QDockWidget" name="dockWidget_details">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
    <property name="minimumSize">
     <size>
-     <width>62</width>
+     <width>78</width>
      <height>38</height>
     </size>
    </property>
@@ -470,10 +507,16 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_browse_candidates">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
-     <width>197</width>
-     <height>167</height>
+     <width>0</width>
+     <height>0</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -568,8 +611,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>0</width>
-     <height>0</height>
+     <width>78</width>
+     <height>38</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -603,7 +646,7 @@
   </widget>
   <widget class="QDockWidget" name="dockWidget_simulation_result">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -697,6 +740,12 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_bindings">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
      <width>0</width>
@@ -798,7 +847,7 @@
   </widget>
   <widget class="QDockWidget" name="dockWidget_settings">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -851,10 +900,16 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_generic_structures">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
-     <width>0</width>
-     <height>0</height>
+     <width>92</width>
+     <height>111</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -901,6 +956,12 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_structure_modifier">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="windowTitle">
     <string>Structure modification</string>
    </property>
@@ -1007,7 +1068,7 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_11">
         <property name="spacing">
-         <number>-1</number>
+         <number>6</number>
         </property>
         <property name="leftMargin">
          <number>0</number>

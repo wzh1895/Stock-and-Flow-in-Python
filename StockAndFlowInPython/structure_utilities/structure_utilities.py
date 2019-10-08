@@ -757,24 +757,23 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
     #     plt.close(opt_fig)
     # del optimization_figures[:]
 
+    plt.gcf().clear()  # TODO: figure out how to integrate this optimization process into GUI, rather than in IDE
+
     optim_fig = plt.figure(figsize=(5, 7))
     ax1 = optim_fig.add_subplot(211)  # comparison
     ax1.legend(loc='upper right')
     ax1.set_xlabel('DT')
+    ax1.set_ylabel('Value')
     ax1.set_xlim(0, 100)
     ax1.set_ylim(0, 100)
 
     ax2 = optim_fig.add_subplot(212)  # parameter history
     ax2.legend(loc='upper left')
     ax2.set_xlabel('Iteration')
-    ax2.set_ylabel('Parameter history')
-
+    ax2.set_ylabel('Parameter value history')
 
     for i in range(rnd):
         print('\nRound {}'.format(i))
-
-        ax1.clear()
-        ax2.clear()
 
         for param_id, param_element_uid in parameter_id.items():
             print('\nParameter {} value {}'.format(new_base.model_structure.get_element_name_by_uid(param_element_uid),
@@ -834,7 +833,7 @@ def optimize_parameters(base_structure, reference_modes, reference_mode_bindings
                     for p_id, p_history in param_history.items():
                         ax2.plot(p_history, label=new_base.model_structure.get_element_name_by_uid(parameter_id[p_id]))
 
-                    plt.show()
+                optim_fig.show()
 
         print("\nDistance after round {} : {}\n".format(rnd, distance_old))
 

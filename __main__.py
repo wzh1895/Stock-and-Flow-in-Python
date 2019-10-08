@@ -571,7 +571,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.generic_structures_likelihood = dict()  # name:likelihood
 
         # UI
-        self.treeWidget_generic_structures.setColumnWidth(0, 170)
+        self.treeWidget_generic_structures.setColumnWidth(0, 130)
         self.generic_structures_tree_item_widgets = dict()  # name:widget reference
 
         self.add_generic_structure(name='basic_stock_inflow')
@@ -663,7 +663,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             self.layout_tree.itemAt(i).widget().setParent(None)
 
         # setup the figure to operate
-        self.expansion_tree_fig = plt.figure(num='expansion_tree', figsize=(4, 4))
+        self.expansion_tree_fig = plt.figure(num='expansion_tree', dpi=70, figsize=(3, 3))
         plt.clf()  # clear figure, otherwise multiple figures will overlap
 
         # solve colors of nodes
@@ -1201,7 +1201,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def time_series_to_widget(self, time_series, label, color=None):
         # plt.cla()
-        fig = plt.figure(dpi=70)
+        fig = plt.figure(dpi=70, figsize=(3, 3))
         # ax = self.fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax = fig.add_subplot(111)
         # ax.set_xlim([-1, 6])
@@ -1212,6 +1212,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
             ax.plot(time_series, marker='*', color=color)
         ax.set_xlabel("Time")
         ax.set_ylabel(label)
+        plt.gcf().tight_layout()
         canvas = FigureCanvasQTAgg(fig)
         return canvas
 

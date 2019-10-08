@@ -163,6 +163,7 @@ def similarity_calc_behavior(who_compare, compare_with, comparison_axes=None):
     # plt.show()
 
     if comparison_axes is not None:
+        comparison_axes.clear()
         behavior = comparison_axes.plot(x1, label='Behavior')
         reference = comparison_axes.plot(x2, label='Reference')
     # print("    Distance: {}".format(dist))
