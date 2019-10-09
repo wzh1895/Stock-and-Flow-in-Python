@@ -1,5 +1,7 @@
+PyQt5
 matplotlib
 dtw
+grave
 numpy
 pandas
 networkx
