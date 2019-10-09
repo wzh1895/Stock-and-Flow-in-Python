@@ -9,18 +9,21 @@ class InteractiveSFD(QGraphicsScene):
     def __init__(self):
         super(InteractiveSFD, self).__init__()
 
+        self.n = 0
+
     def mousePressEvent(self, e):
         print(e)
         print('Press position:', e.pos().x(), e.pos().y())
-        self.add_stock()
+        self.add_stock(e.pos().x(), e.pos().y())
 
     def mouseDoubleClickEvent(self, e):
         print(e)
         print('Double Click position:', e.pos().x(), e.pos().y())
 
-    def add_stock(self):
-        qrect = QRectF(30, 30, 50, 30)
+    def add_stock(self, x, y, w=50, h=30):
+        qrect = QRectF(self.n*20, self.n*20, w, h)
         self.addItem(QGraphicsRectItem(qrect))
+        self.n+=1
 
 
 class WangSim(QWidget, Ui_widget_interactive_sfd):
@@ -38,6 +41,7 @@ class WangSim(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_connector.clicked.connect(self.on_pushbutton_add_connector_pushed)
 
         self.interactive_sfd = InteractiveSFD()
+        self.interactive_sfd.setSceneRect(0, 0, self.size().width(), self.size().height())
         self.graphicsView_interactive_sfd.setScene(self.interactive_sfd)
 
     # Exclusively check buttons
@@ -60,6 +64,9 @@ class WangSim(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
+
+    # def mousePressEvent(self, e):
+    #     print(e.x(), e.y())
 
 
 if __name__ == '__main__':
