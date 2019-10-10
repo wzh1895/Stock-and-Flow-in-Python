@@ -27,6 +27,7 @@ class Ui_widget_interactive_sfd(object):
         self.frame_modifier.setObjectName("frame_modifier")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame_modifier)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout.setSpacing(6)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.pushButton_add_stock = QtWidgets.QPushButton(self.frame_modifier)
         self.pushButton_add_stock.setObjectName("pushButton_add_stock")
@@ -42,6 +43,7 @@ class Ui_widget_interactive_sfd(object):
         self.horizontalLayout.addWidget(self.pushButton_add_connector)
         self.verticalLayout.addWidget(self.frame_modifier)
         self.graphicsView_interactive_sfd = QtWidgets.QGraphicsView(widget_interactive_sfd)
+        self.graphicsView_interactive_sfd.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         self.graphicsView_interactive_sfd.setObjectName("graphicsView_interactive_sfd")
         self.verticalLayout.addWidget(self.graphicsView_interactive_sfd)
 
