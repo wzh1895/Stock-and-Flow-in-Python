@@ -13,9 +13,13 @@ It contains the following functions:
 
 ## A quick glance
 
-**Expanding model structure using time series and informed by generic structures**
+- **Expanding model structure using time series and informed by generic structures**
 
 ![ScreenShot](./screenshots/screenShot_13.png)
+
+- **Modify stock-and-flow diagrams using clicks and drags**
+
+![ScreenShot](./screenshots/screenShot_14.png)
 
 ## How to use
 
