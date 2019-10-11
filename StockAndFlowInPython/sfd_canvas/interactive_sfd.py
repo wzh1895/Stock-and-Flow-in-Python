@@ -6,10 +6,10 @@ from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interac
 
 
 class StockItem(QGraphicsRectItem):
-    def __init__(self, rect, label):
-        super(StockItem, self).__init__(rect)
+    def __init__(self, x, y, w, h, label):
+        self.rect_rect = QRectF(x - w * 0.5, y - h * 0.5, w, h)
+        super(StockItem, self).__init__(self.rect_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.rect_circle = rect
         self.rect_text = None
         self.label = label
 
@@ -19,8 +19,8 @@ class StockItem(QGraphicsRectItem):
         font_metrics = QFontMetrics(current_font)  # calculator used to calculate text's bounding rect
         rect_text_origin = font_metrics.boundingRect(self.label)
         self.rect_text = QRectF(rect_text_origin.translated(
-            self.rect_circle.x() + self.rect_circle.width() / 2 - rect_text_origin.width() / 2,
-            self.rect_circle.y() + original_bounding_rect.height()+15))
+            int(self.rect_rect.x() + self.rect_rect.width() / 2 - rect_text_origin.width() / 2),
+            int(self.rect_rect.y() + original_bounding_rect.height() + 15)))
         return original_bounding_rect.united(self.rect_text)
 
     def paint(self, painter, option, widget=None):
@@ -28,12 +28,68 @@ class StockItem(QGraphicsRectItem):
         painter.drawText(self.rect_text, self.label)
 
 
-class AuxItem(QGraphicsEllipseItem):
-    def __init__(self, rect, label):
-        super(AuxItem, self).__init__(rect)
+class FlowItem(QGraphicsItemGroup):
+    def __init__(self, x, y, r, label):
+        super(FlowItem, self).__init__()
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.rect_circle = rect
-        self.rect_text = None
+        self.central_point = QPointF(x, y)
+        self.x = x
+        self.y = y
+        self.r = r
+        self.label = label
+        self.text_bounding_rect = None
+
+        # circle
+        self.circle_bounding_rect = QRectF(QPointF(self.x-self.r, self.y-self.r), QPointF(self.x+self.r, self.y+self.r))
+        self.addToGroup(QGraphicsEllipseItem(self.circle_bounding_rect))
+
+        # line
+        self.p1 = QPointF(self.x-30, self.y)
+        self.p2 = QPointF(self.x+30, self.y)
+        self.l1 = QLineF(self.p1, self.p2)
+        self.addToGroup(QGraphicsLineItem(self.l1))
+
+        # arrow
+        self.v = self.l1.unitVector()
+        self.v.setLength(10)  # change the unit, => change the length of the arrow
+        self.v.translate(60, 0)  # move v to the end of the line, should use relative coordinate as parameters
+        self.n = self.v.normalVector()  # normal vector
+        self.n.setLength(self.n.length()*0.5)  # width of the arrow
+        self.n2 = self.n.normalVector().normalVector()  # an opposite vector of n
+
+        self.end_arrow = QPolygonF()
+        self.end_arrow.append(self.v.p2())
+        self.end_arrow.append(self.n.p2())
+        self.end_arrow.append(self.n2.p2())
+        self.addToGroup(QGraphicsPolygonItem(self.end_arrow))  # TODO: need to figure out how to fill the arrow black
+
+        # rectangle
+        self.end_rect = QRectF(self.p1.x()-5, self.p1.y()-5, 10, 10)
+        self.addToGroup(QGraphicsRectItem(self.end_rect))  # TODO: need to figure out how to fill the rectangle black
+
+    def boundingRect(self):
+        # this bounding rect should include 1) the circle 2) the arrow and line(s) 3) the label
+
+        # label bounding rect
+        current_font = self.scene().font()  # TODO: find out why call self.scene().font() in __init__() causes crash
+        font_metrics = QFontMetrics(current_font)  # calculator used to calculate text's bounding rect
+        original_text_bounding_rect = font_metrics.boundingRect(self.label)
+        self.text_bounding_rect = QRectF(original_text_bounding_rect.translated(
+            int(self.circle_bounding_rect.x() + self.circle_bounding_rect.width() / 2 - original_text_bounding_rect.width() / 2),
+            int(self.circle_bounding_rect.y() + self.circle_bounding_rect.height() + 15)))
+        return self.circle_bounding_rect.united(self.text_bounding_rect)
+
+    def paint(self, painter, option, widget=None):
+        painter.drawEllipse(self.central_point, self.r, self.r)
+        painter.drawText(self.text_bounding_rect, self.label)
+
+
+class AuxItem(QGraphicsEllipseItem):
+    def __init__(self, x, y, r, label):
+        self.circle_bounding_rect = QRectF(x - r, y - r, r*2, r*2)
+        super(AuxItem, self).__init__(self.circle_bounding_rect)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.text_bounding_rect = None
         self.label = label
 
     def boundingRect(self):
@@ -41,15 +97,15 @@ class AuxItem(QGraphicsEllipseItem):
         original_bounding_rect = super(AuxItem, self).boundingRect()  # bounding rect for the circle
         current_font = self.scene().font()
         font_metrics = QFontMetrics(current_font)  # calculator used to calculate text's bounding rect
-        rect_text_origin = font_metrics.boundingRect(self.label)
-        self.rect_text = QRectF(rect_text_origin.translated(
-            self.rect_circle.x() + self.rect_circle.width() / 2 - rect_text_origin.width() / 2,
-            self.rect_circle.y() + original_bounding_rect.height() + 15))
-        return original_bounding_rect.united(self.rect_text)
+        original_text_bounding_rect = font_metrics.boundingRect(self.label)
+        self.text_bounding_rect = QRectF(original_text_bounding_rect.translated(
+            int(self.circle_bounding_rect.x() + self.circle_bounding_rect.width() / 2 - original_text_bounding_rect.width() / 2),
+            int(self.circle_bounding_rect.y() + original_bounding_rect.height() + 15)))
+        return original_bounding_rect.united(self.text_bounding_rect)
 
     def paint(self, painter, option, widget=None):
         super(AuxItem, self).paint(painter, option, widget)
-        painter.drawText(self.rect_text, self.label)
+        painter.drawText(self.text_bounding_rect, self.label)
 
 
 class ModelCanvas(QGraphicsScene):
@@ -63,17 +119,20 @@ class ModelCanvas(QGraphicsScene):
         y = e.scenePos().y()
         if self.working_mode == 'stock':
             self.add_stock(x, y)
+        elif self.working_mode == 'flow':
+            self.add_flow(x, y)
         elif self.working_mode == 'aux':
             self.add_aux(x, y)
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
     def add_stock(self, x, y, w=40, h=30, label='Stock'):
-        qrect_stock = QRectF(x-w*0.5, y-h*0.5, w, h)
-        self.addItem(StockItem(qrect_stock, label))
+        self.addItem(StockItem(x=x, y=y, w=w, h=h, label=label))
 
-    def add_aux(self, x, y, r=15, label='Aux'):
-        qrect_aux = QRectF(x-r*0.5, y-r*0.5, r, r)
-        self.addItem(AuxItem(qrect_aux, label))
+    def add_flow(self, x, y, r=10, label='Flow'):
+        self.addItem(FlowItem(x=x, y=y, r=r, label=label))
+
+    def add_aux(self, x, y, r=10, label='Aux'):
+        self.addItem(AuxItem(x=x, y=y, r=r, label=label))
 
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
