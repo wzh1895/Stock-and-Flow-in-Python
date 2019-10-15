@@ -6,8 +6,8 @@ from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interac
 
 
 class StockItem(QGraphicsRectItem):
-    def __init__(self, x, y, w, h, label):
-        self.rect_rect = QRectF(x - w * 0.5, y - h * 0.5, w, h)
+    def __init__(self, w, h, label):
+        self.rect_rect = QRectF(- w * 0.5, - h * 0.5, w, h)
         super(StockItem, self).__init__(self.rect_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.rect_text = None
@@ -30,31 +30,28 @@ class StockItem(QGraphicsRectItem):
 
 class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
     core_move_signal = pyqtSignal(QPointF)
+    arrow_direction_change_signal = pyqtSignal(QVector2D)
 
-    def __init__(self, x, y, r, label):
+    def __init__(self, r, label):
         super(FlowCoreItem, self).__init__()
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.central_point = QPointF(x, y)
-        self.x = x
-        self.y = y
-        self.r = r
+        self.central_point = QPointF(0, 0)
         self.label = label
+        self.r = r
         self.text_bounding_rect = None  # we need to make it a property cuz drawing text needs it
 
-        self.p1 = QPointF(self.x+30, self.y)  # arrow
-        self.p2 = QPointF(self.x-30, self.y)  # rect
-        print('Core, upon Creation: P1: {}, P2: {}'.format(self.p1, self.p2))
-        self.l1 = QLineF(self.p1, self.p2)  # TODO update!
+        self.p1 = QPointF(30, 0)
+        self.p2 = QPointF(-30, 0)
 
     def boundingRect(self):
         # this bounding rect should include 1) the circle 2) the label 3) the line
         # circle bounding rect
-        circle_bounding_rect = QRectF(QPointF(self.x - self.r, self.y - self.r),
-                                      QPointF(self.x + self.r, self.y + self.r))
+        circle_bounding_rect = QRectF(QPointF(self.central_point.x() - self.r, self.central_point.y() - self.r),
+                                      QPointF(self.central_point.x() + self.r, self.central_point.y() + self.r))
 
         # label bounding rect
-        # current_font = self.scene().font()  # TODO: find out why call self.scene().font() in __init__() causes crash
-        font_1 = QFont('Calibri', 20)
+        # current_font = self.scene().font()  # TODO: find) out why call self.scene().font() in __init__() causes crash
+        font_1 = QFont('Calibri', 16)
         font_metrics = QFontMetrics(font_1)  # calculator used to calculate text's bounding rect
         original_text_bounding_rect = font_metrics.boundingRect(self.label)
         self.text_bounding_rect = QRectF(original_text_bounding_rect.translated(
@@ -62,31 +59,36 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
             int(circle_bounding_rect.y() + circle_bounding_rect.height() + 15)))
 
         # line bounding rect
-        line_bounding_rect = QRectF(QPointF(self.p2.x()-5, self.p2.y()-5), QPointF(self.p1.x()+5, self.p1.y()+5))
+        line_bounding_rect = QRectF(self.p1, self.p2)
 
         return circle_bounding_rect.united(line_bounding_rect).united(self.text_bounding_rect)
 
     def paint(self, painter, option, widget=None):
-        print('Core: Updating core', self.p1, self.p2)
-        self.l1 = QLineF(self.p1, self.p2)  # TODO update!
+        # print('Core: Updating core', self.p1, self.p2)
+        # self.l1 = QLineF(self.p1, self.p2)  # TODO update!
+        painter.setPen(QPen(Qt.black, 3))
         painter.drawEllipse(self.central_point, self.r, self.r)
-        painter.drawLine(self.l1)
+        # painter.drawLine(self.l1, )
+        # painter.drawPoint(self.p1)
+        # painter.drawPoint(self.p2)
+        line = QLineF(self.p1, self.p2)
+        painter.drawLine(line)
+        painter.setPen(QPen(Qt.black, 1))
         painter.drawText(self.text_bounding_rect, self.label)
 
     def mouseMoveEvent(self, event):
         super(FlowCoreItem, self).mouseMoveEvent(event)
-        self.core_move_signal.emit(self.scenePos())  # send self's position to FlowItem. Come after super() for accuracy
+        self.core_move_signal.emit(self.pos())  # send self's position to FlowItem. Come after super() for accuracy
 
 
 class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
     rect_move_signal = pyqtSignal(QPointF)
 
-    def __init__(self, x, y):
+    def __init__(self):
         super(FlowRectItem, self).__init__()
         self.is_connected = False
-        self.x = x
-        self.y = y
-        self.end_rect = QRectF(self.x - 5, self.y - 5, 10, 10)
+        self.end_rect_point = QPointF(0, 0)
+        self.end_rect = QRectF(self.end_rect_point.x() - 5, self.end_rect_point.y() - 5, 10, 10)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def boundingRect(self):
@@ -94,24 +96,25 @@ class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
 
     def paint(self, painter, option, widget=None):
         painter.drawRect(self.end_rect)
+        painter.drawPoint(self.end_rect_point)
 
     def mouseMoveEvent(self, event):
         super(FlowRectItem, self).mouseMoveEvent(event)
-        self.rect_move_signal.emit(QPointF(self.x + self.pos().x(), self.y+self.pos().y()))
+        self.rect_move_signal.emit(QPointF(self.end_rect_point.x() + self.pos().x(),
+                                           self.end_rect_point.y() + self.pos().y()))
 
 
 class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
     arrow_move_signal = pyqtSignal(QPointF)
 
-    def __init__(self, x, y):
+    def __init__(self):
         super(FlowArrowItem, self).__init__()
         self.is_connected = False
-        self.x = x
-        self.y = y
+        self.end_arrow_point = QPointF(0, 0)
         self.l1 = QLineF(QPointF(0, 0), QPointF(1, 0))
         self.v = self.l1.unitVector()
         self.v.setLength(10)  # change the unit, => change the length of the arrow
-        self.v.translate(x, y)  # move v to the end of the line
+        self.v.translate(self.end_arrow_point)  # move v to the end of the line
         self.n = self.v.normalVector()  # normal vector
         self.n.setLength(self.n.length() * 0.5)  # width of the arrow
         self.n2 = self.n.normalVector().normalVector()  # an opposite vector of n
@@ -124,63 +127,62 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def boundingRect(self):
-        return QRectF(QPointF(self.x-10, self.y-10), QPointF(self.x+10, self.y+10))
+        return QRectF(QPointF(self.end_arrow_point.x()-10, self.end_arrow_point.y()-10),
+                      QPointF(self.end_arrow_point.x()+10, self.end_arrow_point.y()+10))
 
     def paint(self, painter, option, widget=None):
         painter.drawPolygon(self.end_arrow)
+        painter.drawPoint(self.end_arrow_point)
 
     def mouseMoveEvent(self, event):
         super(FlowArrowItem, self).mouseMoveEvent(event)
         # here we send coordinates on canvas, instead of local
-        self.arrow_move_signal.emit(QPointF(self.x + self.pos().x(), self.y+self.pos().y()))
+        self.arrow_move_signal.emit(QPointF(self.end_arrow_point.x() + self.pos().x(),
+                                            self.end_arrow_point.y() + self.pos().y()))
 
 
 class FlowItem(object):
     def __init__(self, canvas, x, y, r, label):  # this 'canvas' is the model_canvas itself, used for drawing
         super(FlowItem, self).__init__()
-        self.core = FlowCoreItem(x=x, y=y, r=r, label=label)
-        self.rect = FlowRectItem(x=x-30, y=y)
-        self.arrow = FlowArrowItem(x=x+30, y=y)
+        self.core = FlowCoreItem(r=r, label=label)
+        self.core.setPos(x, y)
+        self.rect = FlowRectItem()
+        self.rect.setPos(x-30, y)
+        self.arrow = FlowArrowItem()
+        self.arrow.setPos(x+30, y)
         self.canvas = canvas
         self.canvas.addItem(self.core)
         self.canvas.addItem(self.rect)
         self.canvas.addItem(self.arrow)
 
+        self.core_pos_in_canvas = self.core.pos()
+        self.arrow_pos_in_canvas = self.arrow.pos()
+        self.rect_pos_in_canvas = self.rect.pos()
+        self.from_core_to_arrow = self.arrow_pos_in_canvas - self.core_pos_in_canvas  # only change when arrow is dragged alone
+        self.from_core_to_rect = self.rect_pos_in_canvas - self.core_pos_in_canvas   # only change when rect is dragged alone
+
         self.core.core_move_signal.connect(self.on_flow_core_move)
         self.rect.rect_move_signal.connect(self.on_flow_rect_move)
         self.arrow.arrow_move_signal.connect(self.on_flow_arrow_move)
 
-    # The mechanism is:
-    # 1) This FlowItem used for connecting the a) core 2) rect 3) arrow
-    # 2) If neither Rect nor Arrow are connected to a stock, drag the core will move all three
-    # 3) Drag the Rect or Arrow will move only the Rect or Arrow, and the line (inside the core) will be redrawn
+    def on_flow_core_move(self, core_pos):  # here we receive the offsets
+        self.arrow.setPos(core_pos + self.from_core_to_arrow)
+        self.rect.setPos(core_pos + self.from_core_to_rect)
 
-    def on_flow_core_move(self, core_scene_pos):  # here we receive the offsets
-        # print('Core pos:', core_scene_pos)
-        core_x = core_scene_pos.x()
-        core_y = core_scene_pos.y()
-        if not self.arrow.is_connected and not self.rect.is_connected:
-            self.rect.setPos(core_x, core_y)  # what we give are offsets
-            self.arrow.setPos(core_x, core_y)  # what we give are offsets
-
-    def on_flow_arrow_move(self, new_core_arrow_pos):
-        # print('Arrow moving!')
-        # print("Arrow New Position", new_core_arrow_pos)
-        self.core.p1.setX(new_core_arrow_pos.x())
-        self.core.p1.setY(new_core_arrow_pos.y())
+    def on_flow_arrow_move(self, arrow_pos):
+        self.from_core_to_arrow = arrow_pos - self.core.pos()
+        self.core.p1 = self.from_core_to_arrow
         self.core.update()
 
-    def on_flow_rect_move(self, new_core_rect_pos):
-        # print('Rect moving!')
-        # self.refresh_flow_line(new_rect_pos=core_rect_offset)
-        self.core.p2.setX(new_core_rect_pos.x())
-        self.core.p2.setY(new_core_rect_pos.y())
+    def on_flow_rect_move(self, rect_pos):
+        self.from_core_to_rect = rect_pos - self.core.pos()
+        self.core.p2 = self.from_core_to_rect
         self.core.update()
 
 
 class AuxItem(QGraphicsEllipseItem):
-    def __init__(self, x, y, r, label):
-        self.circle_bounding_rect = QRectF(x - r, y - r, r*2, r*2)
+    def __init__(self, r, label):
+        self.circle_bounding_rect = QRectF(- r, - r, r*2, r*2)
         super(AuxItem, self).__init__(self.circle_bounding_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.text_bounding_rect = None
@@ -224,13 +226,17 @@ class ModelCanvas(QGraphicsScene):
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
     def add_stock(self, x, y, w=40, h=30, label='Stock'):
-        self.addItem(StockItem(x=x, y=y, w=w, h=h, label=label))
+        stock_item = StockItem(w=w, h=h, label=label)
+        stock_item.setPos(x, y)
+        self.addItem(stock_item)
 
     def add_flow(self, x, y, r=10, label='Flow'):
         self.flows[label] = FlowItem(self, x, y, r, label)
 
     def add_aux(self, x, y, r=10, label='Aux'):
-        self.addItem(AuxItem(x=x, y=y, r=r, label=label))
+        aux_item = AuxItem(r=r, label=label)
+        aux_item.setPos(x, y)
+        self.addItem(aux_item)
 
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
