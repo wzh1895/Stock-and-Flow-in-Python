@@ -64,13 +64,8 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
         return circle_bounding_rect.united(line_bounding_rect).united(self.text_bounding_rect)
 
     def paint(self, painter, option, widget=None):
-        # print('Core: Updating core', self.p1, self.p2)
-        # self.l1 = QLineF(self.p1, self.p2)  # TODO update!
         painter.setPen(QPen(Qt.black, 3))
         painter.drawEllipse(self.central_point, self.r, self.r)
-        # painter.drawLine(self.l1, )
-        # painter.drawPoint(self.p1)
-        # painter.drawPoint(self.p2)
         line = QLineF(self.p1, self.p2)
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
