@@ -136,6 +136,12 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
                                             self.end_arrow_point.y() + self.pos().y()))
 
 
+class FlowLineItem(QGraphicsObject):
+    def __init__(self):
+        super(FlowLineItem, self).__init__()
+
+
+
 class FlowItem(object):
     def __init__(self, canvas, x, y, r, label):  # this 'canvas' is the model_canvas itself, used for drawing
         super(FlowItem, self).__init__()
@@ -168,11 +174,16 @@ class FlowItem(object):
         self.from_core_to_arrow = arrow_pos - self.core.pos()
         self.core.p1 = self.from_core_to_arrow
         self.core.update()
+        self.repose_flow_core()
 
     def on_flow_rect_move(self, rect_pos):
         self.from_core_to_rect = rect_pos - self.core.pos()
         self.core.p2 = self.from_core_to_rect
         self.core.update()
+        self.repose_flow_core()
+
+    def repose_flow_core(self):
+        pass
 
 
 class AuxItem(QGraphicsEllipseItem):
