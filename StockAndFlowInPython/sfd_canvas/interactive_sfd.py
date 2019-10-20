@@ -1,5 +1,4 @@
 import sys
-import math
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -11,6 +10,7 @@ class StockItem(QGraphicsRectItem):
         self.rect_rect = QRectF(- w * 0.5, - h * 0.5, w, h)
         super(StockItem, self).__init__(self.rect_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.rect_text = None
         self.label = label
 
@@ -36,6 +36,7 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
     def __init__(self, r, label):
         super(FlowCoreItem, self).__init__()
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.central_point = QPointF(0, 0)
         self.label = label
         self.r = r
@@ -51,9 +52,8 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
                                       QPointF(self.central_point.x() + self.r, self.central_point.y() + self.r))
 
         # label bounding rect
-        # current_font = self.scene().font()  # TODO: find) out why call self.scene().font() in __init__() causes crash
-        font_1 = QFont('Calibri', 16)
-        font_metrics = QFontMetrics(font_1)  # calculator used to calculate text's bounding rect
+        current_font = self.scene().font()  # TODO: find out why call self.scene().font() in __init__() causes crash
+        font_metrics = QFontMetrics(current_font)  # calculator used to calculate text's bounding rect
         original_text_bounding_rect = font_metrics.boundingRect(self.label)
         self.text_bounding_rect = QRectF(original_text_bounding_rect.translated(
             int(circle_bounding_rect.x() + circle_bounding_rect.width() / 2 - original_text_bounding_rect.width() / 2),
@@ -81,6 +81,7 @@ class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
         self.end_rect_point = QPointF(0, 0)
         self.end_rect = QRectF(self.end_rect_point.x() - 5, self.end_rect_point.y() - 5, 10, 10)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
 
     def boundingRect(self):
         return self.end_rect
@@ -115,6 +116,7 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
         self.end_arrow.append(self.n2.p2())
 
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
 
     def boundingRect(self):
         return QRectF(QPointF(self.end_arrow_point.x()-10, self.end_arrow_point.y()-10),
@@ -213,6 +215,7 @@ class AuxItem(QGraphicsEllipseItem):
         self.circle_bounding_rect = QRectF(- r, - r, r*2, r*2)
         super(AuxItem, self).__init__(self.circle_bounding_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.text_bounding_rect = None
         self.label = label
 
@@ -233,6 +236,13 @@ class AuxItem(QGraphicsEllipseItem):
     def paint(self, painter, option, widget=None):
         super(AuxItem, self).paint(painter, option, widget)
         painter.drawText(self.text_bounding_rect, self.label)
+
+
+class ConnectorItem(QGraphicsObject):
+    def __init__(self):
+        super(ConnectorItem, self).__init__()
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        pass
 
 
 class ModelCanvas(QGraphicsScene):
