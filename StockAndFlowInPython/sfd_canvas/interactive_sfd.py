@@ -238,11 +238,84 @@ class AuxItem(QGraphicsEllipseItem):
         painter.drawText(self.text_bounding_rect, self.label)
 
 
-class ConnectorItem(QGraphicsObject):
+class ConnectorArrowItem(QGraphicsObject):
+    connector_arrow_move_signal = pyqtSignal()
+
     def __init__(self):
-        super(ConnectorItem, self).__init__()
+        super(ConnectorArrowItem, self).__init__()
+        self.is_connected = False
+        self.connector_end_arrow_point = QPointF(0, 0)
+        self.l1 = QLineF(QPointF(0, 0), QPointF(1, 0))
+        self.v = self.l1.unitVector()
+        self.v.setLength(10)  # change the unit, => change the length of the arrow
+        self.v.translate(self.connector_end_arrow_point)  # move v to the end of the line
+        self.n = self.v.normalVector()  # normal vector
+        self.n.setLength(self.n.length() * 0.5)  # width of the arrow
+        self.n2 = self.n.normalVector().normalVector()  # an opposite vector of n
+
+        self.connector_end_arrow = QPolygonF()
+        self.connector_end_arrow.append(self.v.p2())
+        self.connector_end_arrow.append(self.n.p2())
+        self.connector_end_arrow.append(self.n2.p2())
+
+        self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
-        pass
+
+    def boundingRect(self):
+        return QRectF(QPointF(self.connector_end_arrow_point.x() - 10, self.connector_end_arrow_point.y() - 10),
+                      QPointF(self.connector_end_arrow_point.x() + 10, self.connector_end_arrow_point.y() + 10))
+
+    def paint(self, painter, option, widget=None):
+        painter.setPen(QPen(Qt.red, 1))
+        painter.drawPolygon(self.connector_end_arrow)
+        painter.drawPoint(self.connector_end_arrow_point)
+        painter.setPen(QPen(Qt.black, 1))
+
+    def mouseMoveEvent(self, event):
+        super(ConnectorArrowItem, self).mouseMoveEvent(event)
+        self.connector_arrow_move_signal.emit()
+
+
+class ConnectorLineItem(QGraphicsObject):
+    def __init__(self):
+        super(ConnectorLineItem, self).__init__()
+        self.p1 = QPointF(0, 0)
+        self.p2 = QPointF(0, 0)
+
+    def boundingRect(self):
+        min_x = min(self.p1.x(), self.p2.x())
+        max_x = max(self.p1.x(), self.p2.x())
+        min_y = min(self.p1.y(), self.p2.y())
+        max_y = max(self.p1.y(), self.p2.y())
+        line_bounding_rect = QRectF(QPointF(min_x-10, min_y-10), QPointF(max_x+10, max_y+10))
+        return line_bounding_rect
+
+    def paint(self, painter, option, widget=None):
+        painter.setPen(QPen(Qt.red, 1))
+        line = QLineF(self.p1, self.p2)
+        painter.drawLine(line)
+        painter.setPen(QPen(Qt.black, 1))
+
+
+class ConnectorItem(object):
+    def __init__(self, canvas, x, y, angle):
+        super(ConnectorItem, self).__init__()
+        self.starting_point = QPointF(x, y)
+        self.angle = angle
+
+        self.arrow = ConnectorArrowItem()
+        self.arrow.setPos(self.starting_point)
+        self.line = ConnectorLineItem()
+        self.line.setPos(self.starting_point)
+        self.canvas = canvas
+        self.canvas.addItem(self.arrow)
+        self.canvas.addItem(self.line)
+
+        self.arrow.connector_arrow_move_signal.connect(self.on_connector_arrow_move)
+
+    def on_connector_arrow_move(self):
+        self.line.p2 = self.arrow.pos() - self.line.pos()
+        self.line.update()
 
 
 class ModelCanvas(QGraphicsScene):
@@ -250,6 +323,9 @@ class ModelCanvas(QGraphicsScene):
         super(ModelCanvas, self).__init__()
         self.working_mode = None
         self.flows = dict()
+        self.connectors = dict()
+
+        self.uid = 1
 
     def mousePressEvent(self, e):
         # print(self.working_mode)
@@ -261,6 +337,8 @@ class ModelCanvas(QGraphicsScene):
             self.add_flow(x, y)
         elif self.working_mode == 'aux':
             self.add_aux(x, y)
+        elif self.working_mode == 'connector':
+            self.add_connector(x, y)
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
     def add_stock(self, x, y, w=40, h=30, label='Stock'):
@@ -275,6 +353,11 @@ class ModelCanvas(QGraphicsScene):
         aux_item = AuxItem(r=r, label=label)
         aux_item.setPos(x, y)
         self.addItem(aux_item)
+
+    def add_connector(self, x, y, angle=0):
+        # connect to the uid system later
+        self.connectors[self.uid] = ConnectorItem(self, x, y, angle)
+        self.uid += 1
 
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
