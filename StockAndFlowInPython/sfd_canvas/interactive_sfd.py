@@ -1,4 +1,5 @@
 import sys
+import math
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -170,6 +171,8 @@ class FlowItem(object):
         self.from_core_to_rect = self.rect.pos() - self.core.pos()
         self.from_core_to_line = self.line.pos() - self.core.pos()
 
+        self.angle = 0
+
         self.core.core_move_signal.connect(self.on_flow_core_move)
         self.rect.rect_move_signal.connect(self.on_flow_rect_move)
         self.arrow.arrow_move_signal.connect(self.on_flow_arrow_move)
@@ -183,11 +186,13 @@ class FlowItem(object):
         self.line.p1 = self.arrow.pos() - self.line.pos()
         self.line.update()
         self.repose_flow_core()
+        self.update_angle()
 
     def on_flow_rect_move(self):
         self.line.p2 = self.rect.pos() - self.line.pos()
         self.line.update()
         self.repose_flow_core()
+        self.update_angle()
 
     def repose_flow_core(self):
         self.core.setPos((self.arrow.pos().x()+self.rect.pos().x())/2, (self.arrow.pos().y()+self.rect.pos().y())/2)
@@ -197,6 +202,10 @@ class FlowItem(object):
         self.from_core_to_arrow = self.arrow.pos() - self.core.pos()
         self.from_core_to_rect = self.rect.pos() - self.core.pos()
         self.from_core_to_line = self.line.pos() - self.core.pos()
+
+    def update_angle(self):
+        self.angle = QLineF(self.line.p2, self.line.p1).angle()
+        self.arrow.setRotation(-1*self.angle)
 
 
 class AuxItem(QGraphicsEllipseItem):
