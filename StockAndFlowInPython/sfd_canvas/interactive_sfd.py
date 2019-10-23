@@ -3,14 +3,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interactive_sfd
+from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR
 
 
 class StockItem(QGraphicsRectItem):
     def __init__(self, w, h, label):
         self.rect_rect = QRectF(- w * 0.5, - h * 0.5, w, h)
         super(StockItem, self).__init__(self.rect_rect)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.rect_text = None
         self.label = label
 
@@ -35,8 +36,8 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
 
     def __init__(self, r, label):
         super(FlowCoreItem, self).__init__()
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsObject.ItemIsMovable, True)
+        self.setFlag(QGraphicsObject.ItemIsSelectable, True)
         self.central_point = QPointF(0, 0)
         self.label = label
         self.r = r
@@ -62,9 +63,7 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
         return circle_bounding_rect.united(self.text_bounding_rect)
 
     def paint(self, painter, option, widget=None):
-        painter.setPen(QPen(Qt.black, 2))
         painter.drawEllipse(self.central_point, self.r, self.r)
-        painter.setPen(QPen(Qt.black, 1))
         painter.drawText(self.text_bounding_rect, self.label)
 
     def mouseMoveEvent(self, event):
@@ -73,30 +72,46 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
 
 
 class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
-    rect_move_signal = pyqtSignal()
+    rect_move_signal = pyqtSignal(bool)
 
     def __init__(self):
         super(FlowRectItem, self).__init__()
         self.is_connected = False
         self.end_rect_point = QPointF(0, 0)
         self.end_rect = QRectF(self.end_rect_point.x() - 5, self.end_rect_point.y() - 5, 10, 10)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+        self.brush = QBrush(Qt.white)
 
     def boundingRect(self):
         return self.end_rect
 
     def paint(self, painter, option, widget=None):
+        painter.setBrush(self.brush)
         painter.drawRect(self.end_rect)
         painter.drawPoint(self.end_rect_point)
 
     def mouseMoveEvent(self, event):
+        collided_items = self.scene().collidingItems(self)
+        stock_collided = False
+        # print(collided_items)
+        for item in collided_items:
+            if type(item) == StockItem:
+                self.brush = QBrush(Qt.black)
+                stock_collided = True
+        if stock_collided:
+            self.is_connected = True
+        else:
+            self.is_connected = False
+            self.brush = QBrush(Qt.white)
+
         super(FlowRectItem, self).mouseMoveEvent(event)
-        self.rect_move_signal.emit()
+        self.rect_move_signal.emit(self.is_connected)
 
 
 class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
-    arrow_move_signal = pyqtSignal()
+    arrow_move_signal = pyqtSignal(bool)
 
     def __init__(self):
         super(FlowArrowItem, self).__init__()
@@ -115,20 +130,36 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
         self.end_arrow.append(self.n.p2())
         self.end_arrow.append(self.n2.p2())
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+        self.brush = QBrush(Qt.white)
 
     def boundingRect(self):
         return QRectF(QPointF(self.end_arrow_point.x()-10, self.end_arrow_point.y()-10),
                       QPointF(self.end_arrow_point.x()+10, self.end_arrow_point.y()+10))
 
     def paint(self, painter, option, widget=None):
+        painter.setBrush(self.brush)
         painter.drawPolygon(self.end_arrow)
         painter.drawPoint(self.end_arrow_point)
 
     def mouseMoveEvent(self, event):
+        collided_items = self.scene().collidingItems(self)
+        stock_collided = False
+        # print(collided_items)
+        for item in collided_items:
+            if type(item) == StockItem:
+                self.brush = QBrush(Qt.black)
+                stock_collided = True
+        if stock_collided:
+            self.is_connected = True
+        else:
+            self.is_connected = False
+            self.brush = QBrush(Qt.white)
+
         super(FlowArrowItem, self).mouseMoveEvent(event)
-        self.arrow_move_signal.emit()
+        self.arrow_move_signal.emit(self.is_connected)
 
 
 class FlowLineItem(QGraphicsObject):
@@ -142,11 +173,11 @@ class FlowLineItem(QGraphicsObject):
         max_x = max(self.p1.x(), self.p2.x())
         min_y = min(self.p1.y(), self.p2.y())
         max_y = max(self.p1.y(), self.p2.y())
-        line_bounding_rect = QRectF(QPointF(min_x-10, min_y-10), QPointF(max_x+10, max_y+10))
+        line_bounding_rect = QRectF(QPointF(min_x-20, min_y-20), QPointF(max_x+20, max_y+20))
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
-        painter.setPen(QPen(Qt.black, 2))
+        painter.setPen(QPen(Qt.black, 1))
         line = QLineF(self.p1, self.p2)
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
@@ -163,6 +194,7 @@ class FlowItem(object):
         self.arrow.setPos(x+30, y)
         self.line = FlowLineItem()
         self.line.setPos(x, y)
+
         self.canvas = canvas
         self.canvas.addItem(self.core)
         self.canvas.addItem(self.rect)
@@ -184,13 +216,21 @@ class FlowItem(object):
         self.rect.setPos(self.core.pos() + self.from_core_to_rect)
         self.line.setPos(self.core.pos() + self.from_core_to_line)
 
-    def on_flow_arrow_move(self):
+    def on_flow_arrow_move(self, is_connected):
+        if is_connected or self.rect.is_connected:
+            self.core.setFlag(QGraphicsObject.ItemIsMovable, False)
+        else:
+            self.core.setFlag(QGraphicsObject.ItemIsMovable, True)
         self.line.p1 = self.arrow.pos() - self.line.pos()
         self.line.update()
         self.repose_flow_core()
         self.update_angle()
 
-    def on_flow_rect_move(self):
+    def on_flow_rect_move(self, is_connected):
+        if is_connected or self.arrow.is_connected:
+            self.core.setFlag(QGraphicsObject.ItemIsMovable, False)
+        else:
+            self.core.setFlag(QGraphicsObject.ItemIsMovable, True)
         self.line.p2 = self.rect.pos() - self.line.pos()
         self.line.update()
         self.repose_flow_core()
@@ -214,8 +254,8 @@ class AuxItem(QGraphicsEllipseItem):
     def __init__(self, r, label):
         self.circle_bounding_rect = QRectF(- r, - r, r*2, r*2)
         super(AuxItem, self).__init__(self.circle_bounding_rect)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.text_bounding_rect = None
         self.label = label
 
@@ -239,7 +279,7 @@ class AuxItem(QGraphicsEllipseItem):
 
 
 class ConnectorArrowItem(QGraphicsObject):
-    connector_arrow_move_signal = pyqtSignal()
+    connector_arrow_move_signal = pyqtSignal(bool)
 
     def __init__(self):
         super(ConnectorArrowItem, self).__init__()
@@ -261,19 +301,35 @@ class ConnectorArrowItem(QGraphicsObject):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 
+        self.brush = QBrush(Qt.white)
+
     def boundingRect(self):
         return QRectF(QPointF(self.connector_end_arrow_point.x() - 10, self.connector_end_arrow_point.y() - 10),
                       QPointF(self.connector_end_arrow_point.x() + 10, self.connector_end_arrow_point.y() + 10))
 
     def paint(self, painter, option, widget=None):
+        painter.setBrush(self.brush)
         painter.setPen(QPen(Qt.red, 1))
         painter.drawPolygon(self.connector_end_arrow)
         painter.drawPoint(self.connector_end_arrow_point)
         painter.setPen(QPen(Qt.black, 1))
 
     def mouseMoveEvent(self, event):
+        collided_items = self.scene().collidingItems(self)
+        stock_collided = False
+        # print(collided_items)
+        for item in collided_items:
+            if type(item) in [FlowCoreItem, AuxItem]:
+                self.brush = QBrush(Qt.red)
+                stock_collided = True
+        if stock_collided:
+            self.is_connected = True
+        else:
+            self.is_connected = False
+            self.brush = QBrush(Qt.white)
+
         super(ConnectorArrowItem, self).mouseMoveEvent(event)
-        self.connector_arrow_move_signal.emit()
+        self.connector_arrow_move_signal.emit(self.is_connected)
 
 
 class ConnectorLineItem(QGraphicsObject):
@@ -287,7 +343,7 @@ class ConnectorLineItem(QGraphicsObject):
         max_x = max(self.p1.x(), self.p2.x())
         min_y = min(self.p1.y(), self.p2.y())
         max_y = max(self.p1.y(), self.p2.y())
-        line_bounding_rect = QRectF(QPointF(min_x-10, min_y-10), QPointF(max_x+10, max_y+10))
+        line_bounding_rect = QRectF(QPointF(min_x-20, min_y-20), QPointF(max_x+20, max_y+20))
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
@@ -313,9 +369,14 @@ class ConnectorItem(object):
 
         self.arrow.connector_arrow_move_signal.connect(self.on_connector_arrow_move)
 
-    def on_connector_arrow_move(self):
-        self.line.p2 = self.arrow.pos() - self.line.pos()
+    def on_connector_arrow_move(self, is_connected):
+        self.line.p1 = self.arrow.pos() - self.line.pos()
         self.line.update()
+        self.update_angle()
+
+    def update_angle(self):
+        self.angle = QLineF(self.line.p2, self.line.p1).angle()
+        self.arrow.setRotation(-1*self.angle)
 
 
 class ModelCanvas(QGraphicsScene):
@@ -338,7 +399,15 @@ class ModelCanvas(QGraphicsScene):
         elif self.working_mode == 'aux':
             self.add_aux(x, y)
         elif self.working_mode == 'connector':
-            self.add_connector(x, y)
+            # check if there is a stock/flow/aux at this point; if not, do nothing.
+            items_at_click_point = self.itemAt(x, y, QTransform())
+            print(items_at_click_point)
+            if type(items_at_click_point) in [StockItem,
+                                              FlowCoreItem,
+                                              FlowLineItem,  # TODO: solve the overlap of FlowLine and FlowCore
+                                              AuxItem]:
+                self.add_connector(x, y)
+
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
     def add_stock(self, x, y, w=40, h=30, label='Stock'):
@@ -362,6 +431,7 @@ class ModelCanvas(QGraphicsScene):
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
     def __init__(self):
+        # print('Initializing Interactive SFD')
         super(InteractiveSFD, self).__init__()
         self.setupUi(self)
         self.pushButton_add_stock.setCheckable(True)
@@ -380,6 +450,8 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.graphicsView_interactive_sfd.setSceneRect(0, 0, self.width(), self.height())
         self.graphicsView_interactive_sfd.setScene(self.model_canvas)
         self.graphicsView_interactive_sfd.show()
+
+        self.sfd = None
 
     # Exclusively check buttons
     def on_pushbutton_add_stock_pushed(self):
@@ -413,6 +485,41 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_aux.setChecked(False)
         if not self.pushButton_add_connector.isChecked():
             self.model_canvas.working_mode = None
+
+    def draw_sfd(self, sfd):
+        print('drawing sfd')
+        self.sfd = sfd
+
+        radius1 = 8
+
+        # draw flows
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] == FLOW:
+                print("    drawing flow {}".format(element))
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                points = self.sfd.nodes[element]['points']
+                self.model_canvas.add_flow(x, y, label=element)
+
+        # draw stocks (comes the last, so they can cover the connectors)
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] == STOCK:
+                print("    drawing stock {}".format(element))
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                # print(x,y)
+                self.model_canvas.add_stock(x, y, label=element)
+
+        # draw auxs
+        for element in self.sfd.nodes:
+            if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                print("    drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                self.model_canvas.add_aux(x, y, label=element)
+
+        # draw connectors
+        pass
 
 
 if __name__ == '__main__':

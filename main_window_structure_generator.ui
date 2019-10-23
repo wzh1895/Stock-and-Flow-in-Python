@@ -65,7 +65,20 @@
        <attribute name="title">
         <string>Interactive SFD</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_8"/>
+       <layout class="QVBoxLayout" name="layout_interactive_sfd">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -157,7 +170,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -217,8 +230,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>202</width>
-     <height>221</height>
+     <width>241</width>
+     <height>232</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -515,8 +528,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>0</width>
-     <height>0</height>
+     <width>197</width>
+     <height>159</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -654,7 +667,7 @@
    <property name="minimumSize">
     <size>
      <width>204</width>
-     <height>58</height>
+     <height>64</height>
     </size>
    </property>
    <property name="windowTitle">
@@ -748,8 +761,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>0</width>
-     <height>0</height>
+     <width>173</width>
+     <height>183</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -908,8 +921,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>92</width>
-     <height>111</height>
+     <width>95</width>
+     <height>117</height>
     </size>
    </property>
    <property name="maximumSize">

@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
     COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, PURGE_SWITCH, PURGE_THRESHOLD
+
 from StockAndFlowInPython.session_handler import SessionHandler, NewGraphNetworkWindow
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
     apply_a_concept_cld, optimize_parameters, import_flow
@@ -17,7 +18,9 @@ from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similar
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
 from StockAndFlowInPython.sfd_canvas.sfd_canvas_qt import SFDCanvas
+from StockAndFlowInPython.sfd_canvas.interactive_sfd import InteractiveSFD
 from StockAndFlowInPython.parsing.XMILE_parsing import equation_to_text, text_to_equation
+
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -65,7 +68,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         # result
         self.comboBox_elements.currentIndexChanged.connect(self.display_an_element_behavior)
 
-        # UI - structure modification modification
+        # UI - structure modification
         self.pushButton_add_stock.clicked.connect(self.add_stock)
         self.pushButton_add_flow.clicked.connect(self.add_flow)
         self.pushButton_add_aux.clicked.connect(self.add_auxiliary)
@@ -941,6 +944,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
     def display_a_candidate_structure(self):
         self.display_a_candidate_structure_sfd()
         self.display_a_candidate_structure_cld()
+        self.display_a_candidate_structure_interactive_sfd()
         self.display_a_candidate_structure_elements()
 
     def display_a_candidate_structure_sfd(self):
@@ -970,6 +974,18 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         cld_network_widget.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout_cld.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_cld.addWidget(cld_network_widget)
+
+    def display_a_candidate_structure_interactive_sfd(self):
+        # clear interactive sfd tab
+        for i in reversed(range(self.layout_interactive_sfd.count())):
+            self.layout_interactive_sfd.itemAt(i).widget().setParent(None)
+
+        # add interactive cld
+        interactive_sfd = InteractiveSFD()
+        interactive_sfd.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd)
+        interactive_sfd.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.layout_interactive_sfd.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.layout_interactive_sfd.addWidget(interactive_sfd)
 
     def display_a_candidate_structure_elements(self):
         # clear combobox
