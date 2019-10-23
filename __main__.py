@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from config import ITERATION_TIMES, ACTIVITY_DEMOMINATOR, INITIAL_LIKELIHOOD, INITIAL_ACTIVITY, REFERENCE_MODE_PATH, \
     COOL_DOWN_TIMES, COOL_DOWN_SWITCH, GENERIC_STRUCTURE_LIKELIHOOD_UPDATE_TIMES, PURGE_SWITCH, PURGE_THRESHOLD
 
-from StockAndFlowInPython.session_handler import SessionHandler, NewGraphNetworkWindow
+from StockAndFlowInPython.session_handler import SessionHandler
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
     apply_a_concept_cld, optimize_parameters, import_flow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
@@ -942,7 +942,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
         self.selected_candidata_tableWidgetItem_count = self.listWidget_candidates.currentIndex()
 
     def display_a_candidate_structure(self):
-        self.display_a_candidate_structure_sfd()
+        # self.display_a_candidate_structure_sfd()
         self.display_a_candidate_structure_cld()
         self.display_a_candidate_structure_interactive_sfd()
         self.display_a_candidate_structure_elements()
@@ -1063,7 +1063,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
     def remove_element(self):
         element_to_remove = self.comboBox_elements_in_selected_structure.currentText()
-        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].delete_variable(name=element_to_remove)
+        self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].delete_element(name=element_to_remove)
         self.display_a_candidate_structure()
         # TODO this part needs improvement: the consequences of removing an element: e.g. bindings?
 

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'interactive_sfd_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -20,6 +20,7 @@ class Ui_widget_interactive_sfd(object):
         sizePolicy.setHeightForWidth(widget_interactive_sfd.sizePolicy().hasHeightForWidth())
         widget_interactive_sfd.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(widget_interactive_sfd)
+        self.verticalLayout.setContentsMargins(6, 6, 6, 10)
         self.verticalLayout.setObjectName("verticalLayout")
         self.frame_modifier = QtWidgets.QFrame(widget_interactive_sfd)
         self.frame_modifier.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -43,6 +44,7 @@ class Ui_widget_interactive_sfd(object):
         self.horizontalLayout.addWidget(self.pushButton_add_connector)
         self.verticalLayout.addWidget(self.frame_modifier)
         self.graphicsView_interactive_sfd = QtWidgets.QGraphicsView(widget_interactive_sfd)
+        self.graphicsView_interactive_sfd.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.graphicsView_interactive_sfd.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         self.graphicsView_interactive_sfd.setObjectName("graphicsView_interactive_sfd")
         self.verticalLayout.addWidget(self.graphicsView_interactive_sfd)

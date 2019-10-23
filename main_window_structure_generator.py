@@ -2,17 +2,25 @@
 
 # Form implementation generated from reading ui file 'main_window_structure_generator.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1280, 900)
+        MainWindow.resize(1280, 878)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
+        self.centralwidget.setSizePolicy(sizePolicy)
+        self.centralwidget.setMaximumSize(QtCore.QSize(800, 800))
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -22,6 +30,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
         self.tabWidget.setSizePolicy(sizePolicy)
+        self.tabWidget.setMinimumSize(QtCore.QSize(0, 0))
         self.tabWidget.setObjectName("tabWidget")
         self.tab_sfd = QtWidgets.QWidget()
         self.tab_sfd.setObjectName("tab_sfd")
@@ -97,7 +106,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dockWidget_browse_time_series.sizePolicy().hasHeightForWidth())
         self.dockWidget_browse_time_series.setSizePolicy(sizePolicy)
-        self.dockWidget_browse_time_series.setMinimumSize(QtCore.QSize(241, 232))
+        self.dockWidget_browse_time_series.setMinimumSize(QtCore.QSize(243, 232))
         self.dockWidget_browse_time_series.setMaximumSize(QtCore.QSize(524287, 524287))
         self.dockWidget_browse_time_series.setObjectName("dockWidget_browse_time_series")
         self.dockWidgetContents = QtWidgets.QWidget()
@@ -188,13 +197,13 @@ class Ui_MainWindow(object):
         self.dockWidget_browse_time_series.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_browse_time_series)
         self.dockWidget_details = QtWidgets.QDockWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dockWidget_details.sizePolicy().hasHeightForWidth())
         self.dockWidget_details.setSizePolicy(sizePolicy)
         self.dockWidget_details.setMinimumSize(QtCore.QSize(78, 38))
-        self.dockWidget_details.setMaximumSize(QtCore.QSize(10000, 10000))
+        self.dockWidget_details.setMaximumSize(QtCore.QSize(250, 250))
         self.dockWidget_details.setObjectName("dockWidget_details")
         self.dockWidgetContents_details = QtWidgets.QWidget()
         self.dockWidgetContents_details.setObjectName("dockWidgetContents_details")
@@ -239,13 +248,13 @@ class Ui_MainWindow(object):
         self.dockWidget_browse_candidates.setWidget(self.dockWidgetContents_candidates)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_browse_candidates)
         self.dockWidget_expansion_tree = QtWidgets.QDockWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dockWidget_expansion_tree.sizePolicy().hasHeightForWidth())
         self.dockWidget_expansion_tree.setSizePolicy(sizePolicy)
         self.dockWidget_expansion_tree.setMinimumSize(QtCore.QSize(78, 38))
-        self.dockWidget_expansion_tree.setMaximumSize(QtCore.QSize(524287, 524287))
+        self.dockWidget_expansion_tree.setMaximumSize(QtCore.QSize(250, 250))
         self.dockWidget_expansion_tree.setObjectName("dockWidget_expansion_tree")
         self.dockWidgetContents_tree = QtWidgets.QWidget()
         self.dockWidgetContents_tree.setObjectName("dockWidgetContents_tree")
@@ -255,12 +264,13 @@ class Ui_MainWindow(object):
         self.dockWidget_expansion_tree.setWidget(self.dockWidgetContents_tree)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget_expansion_tree)
         self.dockWidget_simulation_result = QtWidgets.QDockWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dockWidget_simulation_result.sizePolicy().hasHeightForWidth())
         self.dockWidget_simulation_result.setSizePolicy(sizePolicy)
-        self.dockWidget_simulation_result.setMinimumSize(QtCore.QSize(204, 64))
+        self.dockWidget_simulation_result.setMinimumSize(QtCore.QSize(205, 64))
+        self.dockWidget_simulation_result.setMaximumSize(QtCore.QSize(250, 270))
         self.dockWidget_simulation_result.setObjectName("dockWidget_simulation_result")
         self.dockWidgetContents_result = QtWidgets.QWidget()
         self.dockWidgetContents_result.setObjectName("dockWidgetContents_result")
@@ -328,11 +338,12 @@ class Ui_MainWindow(object):
         self.dockWidget_bindings.setWidget(self.dockWidgetContents_bindings)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_bindings)
         self.dockWidget_settings = QtWidgets.QDockWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dockWidget_settings.sizePolicy().hasHeightForWidth())
         self.dockWidget_settings.setSizePolicy(sizePolicy)
+        self.dockWidget_settings.setMaximumSize(QtCore.QSize(250, 200))
         self.dockWidget_settings.setObjectName("dockWidget_settings")
         self.dockWidgetContents_settings = QtWidgets.QWidget()
         self.dockWidgetContents_settings.setObjectName("dockWidgetContents_settings")
@@ -527,7 +538,7 @@ class Ui_MainWindow(object):
         self.toolBar.addSeparator()
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         self.tabWidget_time_series_ref_modes.setCurrentIndex(0)
         self.tabWidget_settings.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -596,4 +607,3 @@ class Ui_MainWindow(object):
         self.actionOpen.setText(_translate("MainWindow", "Open ..."))
         self.actionClose.setText(_translate("MainWindow", "Close ..."))
         self.actionOpen_2.setText(_translate("MainWindow", "Open"))
-

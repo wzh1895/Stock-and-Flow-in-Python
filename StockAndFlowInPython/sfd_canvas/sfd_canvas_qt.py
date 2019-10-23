@@ -189,7 +189,6 @@ class SFDCanvas(QWidget):
                     # draw an arrow
                     self.create_arrow(qp, source.x(), source.y(), dest.x(), dest.y())
 
-
     def create_arrow(self, qp, x_1, y_1, x_2, y_2):
         """
         Used for the last part of a flow or a connector

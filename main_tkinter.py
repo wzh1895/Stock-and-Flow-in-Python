@@ -1296,7 +1296,7 @@ class StructureModifier(Toplevel):
 
     def remove_element(self):
         var_to_remove = self.variable_to_remove_combobox.get()
-        self.structure.delete_variable(name=var_to_remove)
+        self.structure.delete_element(name=var_to_remove)
         self.refresh_display_structure()
 
     def on_select_var_to_modify(self, evt):

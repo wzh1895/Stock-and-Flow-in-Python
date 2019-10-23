@@ -1,16 +1,16 @@
 import xml.dom.minidom
-import math
+# import math
 import time
 import random
-import matplotlib.pyplot as plt
-import networkx as nx
-from grave import plot_network
-from tkinter import filedialog
-from tkinter import *
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names, STOCK, FLOW, PARAMETER, VARIABLE, ALIAS
+# import matplotlib.pyplot as plt
+# import networkx as nx
+# from grave import plot_network
+# from tkinter import filedialog
+# from tkinter import *
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names
 from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation
-from StockAndFlowInPython.sfd_canvas.sfd_canvas_tkinter import SFDCanvas
+# from StockAndFlowInPython.sfd_canvas.sfd_canvas_tkinter import SFDCanvas
 
 SLEEP_TIME = 0
 
@@ -32,45 +32,45 @@ class SessionHandler(object):
         self.selected_variable = None
         self.simulation_time = 75
 
-    def file_load(self):
-        self.filename = filedialog.askopenfilename()
-        if self.filename != '':
-            self.read_xmile_model(self.filename)
-            # draw sfd
-            self.show_sfd_window()
-            self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
-            # draw graph network
-            self.draw_graph_network()
-            self.variables_in_model = list(self.model_structure.sfd.nodes)
-            print(self.filename)
-            return (self.filename, self.variables_in_model)
+    # def file_load(self):
+    #     self.filename = filedialog.askopenfilename()
+    #     if self.filename != '':
+    #         self.read_xmile_model(self.filename)
+    #         # draw sfd
+    #         self.show_sfd_window()
+    #         self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
+    #         # draw graph network
+    #         self.draw_graph_network()
+    #         self.variables_in_model = list(self.model_structure.sfd.nodes)
+    #         print(self.filename)
+    #         return (self.filename, self.variables_in_model)
 
-    def show_sfd_window(self):
-        self.sfd_window1 = SFDWindow()
+    # def show_sfd_window(self):
+    #     self.sfd_window1 = SFDWindow()
 
-    def show_graph_network_window(self):
-        self.graph_network_window1 = GraphNetworkWindow()
+    # def show_graph_network_window(self):
+    #     self.graph_network_window1 = GraphNetworkWindow()
 
-    def apply_generic_structure(self, generic_structure_type):
-        """
-        Retrieve a specific structure type by:
-        1) Establish it in the graph engine;
-        2) Draw SFD
-        2) Draw Graph network
-
-        :param generic_structure_type:
-        :return:
-        """
-        if generic_structure_type == 'decline_c':
-            self.model_structure.first_order_negative()
-        elif generic_structure_type == 'growth_b':
-            self.model_structure.first_order_positive()
-        # draw sfd
-        self.sfd_window1 = SFDWindow()
-        self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
-        # draw graph network
-        self.draw_graph_network()
-        self.variables_in_model = list(self.model_structure.sfd.nodes)
+    # def apply_generic_structure(self, generic_structure_type):
+    #     """
+    #     Retrieve a specific structure type by:
+    #     1) Establish it in the graph engine;
+    #     2) Draw SFD
+    #     2) Draw Graph network
+    #
+    #     :param generic_structure_type:
+    #     :return:
+    #     """
+    #     if generic_structure_type == 'decline_c':
+    #         self.model_structure.first_order_negative()
+    #     elif generic_structure_type == 'growth_b':
+    #         self.model_structure.first_order_positive()
+    #     # draw sfd
+    #     self.sfd_window1 = SFDWindow()
+    #     self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
+    #     # draw graph network
+    #     self.draw_graph_network()
+    #     self.variables_in_model = list(self.model_structure.sfd.nodes)
 
     def simulation_handler(self, simulation_time):
         self.model_structure.clear_a_run()
@@ -176,6 +176,7 @@ class SessionHandler(object):
             # print("Adding this stock:", name)
             inflow = None
             outflow = None
+            eqn = None
             for stock_definition in self.stock_definitions:  # Loop to find a particular stock
                 if name_handler(stock_definition.getAttribute("name")) == name:
                     eqn = stock_definition.getElementsByTagName("eqn")[0].firstChild.data
@@ -191,7 +192,10 @@ class SessionHandler(object):
             x = float(stockview.getAttribute("x"))
             y = float(stockview.getAttribute("y"))
             print('adding stock', name)
-            self.model_structure.add_stock(name=name, equation=self.add_angle_to_eqn(name=name, eqn=text_to_equation(eqn)), x=x, y=y)
+            self.model_structure.add_stock(name=name,
+                                           equation=self.add_angle_to_eqn(name=name, eqn=text_to_equation(eqn)),
+                                           x=x,
+                                           y=y)
             self.stock_views_array.append([name, eqn, inflow, outflow, x, y])
 
         # fetch views for all flows and draw
@@ -203,6 +207,7 @@ class SessionHandler(object):
         for flowview in self.flowviews:
             name = flowview.getAttribute("name")
             name = name_handler(name)
+            eqn = None
             # print("Adding this flow:", name)
             for flow_definition in self.flow_definitions:  # loop to find a particular flow
                 if name_handler(flow_definition.getAttribute("name")) == name:
@@ -231,6 +236,7 @@ class SessionHandler(object):
             name = auxview.getAttribute("name")
             name = name_handler(name)
             # print("Adding this aux:", name)
+            eqn = None
             for aux_definition in self.aux_definitions:  # Loop to find a particular aux
                 if name_handler(aux_definition.getAttribute("name")) == name:
                     eqn = aux_definition.getElementsByTagName("eqn")[0].firstChild.data
@@ -244,7 +250,6 @@ class SessionHandler(object):
         for aliasview in self.views[0].getElementsByTagName("alias"):
             # distinguish definition of alias from refering to it (cannot use 'color': sometimes there isn't)
             if aliasview.hasAttribute("x"):
-                #print(aliasview.getAttribute("x"), "herererere!!")
                 self.aliasviews.append(aliasview)
 
         for aliasview in self.aliasviews:
@@ -252,9 +257,8 @@ class SessionHandler(object):
             x = float(aliasview.getAttribute("x"))
             y = float(aliasview.getAttribute("y"))
             of = aliasview.getElementsByTagName("of")[0].firstChild.data
-            # print('\n', uid, 'of', of, 'bbbbbbbb\n')
             of = name_handler(of)
-            print('adding alias', name)
+            print('adding alias', of)
             self.model_structure.add_alias(uid=uid, of_element=of, x=x, y=y)
 
         print('\nnodes: ', self.model_structure.sfd.nodes)
@@ -272,72 +276,55 @@ class SessionHandler(object):
         # self.DOMTree = xml.dom.minidom.parse("./sample_models/reindeerModel.stmx")
         self.model = DOMTree.documentElement
 
-    def draw_graph_network(self):
-        try:
-            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
-        except:
-            pass
-        self.show_graph_network_window()
-        self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
-        self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
+    # def draw_graph_network(self):
+    #     try:
+    #         self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+    #     except:
+    #         pass
+    #     self.show_graph_network_window()
+    #     self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True), master=self.graph_network_window1.top)
+    #     self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
 
-    def show_result(self):
-        # try:
-        #     self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
-        # except:
-        #     pass
-        self.simulation_result1 = SimulationResult()
-        self.result_figure = self.model_structure.draw_results(names=[self.selected_variable], rtn=True)
-        self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
-        self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
+    # def show_result(self):
+    #     # try:
+    #     #     self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+    #     # except:
+    #     #     pass
+    #     self.simulation_result1 = SimulationResult()
+    #     self.result_figure = self.model_structure.draw_results(names=[self.selected_variable], rtn=True)
+    #     self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
+    #     self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
 
-    def reset(self):
-        """
-        Clear SFD canvas;
-        Clear graph network display;
-        Clear simulation results;
-        :return:
-        """
-        self.sfd_window1.sfd_canvas1.reset_canvas()
-        try:
-            self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
-        except:
-            pass
-        try:
-            self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
-        except:
-            pass
-        self.model_structure.clear_a_run()
-        self.model_structure.reset_a_structure()
+    # def reset(self):
+    #     """
+    #     Clear SFD canvas;
+    #     Clear graph network display;
+    #     Clear simulation results;
+    #     :return:
+    #     """
+    #     self.sfd_window1.sfd_canvas1.reset_canvas()
+    #     try:
+    #         self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
+    #     except:
+    #         pass
+    #     try:
+    #         self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
+    #     except:
+    #         pass
+    #     self.model_structure.clear_a_run()
+    #     self.model_structure.reset_a_structure()
 
     def refresh(self):
         """
         Refresh 1) graph network window 2) SFD window 3) variable list
         """
-        # try:
-        #     self.graph_network_window1.canvas1.get_tk_widget().destroy()  # clear graph network display
-        # except:
-        #     pass
-        # try:
-        #     self.simulation_result1.canvas1.get_tk_widget().destroy()  # clear simulation result display
-        # except:
-        #     pass
-        #
-        # # draw graph network again
-        # self.graph_network_window1.canvas1 = FigureCanvasTkAgg(self.model_structure.draw_graphs_with_curve(rtn=True),
-        #                                                        master=self.graph_network_window1.top)
-        # self.graph_network_window1.canvas1.get_tk_widget().pack(side=TOP)
-        # # draw sfd again
-        # self.sfd_window1.sfd_canvas1.reset_canvas()
-        # self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
-        # update variables' list
         self.variables_in_model = list(self.model_structure.sfd.nodes)
 
     def build_stock(self, name=None, initial_value=None, x=0, y=0):
         print("===>Building stock: {}".format(name))
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
             # TODO: fix this line
-            pos = self.generate_location(self.sfd_window1, [])
+            pos = self.generate_location([])
             x = pos[0]
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
@@ -347,7 +334,9 @@ class SessionHandler(object):
         time.sleep(SLEEP_TIME)
         return uid
 
-    def build_flow(self, name=None, equation=None, x=0, y=0, points=list(), flow_from=None, flow_to=None):
+    def build_flow(self, name=None, equation=None, x=0, y=0, points=None, flow_from=None, flow_to=None):
+        if points is None:
+            points = []
         print("===>Building flow: {}".format(name if name is not None else 'new'))
 
         linked_vars = list()  # collect linked variables for generating location
@@ -360,7 +349,7 @@ class SessionHandler(object):
         print('    Building flow:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
-            pos = self.generate_location(self.sfd_window1, linked_vars)
+            pos = self.generate_location(linked_vars)
             x = pos[0]
             y = pos[1]
 
@@ -412,26 +401,12 @@ class SessionHandler(object):
                                             x=x,
                                             y=y,
                                             points=points)
-
-        # connectors also need to be build  # this part was wrong for 2 reasons: 1) add_flow already dealt with connectors; 2) this part doesn't check names, so 'None' was added
-        # if flow_from is not None:
-        #     print('here14.1', name, flow_from)
-        #     self.model_structure.add_connector(from_element=name,
-        #                                        to_element=flow_from,
-        #                                        polarity='negative',
-        #                                        display=False)
-        # if flow_to is not None:
-        #     print('here14.2', name, flow_to)
-        #     self.model_structure.add_connector(from_element=name,
-        #                                        to_element=flow_to,
-        #                                        polarity='positive',
-        #                                        display=False)
-
         self.refresh()
         time.sleep(SLEEP_TIME)
         return uid
 
     def build_aux(self, name=None, equation=None, x=0, y=0):
+        uid: int  # a type hint
         print("===>Building aux: {}".format(name))
 
         linked_vars = list()  # collect linked variables for generating location
@@ -444,7 +419,7 @@ class SessionHandler(object):
         print('    Building aux:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
-            pos = self.generate_location(self.sfd_window1, linked_vars)
+            pos = self.generate_location(linked_vars)
             x = pos[0]
             y = pos[1]
             print("Generated position for {} at x = {}, y = {}.".format(name, x, y))
@@ -460,16 +435,17 @@ class SessionHandler(object):
     def build_connector(self, from_var, to_var, angle=None, polarity=None):
         self.model_structure.add_causality(from_element=from_var, angle=angle, to_element=to_var, polarity=polarity)
 
-    def generate_location(self, sfd_window, linked_vars):
+    def generate_location(self, linked_vars):
         """
         Automatically decide where to put a variable.
-        :param sfd_window: The canvas object where this var is going to be put on
         :param linked_vars: A list of variables that are linked to this new var
         :return: A x-y coordinate for the new variable
         """
-        sfd_window.top.update()
-        canvas_width = sfd_window.top.winfo_width()
-        canvas_height = sfd_window.top.winfo_height()
+        # sfd_window.top.update()
+        # canvas_width = sfd_window.top.winfo_width()
+        # canvas_height = sfd_window.top.winfo_height()
+        canvas_width = 640
+        canvas_height = 480
 
         # When it is isolated: centered
         if len(linked_vars) == 0:
@@ -506,7 +482,7 @@ class SessionHandler(object):
         :param name: Name of the variable
         :return:
         """
-        self.model_structure.delete_variable(name=name)
+        self.model_structure.delete_element(name=name)
         self.refresh()
         time.sleep(SLEEP_TIME)
 
@@ -534,7 +510,6 @@ class SessionHandler(object):
         # new_equation = self.wrap_equation(new_equation)
         self.model_structure.replace_equation(name, new_equation)
         self.refresh()
-        time.sleep(SLEEP_TIME)
 
     def connect_stock_flow(self, flow_name, new_flow_from=None, new_flow_to=None):
         # step 1: remove connectors from this flow to those replaced
@@ -569,7 +544,6 @@ class SessionHandler(object):
             self.model_structure.sfd.nodes[flow_name]['points'][1][1] = self.model_structure.sfd.nodes[flow_name]['pos'][1]
 
         self.refresh()
-        time.sleep(SLEEP_TIME)
 
     def disconnect_stock_flow(self, flow_name, stock_name):
         """
@@ -596,57 +570,56 @@ class SessionHandler(object):
                 self.model_structure.sfd.nodes[flow_name]['points'][i][0] += 20
 
         self.refresh()
-        time.sleep(SLEEP_TIME)
 
 
-class SFDWindow(object):
-    def __init__(self):
-        self.top = Toplevel()
-        self.top.title("Stock and Flow Diagram")
-        self.top.geometry("%dx%d+1070+750" % (500, 430))
-        self.sfd_canvas1 = SFDCanvas(self.top)
+# class SFDWindow(object):
+#     def __init__(self):
+#         self.top = Toplevel()
+#         self.top.title("Stock and Flow Diagram")
+#         self.top.geometry("%dx%d+1070+750" % (500, 430))
+#         self.sfd_canvas1 = SFDCanvas(self.top)
+#
+#
+# class GraphNetworkWindow(object):
+#     def __init__(self):
+#         self.top = Toplevel()
+#         self.top.title("Graph Network Structure")
+#         self.top.geometry("%dx%d+1070+50" % (500, 430))
 
 
-class GraphNetworkWindow(object):
-    def __init__(self):
-        self.top = Toplevel()
-        self.top.title("Graph Network Structure")
-        self.top.geometry("%dx%d+1070+50" % (500, 430))
-
-
-class NewGraphNetworkWindow(Toplevel):
-    def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red",
-                 width=500, height=430, x=650, y=250, attr=None):
-        super().__init__()
-        self.title(window_title)
-        self.width = width
-        self.height = height
-        self.geometry("+{}+{}".format(x, y))
-        self.graph_network = graph_network
-        self.attr = attr
-        self.update_graph_network(node_color)
-
-    def update_graph_network(self, node_color):
-        try:
-            self.graph_network_canvas.get_tk_widget().destroy()
-        except :
-            pass
-        fig, ax = plt.subplots()
-
-        node_attr_mapping = nx.get_node_attributes(self.graph_network, self.attr)
-        for node, attr in node_attr_mapping.items():
-            node_attr_mapping[node] = "{} [{}]".format(node, attr)
-        nx.draw(self.graph_network,
-                labels=node_attr_mapping,
-                font_size=9,
-                node_color=node_color,
-                font_color='black',
-                #with_labels=True
-                )
-        self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)
-        self.graph_network_canvas.get_tk_widget().configure(width=self.width, height=self.height)
-        self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
-        self.update()
+# class NewGraphNetworkWindow(Toplevel):
+#     def __init__(self, graph_network, window_title="Graph Network Structure", node_color="red",
+#                  width=500, height=430, x=650, y=250, attr=None):
+#         super().__init__()
+#         self.title(window_title)
+#         self.width = width
+#         self.height = height
+#         self.geometry("+{}+{}".format(x, y))
+#         self.graph_network = graph_network
+#         self.attr = attr
+#         self.update_graph_network(node_color)
+#
+#     def update_graph_network(self, node_color):
+#         try:
+#             self.graph_network_canvas.get_tk_widget().destroy()
+#         except :
+#             pass
+#         fig, ax = plt.subplots()
+#
+#         node_attr_mapping = nx.get_node_attributes(self.graph_network, self.attr)
+#         for node, attr in node_attr_mapping.items():
+#             node_attr_mapping[node] = "{} [{}]".format(node, attr)
+#         nx.draw(self.graph_network,
+#                 labels=node_attr_mapping,
+#                 font_size=9,
+#                 node_color=node_color,
+#                 font_color='black',
+#                 #with_labels=True
+#                 )
+#         self.graph_network_canvas = FigureCanvasTkAgg(figure=fig, master=self)
+#         self.graph_network_canvas.get_tk_widget().configure(width=self.width, height=self.height)
+#         self.graph_network_canvas.get_tk_widget().pack(side=LEFT)
+#         self.update()
 
     # def update_graph_network_grave(self):
     #     try:
@@ -663,8 +636,8 @@ class NewGraphNetworkWindow(Toplevel):
     #     print("Triggered")
 
 
-class SimulationResult(object):
-    def __init__(self):
-        self.top = Toplevel()
-        self.top.title("Simulation Result")
-        self.top.geometry("%dx%d+560+50" % (500, 430))
+# class SimulationResult(object):
+#     def __init__(self):
+#         self.top = Toplevel()
+#         self.top.title("Simulation Result")
+#         self.top.geometry("%dx%d+560+50" % (500, 430))

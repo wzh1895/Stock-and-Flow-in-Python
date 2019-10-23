@@ -89,6 +89,9 @@
    </item>
    <item>
     <widget class="QGraphicsView" name="graphicsView_interactive_sfd">
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
      <property name="dragMode">
       <enum>QGraphicsView::NoDrag</enum>
      </property>

@@ -377,7 +377,7 @@ class Structure(object):
         """
         # step 1: remove all incoming connectors into this variable (node)
         # step 2: replace the equation of this variable in the graph representation
-        # step 3: confirm connectors based on the new equation (only when the new equation is a function instead of a number
+        # step 3: confirm connectors based on the new equation (only when the new equation is a function not a number
         print("Graph: Replacing equation of {}".format(name))
         # step 1:
         to_remove = list()
@@ -438,11 +438,10 @@ class Structure(object):
         self.add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
         # print('Graph: added alias of', of_element, 'to graph.\n')
 
-    def delete_variable(self, name):
+    def delete_element(self, name):
         """
-        Delete a variable
+        Delete an element
         :param name:
-        :param structure_name:
         :return:
         """
         self.sfd.remove_node(name)
@@ -452,7 +451,6 @@ class Structure(object):
         """
         Disconnect stock and flow
         :param name: The flow's name
-        :param structure_name: The structure to modify
         :param stock_name: The stock this flow no longer connected to
         :return:
         """
@@ -462,15 +460,6 @@ class Structure(object):
         if self.sfd.nodes[name]['flow_to'] == stock_name:
             self.sfd.remove_edge(name, stock_name)
             self.sfd.nodes[name]['flow_to'] = None
-
-        # # Set the previous 'from' to None, and remove the causal link if it exists
-        # if self.structures[structure_name].sfd.nodes[name]['flow_from'] is not None:
-        #     self.structures[structure_name].sfd.remove_edge(name, self.structures[structure_name].sfd.nodes[name]['flow_from'])
-        #     self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
-        # # Set the previous 'to' to None, and remove the causal link if it exists
-        # if self.structures[structure_name].sfd.nodes[name]['flow_from'] is not None:
-        #     self.structures[structure_name].sfd.remove_edge(name, self.structures[structure_name].sfd.nodes[name]['flow_from'])
-        #     self.structures[structure_name].sfd.nodes[name]['flow_from'] = None
 
     # Set the model to a first order negative feedback loop
     def first_order_negative(self):
@@ -598,43 +587,6 @@ class Structure(object):
             return self.figure1
         else:  # otherwise, show the figure.
             plt.show()
-
-    # # Draw graphs
-    # def draw_graphs(self, rtn=False):
-    #     self.figure1 = plt.figure(figsize=(5, 4))
-    #     plt.gca().invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
-    #     pos = nx.get_node_attributes(self.sfd, 'pos')
-    #     nx.draw(self.sfd, with_labels=True, pos=pos)
-    #
-    #     if rtn:  # if called from external, return the figure without show it.
-    #         return self.figure1
-    #     else:  # otherwise, show the figure.
-    #         plt.show()
-    #
-    # # Draw graphs with curve
-    # def draw_graphs_with_curve(self, rtn=False):
-    #     self.figure1 = plt.figure(figsize=(8, 6))
-    #     ax = plt.gca()
-    #     ax.invert_yaxis()  # invert y-axis to move the origin to upper-left point, matching tkinter's canvas
-    #
-    #     # disable all frames/borders
-    #     ax.axes.get_yaxis().set_visible(False)
-    #     ax.axes.get_xaxis().set_visible(False)
-    #     ax.spines['top'].set_visible(False)
-    #     ax.spines['right'].set_visible(False)
-    #     ax.spines['bottom'].set_visible(False)
-    #     ax.spines['left'].set_visible(False)
-    #
-    #     pos = nx.get_node_attributes(self.sfd, 'pos')
-    #     # print("Graph: The graph contains elements with their positions:", pos)
-    #     self.draw_network(self.sfd, pos, ax)
-    #     ax.autoscale()
-    #
-    #     if rtn:  # if figure needs to be returned
-    #         # print('Graph: Engine is returning graph figure.')
-    #         return self.figure1
-    #     else:
-    #         plt.show()
 
     # Draw graphs with customized labels and colored connectors
     def draw_graphs_with_function_value_polarity(self, rtn=False):

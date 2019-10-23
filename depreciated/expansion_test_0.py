@@ -42,8 +42,8 @@ class ExpansionTest(ControllerBar):
         # self.session_handler1.build_aux(name='fraction1', equation=0.1, )
         # self.session_handler1.connect_stock_flow(flow_name='inflow0', new_flow_to='stock0')
         # self.session_handler1.replace_equation(name='inflow0', new_equation=[MULTIPLICATION, ['stock0', 50], ['fraction1', 40]])
-        # self.session_handler1.delete_variable(name='inflow0')
-        # self.session_handler1.delete_variable(name='fraction1')
+        # self.session_handler1.delete_element(name='inflow0')
+        # self.session_handler1.delete_element(name='fraction1')
         # self.simulate()
 
 

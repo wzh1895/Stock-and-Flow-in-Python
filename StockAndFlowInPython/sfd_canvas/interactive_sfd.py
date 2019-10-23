@@ -333,10 +333,10 @@ class ConnectorArrowItem(QGraphicsObject):
 
 
 class ConnectorLineItem(QGraphicsObject):
-    def __init__(self):
+    def __init__(self, delta_x, delta_y):
         super(ConnectorLineItem, self).__init__()
-        self.p1 = QPointF(0, 0)
-        self.p2 = QPointF(0, 0)
+        self.p1 = QPointF(0, 0)  # root
+        self.p2 = QPointF(delta_x, delta_y)  # end
 
     def boundingRect(self):
         min_x = min(self.p1.x(), self.p2.x())
@@ -354,15 +354,23 @@ class ConnectorLineItem(QGraphicsObject):
 
 
 class ConnectorItem(object):
-    def __init__(self, canvas, x, y, angle):
+    def __init__(self, canvas, from_x, from_y, to_x=None, to_y=None, angle=0):
         super(ConnectorItem, self).__init__()
-        self.starting_point = QPointF(x, y)
+        self.starting_point = QPointF(from_x, from_y)
+        if to_x is not None and to_y is not None:
+            delta_x = to_x - from_x
+            delta_y = to_y - from_y
+        else:
+            delta_x = 0
+            delta_y = 0
+
         self.angle = angle
 
         self.arrow = ConnectorArrowItem()
-        self.arrow.setPos(self.starting_point)
-        self.line = ConnectorLineItem()
+        self.arrow.setPos(QPointF(from_x + delta_x, from_y + delta_y))
+        self.line = ConnectorLineItem(delta_x=delta_x, delta_y=delta_y)
         self.line.setPos(self.starting_point)
+        self.update_angle()
         self.canvas = canvas
         self.canvas.addItem(self.arrow)
         self.canvas.addItem(self.line)
@@ -370,12 +378,12 @@ class ConnectorItem(object):
         self.arrow.connector_arrow_move_signal.connect(self.on_connector_arrow_move)
 
     def on_connector_arrow_move(self, is_connected):
-        self.line.p1 = self.arrow.pos() - self.line.pos()
+        self.line.p2 = self.arrow.pos() - self.line.pos()
         self.line.update()
         self.update_angle()
 
     def update_angle(self):
-        self.angle = QLineF(self.line.p2, self.line.p1).angle()
+        self.angle = QLineF(self.line.p1, self.line.p2).angle()
         self.arrow.setRotation(-1*self.angle)
 
 
@@ -406,7 +414,7 @@ class ModelCanvas(QGraphicsScene):
                                               FlowCoreItem,
                                               FlowLineItem,  # TODO: solve the overlap of FlowLine and FlowCore
                                               AuxItem]:
-                self.add_connector(x, y)
+                self.draw_connector(x, y)
 
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
@@ -423,9 +431,13 @@ class ModelCanvas(QGraphicsScene):
         aux_item.setPos(x, y)
         self.addItem(aux_item)
 
-    def add_connector(self, x, y, angle=0):
-        # connect to the uid system later
-        self.connectors[self.uid] = ConnectorItem(self, x, y, angle)
+    def draw_connector(self, x, y, angle=0):
+        self.connectors[self.uid] = ConnectorItem(self, x, y, angle=angle)
+        self.uid += 1
+
+    def add_connector(self, from_x, from_y, to_x, to_y, angle):
+        print(from_x, from_y, to_x, to_y, angle)
+        self.connectors[self.uid] = ConnectorItem(self, from_x, from_y, to_x, to_y, angle=angle)
         self.uid += 1
 
 
@@ -486,6 +498,26 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         if not self.pushButton_add_connector.isChecked():
             self.model_canvas.working_mode = None
 
+    @staticmethod
+    def name_handler(name):
+        return name.replace(' ', '_').replace('\n', '_')
+
+    def locate_var(self, ele):
+        for element in self.sfd.nodes:
+            if element == ele:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                return [float(x), float(y)]
+
+        # if nothing is found (return is not triggered), try replace ' ' with '_'
+        name = self.name_handler(ele)
+
+        for element in self.sfd.nodes:
+            if element == ele:
+                x = self.sfd.nodes[element]['pos'][0]
+                y = self.sfd.nodes[element]['pos'][1]
+                return [float(x), float(y)]
+
     def draw_sfd(self, sfd):
         print('drawing sfd')
         self.sfd = sfd
@@ -510,7 +542,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
                 # print(x,y)
                 self.model_canvas.add_stock(x, y, label=element)
 
-        # draw auxs
+        # draw auxiliaries
         for element in self.sfd.nodes:
             if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
                 print("    drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
@@ -519,7 +551,21 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
                 self.model_canvas.add_aux(x, y, label=element)
 
         # draw connectors
-        pass
+        print('SFD:', self.sfd.nodes(data=True))
+        for connector in self.sfd.edges():
+            from_element = connector[0]
+            print('from ele', from_element)
+            to_element = connector[1]
+            print('to ele', to_element)
+            if self.sfd[from_element][to_element]['display']:
+                # Only draw when 'display' == True, avoid FLOW--->STOCK
+                print('    drawing connector from {} to {}'.format(from_element, to_element))
+                from_cord = self.locate_var(from_element)
+                print('from cord', from_cord)
+                to_cord = self.locate_var(to_element)
+                print('to cord', to_cord)
+                angle = self.sfd[from_element][to_element]['angle']
+                self.model_canvas.add_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)
 
 
 if __name__ == '__main__':
