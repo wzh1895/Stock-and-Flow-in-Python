@@ -38,7 +38,7 @@ class SessionHandler(object):
     #         self.read_xmile_model(self.filename)
     #         # draw sfd
     #         self.show_sfd_window()
-    #         self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
+    #         self.sfd_window1.sfd_canvas1.draw_existing_sfd(self.model_structure.sfd)
     #         # draw graph network
     #         self.draw_graph_network()
     #         self.variables_in_model = list(self.model_structure.sfd.nodes)
@@ -67,7 +67,7 @@ class SessionHandler(object):
     #         self.model_structure.first_order_positive()
     #     # draw sfd
     #     self.sfd_window1 = SFDWindow()
-    #     self.sfd_window1.sfd_canvas1.draw_sfd(self.model_structure.sfd)
+    #     self.sfd_window1.sfd_canvas1.draw_existing_sfd(self.model_structure.sfd)
     #     # draw graph network
     #     self.draw_graph_network()
     #     self.variables_in_model = list(self.model_structure.sfd.nodes)

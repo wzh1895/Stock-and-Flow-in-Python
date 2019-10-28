@@ -982,7 +982,7 @@ class IntegratedWindow(QMainWindow, Ui_MainWindow):
 
         # add interactive cld
         interactive_sfd = InteractiveSFD()
-        interactive_sfd.draw_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure.sfd)
+        interactive_sfd.draw_existing_sfd(sfd=self.expansion_tree.nodes[self.selected_candidate_structure_uid]['structure'].model_structure)
         interactive_sfd.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout_interactive_sfd.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.layout_interactive_sfd.addWidget(interactive_sfd)

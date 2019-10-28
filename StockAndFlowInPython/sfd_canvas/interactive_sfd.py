@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interactive_sfd
 from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR
+from StockAndFlowInPython.graph_sd.graph_based_engine import Structure
 
 
 class StockItem(QGraphicsRectItem):
@@ -309,7 +310,7 @@ class ConnectorArrowItem(QGraphicsObject):
 
     def paint(self, painter, option, widget=None):
         painter.setBrush(self.brush)
-        painter.setPen(QPen(Qt.red, 1))
+        painter.setPen(QPen(Qt.blue, 1))
         painter.drawPolygon(self.connector_end_arrow)
         painter.drawPoint(self.connector_end_arrow_point)
         painter.setPen(QPen(Qt.black, 1))
@@ -320,7 +321,7 @@ class ConnectorArrowItem(QGraphicsObject):
         # print(collided_items)
         for item in collided_items:
             if type(item) in [FlowCoreItem, AuxItem]:
-                self.brush = QBrush(Qt.red)
+                self.brush = QBrush(Qt.blue)
                 stock_collided = True
         if stock_collided:
             self.is_connected = True
@@ -347,10 +348,47 @@ class ConnectorLineItem(QGraphicsObject):
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
-        painter.setPen(QPen(Qt.red, 1))
+        painter.setPen(QPen(Qt.blue, 1))
         line = QLineF(self.p1, self.p2)
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
+
+
+class ConnectorArcItem(QGraphicsItem):
+    def __init__(self, rect, start_angle, span_angle):
+        super(ConnectorArcItem, self).__init__()
+        self.rect = rect
+        self.start_angle = start_angle
+        self.span_angle = span_angle
+
+    def boundingRect(self):
+        return self.rect
+
+    def paint(self, painter, option, widget=None):
+        painter.setPen(QPen(Qt.blue, 1))
+        painter.drawArc(self.rect, self.start_angle, self.span_angle)
+        painter.setPen(QPen(Qt.black, 1))
+
+
+class ConnectorControllerItem(QGraphicsObject):
+    connector_controller_move_signal = pyqtSignal()
+
+    def __init__(self):
+        super(ConnectorControllerItem, self).__init__()
+        self.central_point = QPointF(0, 0)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+
+    def boundingRect(self):
+        controller_bounding_rect = QRectF(-3, -3, 10, 10)
+        return controller_bounding_rect
+
+    def paint(self, painter, option, widget=None):
+        painter.drawEllipse(self.central_point, 3, 3)
+
+    def mouseMoveEvent(self, event):
+        super(ConnectorControllerItem, self).mouseMoveEvent(event)
+        self.connector_controller_move_signal.emit()
 
 
 class ConnectorItem(object):
@@ -366,25 +404,77 @@ class ConnectorItem(object):
 
         self.angle = angle
 
-        self.arrow = ConnectorArrowItem()
-        self.arrow.setPos(QPointF(from_x + delta_x, from_y + delta_y))
         self.line = ConnectorLineItem(delta_x=delta_x, delta_y=delta_y)
         self.line.setPos(self.starting_point)
-        self.update_angle()
+        self.line.setVisible(False)  # by default, the line is not visible; only when it's really a straight line
+        self.arc = ConnectorArcItem(QRectF(0, 0, 0, 0), 0, 0)
+        self.controller = ConnectorControllerItem()
+        self.controller.setPos(from_x, from_y)
+        self.arrow = ConnectorArrowItem()
+        self.arrow.setPos(QPointF(from_x + delta_x, from_y + delta_y))
+        self.update_arrow_angle_arc()
+
         self.canvas = canvas
-        self.canvas.addItem(self.arrow)
+        self.canvas.addItem(self.arc)
+        self.canvas.addItem(self.controller)
         self.canvas.addItem(self.line)
+        self.canvas.addItem(self.arrow)
 
         self.arrow.connector_arrow_move_signal.connect(self.on_connector_arrow_move)
+        self.controller.connector_controller_move_signal.connect(self.on_connector_controller_move)
+
+    def on_connector_controller_move(self):
+        # re-draw the connector line
+        center, r = self.calculate_circle(self.starting_point, self.controller.scenePos(), self.arrow.scenePos())
+        print(center, r)
+        if center is None and r is None:
+            self.arc.setVisible(False)
+            self.line.setVisible(True)
+        else:
+            self.line.setVisible(False)
+            self.arc.setVisible(True)
+            new_rect_for_arc = QRectF(center.x() - r, center.y() - r, r * 2, r * 2)
+            self.arc.rect = new_rect_for_arc
+            new_start_angle = QLineF(center, self.arrow.scenePos()).angle() * 16
+            new_span_angle = QLineF(center, self.starting_point).angle() * 16 - new_start_angle
+            self.arc.start_angle = new_start_angle
+            self.arc.span_angle = new_span_angle
+            self.arc.update()
+            self.update_arrow_angle_arc()
 
     def on_connector_arrow_move(self, is_connected):
         self.line.p2 = self.arrow.pos() - self.line.pos()
         self.line.update()
-        self.update_angle()
+        self.update_arrow_angle_line()
 
-    def update_angle(self):
-        self.angle = QLineF(self.line.p1, self.line.p2).angle()
+    def update_arrow_angle_line(self):
+        self.angle = QLineF(self.starting_point, self.arrow.scenePos()).angle()
+
+    def update_arrow_angle_arc(self):
+        if self.arc.start_angle == 0:  # just created
+            self.angle = 0
+        elif self.arc.span_angle < 0:
+            self.angle = self.arc.start_angle / 16 + 90
+        else:
+            self.angle = self.arc.start_angle / 16 - 90
         self.arrow.setRotation(-1*self.angle)
+
+    @staticmethod
+    def calculate_circle(pt1, pt2, pt3):
+        a = pt1.x() - pt2.x()
+        b = pt1.y() - pt2.y()
+        c = pt1.x() - pt3.x()
+        d = pt1.y() - pt3.y()
+        e = ((pt1.x() ** 2 - pt2.x() ** 2) + (pt1.y() ** 2 - pt2.y() ** 2)) / 2
+        f = ((pt1.x() ** 2 - pt3.x() ** 2) + (pt1.y() ** 2 - pt3.y() ** 2)) / 2
+        delta = b * c - a * d
+        print('\n', delta)
+        if abs(delta) < 200:  # the three points are on the same line
+            return None, None
+        x0 = - (d * e - b * f) / delta
+        y0 = - (a * f - c * e) / delta
+        r = ((pt1.x() - x0) ** 2 + (pt1.y() - y0) ** 2) ** 0.5
+        return QPointF(x0, y0), r
 
 
 class ModelCanvas(QGraphicsScene):
@@ -394,7 +484,10 @@ class ModelCanvas(QGraphicsScene):
         self.flows = dict()
         self.connectors = dict()
 
-        self.uid = 1
+        self.stock_uid = 1
+        self.flow_uid = 1
+        self.aux_uid = 1
+        self.connector_uid = 1
 
     def mousePressEvent(self, e):
         # print(self.working_mode)
@@ -419,26 +512,29 @@ class ModelCanvas(QGraphicsScene):
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
 
     def add_stock(self, x, y, w=40, h=30, label='Stock'):
-        stock_item = StockItem(w=w, h=h, label=label)
+        stock_item = StockItem(w=w, h=h, label=label + str(self.stock_uid))
         stock_item.setPos(x, y)
         self.addItem(stock_item)
+        self.stock_uid += 1
 
     def add_flow(self, x, y, r=10, label='Flow'):
-        self.flows[label] = FlowItem(self, x, y, r, label)
+        self.flows[label] = FlowItem(self, x, y, r, label + str(self.flow_uid))
+        self.flow_uid += 1
 
     def add_aux(self, x, y, r=10, label='Aux'):
-        aux_item = AuxItem(r=r, label=label)
+        aux_item = AuxItem(r=r, label=label + str(self.aux_uid))
         aux_item.setPos(x, y)
         self.addItem(aux_item)
+        self.aux_uid += 1
 
     def draw_connector(self, x, y, angle=0):
-        self.connectors[self.uid] = ConnectorItem(self, x, y, angle=angle)
-        self.uid += 1
+        self.connectors[self.connector_uid] = ConnectorItem(self, x, y, angle=angle)
+        self.connector_uid += 1
 
     def add_connector(self, from_x, from_y, to_x, to_y, angle):
         print(from_x, from_y, to_x, to_y, angle)
-        self.connectors[self.uid] = ConnectorItem(self, from_x, from_y, to_x, to_y, angle=angle)
-        self.uid += 1
+        self.connectors[self.connector_uid] = ConnectorItem(self, from_x, from_y, to_x, to_y, angle=angle)
+        self.connector_uid += 1
 
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
@@ -463,7 +559,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.graphicsView_interactive_sfd.setScene(self.model_canvas)
         self.graphicsView_interactive_sfd.show()
 
-        self.sfd = None
+        self.model_structure = Structure()
 
     # Exclusively check buttons
     def on_pushbutton_add_stock_pushed(self):
@@ -503,68 +599,68 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         return name.replace(' ', '_').replace('\n', '_')
 
     def locate_var(self, ele):
-        for element in self.sfd.nodes:
+        for element in self.model_structure.sfd.nodes:
             if element == ele:
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
+                x = self.model_structure.sfd.nodes[element]['pos'][0]
+                y = self.model_structure.sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
 
         # if nothing is found (return is not triggered), try replace ' ' with '_'
         name = self.name_handler(ele)
 
-        for element in self.sfd.nodes:
+        for element in self.model_structure.sfd.nodes:
             if element == ele:
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
+                x = self.model_structure.sfd.nodes[element]['pos'][0]
+                y = self.model_structure.sfd.nodes[element]['pos'][1]
                 return [float(x), float(y)]
 
-    def draw_sfd(self, sfd):
+    def draw_existing_sfd(self, sfd):
         print('drawing sfd')
-        self.sfd = sfd
+        self.model_structure = sfd
 
         radius1 = 8
 
         # draw flows
-        for element in self.sfd.nodes:
-            if self.sfd.nodes[element]['element_type'] == FLOW:
+        for element in self.model_structure.sfd.nodes:
+            if self.model_structure.sfd.nodes[element]['element_type'] == FLOW:
                 print("    drawing flow {}".format(element))
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
-                points = self.sfd.nodes[element]['points']
+                x = self.model_structure.sfd.nodes[element]['pos'][0]
+                y = self.model_structure.sfd.nodes[element]['pos'][1]
+                points = self.model_structure.sfd.nodes[element]['points']
                 self.model_canvas.add_flow(x, y, label=element)
 
         # draw stocks (comes the last, so they can cover the connectors)
-        for element in self.sfd.nodes:
-            if self.sfd.nodes[element]['element_type'] == STOCK:
+        for element in self.model_structure.sfd.nodes:
+            if self.model_structure.sfd.nodes[element]['element_type'] == STOCK:
                 print("    drawing stock {}".format(element))
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
+                x = self.model_structure.sfd.nodes[element]['pos'][0]
+                y = self.model_structure.sfd.nodes[element]['pos'][1]
                 # print(x,y)
                 self.model_canvas.add_stock(x, y, label=element)
 
         # draw auxiliaries
-        for element in self.sfd.nodes:
-            if self.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
-                print("    drawing {} {}".format(self.sfd.nodes[element]['element_type'], element))
-                x = self.sfd.nodes[element]['pos'][0]
-                y = self.sfd.nodes[element]['pos'][1]
+        for element in self.model_structure.sfd.nodes:
+            if self.model_structure.sfd.nodes[element]['element_type'] in [PARAMETER, VARIABLE]:
+                print("    drawing {} {}".format(self.model_structure.sfd.nodes[element]['element_type'], element))
+                x = self.model_structure.sfd.nodes[element]['pos'][0]
+                y = self.model_structure.sfd.nodes[element]['pos'][1]
                 self.model_canvas.add_aux(x, y, label=element)
 
         # draw connectors
-        print('SFD:', self.sfd.nodes(data=True))
-        for connector in self.sfd.edges():
+        print('SFD:', self.model_structure.sfd.nodes(data=True))
+        for connector in self.model_structure.sfd.edges():
             from_element = connector[0]
             print('from ele', from_element)
             to_element = connector[1]
             print('to ele', to_element)
-            if self.sfd[from_element][to_element]['display']:
+            if self.model_structure[from_element][to_element]['display']:
                 # Only draw when 'display' == True, avoid FLOW--->STOCK
                 print('    drawing connector from {} to {}'.format(from_element, to_element))
                 from_cord = self.locate_var(from_element)
                 print('from cord', from_cord)
                 to_cord = self.locate_var(to_element)
                 print('to cord', to_cord)
-                angle = self.sfd[from_element][to_element]['angle']
+                angle = self.model_structure[from_element][to_element]['angle']
                 self.model_canvas.add_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)
 
 
