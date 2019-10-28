@@ -4,7 +4,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from networkx.algorithms import chain_decomposition
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, \
+from StockAndFlowInPython.graph_sd.graph_engine import Structure, STOCK, FLOW, VARIABLE, PARAMETER, \
     ADDITION, SUBTRACTION, MULTIPLICATION, DIVISION, LINEAR
 from StockAndFlowInPython.session_handler import SessionHandler
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_behavior, similarity_calc_pattern

@@ -1,6 +1,6 @@
 from tkinter import *
 from depreciated.suggestion import SuggestionPanel
-from StockAndFlowInPython.graph_sd.graph_based_engine import MULTIPLICATION
+from StockAndFlowInPython.graph_sd.graph_engine import MULTIPLICATION
 
 
 class ExpansionPanel(SuggestionPanel):

@@ -3,8 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interactive_sfd
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure
+from StockAndFlowInPython.graph_sd.graph_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR, Structure
 
 
 class StockItem(QGraphicsRectItem):
@@ -63,6 +62,11 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
 
         return circle_bounding_rect.united(self.text_bounding_rect)
 
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addEllipse(self.central_point, self.r, self.r)
+        return path_0
+
     def paint(self, painter, option, widget=None):
         painter.drawEllipse(self.central_point, self.r, self.r)
         painter.drawText(self.text_bounding_rect, self.label)
@@ -70,6 +74,8 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
     def mouseMoveEvent(self, event):
         super(FlowCoreItem, self).mouseMoveEvent(event)
         self.core_move_signal.emit()  # send self's position to FlowItem. Come after super() for accuracy
+
+
 
 
 class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
@@ -274,6 +280,11 @@ class AuxItem(QGraphicsEllipseItem):
                 + original_bounding_rect.height() + 15)))
         return original_bounding_rect.united(self.text_bounding_rect)
 
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addEllipse(self.circle_bounding_rect)
+        return path_0
+
     def paint(self, painter, option, widget=None):
         super(AuxItem, self).paint(painter, option, widget)
         painter.drawText(self.text_bounding_rect, self.label)
@@ -307,6 +318,11 @@ class ConnectorArrowItem(QGraphicsObject):
     def boundingRect(self):
         return QRectF(QPointF(self.connector_end_arrow_point.x() - 10, self.connector_end_arrow_point.y() - 10),
                       QPointF(self.connector_end_arrow_point.x() + 10, self.connector_end_arrow_point.y() + 10))
+
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addPolygon(self.connector_end_arrow)
+        return path_0
 
     def paint(self, painter, option, widget=None):
         painter.setBrush(self.brush)
@@ -353,6 +369,11 @@ class ConnectorLineItem(QGraphicsObject):
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
 
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addEllipse(self.p1, 0, 0)  # add an ellipse that takes no place
+        return path_0
+
 
 class ConnectorArcItem(QGraphicsItem):
     def __init__(self, rect, start_angle, span_angle):
@@ -363,6 +384,11 @@ class ConnectorArcItem(QGraphicsItem):
 
     def boundingRect(self):
         return self.rect
+
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addEllipse(QPointF(0, 0), 0, 0)  # add an ellipse that takes no place
+        return path_0
 
     def paint(self, painter, option, widget=None):
         painter.setPen(QPen(Qt.blue, 1))
@@ -406,7 +432,7 @@ class ConnectorItem(object):
 
         self.line = ConnectorLineItem(delta_x=delta_x, delta_y=delta_y)
         self.line.setPos(self.starting_point)
-        self.line.setVisible(False)  # by default, the line is not visible; only when it's really a straight line
+        # self.line.setVisible(False)  # by default, the line is not visible; only when it's really a straight line
         self.arc = ConnectorArcItem(QRectF(0, 0, 0, 0), 0, 0)
         self.controller = ConnectorControllerItem()
         self.controller.setPos(from_x, from_y)
@@ -424,9 +450,22 @@ class ConnectorItem(object):
         self.controller.connector_controller_move_signal.connect(self.on_connector_controller_move)
 
     def on_connector_controller_move(self):
+        self.update_line()
+        self.update_arc()
+
+    def on_connector_arrow_move(self, is_connected):
+        self.update_line()
+        self.update_arc()
+
+    def update_line(self):
+        self.line.p2 = self.arrow.pos() - self.line.pos()
+        self.line.update()
+        self.update_arrow_angle_line()
+
+    def update_arc(self):
         # re-draw the connector line
         center, r = self.calculate_circle(self.starting_point, self.controller.scenePos(), self.arrow.scenePos())
-        print(center, r)
+        # print(center, r)
         if center is None and r is None:
             self.arc.setVisible(False)
             self.line.setVisible(True)
@@ -437,18 +476,17 @@ class ConnectorItem(object):
             self.arc.rect = new_rect_for_arc
             new_start_angle = QLineF(center, self.arrow.scenePos()).angle() * 16
             new_span_angle = QLineF(center, self.starting_point).angle() * 16 - new_start_angle
+            if new_span_angle > 180 * 16:
+                new_span_angle = new_span_angle - 360 * 16  # This is to control that we always have an arc < 180
             self.arc.start_angle = new_start_angle
             self.arc.span_angle = new_span_angle
+            # print('Start angle {}, span angle {}'.format(new_start_angle/16, new_span_angle/16))
             self.arc.update()
             self.update_arrow_angle_arc()
 
-    def on_connector_arrow_move(self, is_connected):
-        self.line.p2 = self.arrow.pos() - self.line.pos()
-        self.line.update()
-        self.update_arrow_angle_line()
-
     def update_arrow_angle_line(self):
         self.angle = QLineF(self.starting_point, self.arrow.scenePos()).angle()
+        self.arrow.setRotation(-1 * self.angle)
 
     def update_arrow_angle_arc(self):
         if self.arc.start_angle == 0:  # just created
@@ -468,7 +506,7 @@ class ConnectorItem(object):
         e = ((pt1.x() ** 2 - pt2.x() ** 2) + (pt1.y() ** 2 - pt2.y() ** 2)) / 2
         f = ((pt1.x() ** 2 - pt3.x() ** 2) + (pt1.y() ** 2 - pt3.y() ** 2)) / 2
         delta = b * c - a * d
-        print('\n', delta)
+        # print('\n', delta)
         if abs(delta) < 200:  # the three points are on the same line
             return None, None
         x0 = - (d * e - b * f) / delta
@@ -478,8 +516,9 @@ class ConnectorItem(object):
 
 
 class ModelCanvas(QGraphicsScene):
-    def __init__(self):
+    def __init__(self, parent):
         super(ModelCanvas, self).__init__()
+        self.setParent(parent)
         self.working_mode = None
         self.flows = dict()
         self.connectors = dict()
@@ -495,34 +534,54 @@ class ModelCanvas(QGraphicsScene):
         y = e.scenePos().y()
         if self.working_mode == 'stock':
             self.add_stock(x, y)
+            self.working_mode = None
         elif self.working_mode == 'flow':
             self.add_flow(x, y)
+            self.working_mode = None
         elif self.working_mode == 'aux':
             self.add_aux(x, y)
+            self.working_mode = None
         elif self.working_mode == 'connector':
             # check if there is a stock/flow/aux at this point; if not, do nothing.
             items_at_click_point = self.itemAt(x, y, QTransform())
-            print(items_at_click_point)
+            print('Items at clicking point', items_at_click_point)
             if type(items_at_click_point) in [StockItem,
                                               FlowCoreItem,
                                               FlowLineItem,  # TODO: solve the overlap of FlowLine and FlowCore
                                               AuxItem]:
                 self.draw_connector(x, y)
+                self.working_mode = None
 
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
+        self.parent().reset_all_buttons()
 
-    def add_stock(self, x, y, w=40, h=30, label='Stock'):
-        stock_item = StockItem(w=w, h=h, label=label + str(self.stock_uid))
+    def add_stock(self, x, y, w=40, h=30, label=None):
+        if label is None:
+            label = self.ask_for_name()
+            if label is None:
+                label = 'Stock' + str(self.stock_uid)
+
+        stock_item = StockItem(w=w, h=h, label=label)
         stock_item.setPos(x, y)
         self.addItem(stock_item)
         self.stock_uid += 1
 
-    def add_flow(self, x, y, r=10, label='Flow'):
-        self.flows[label] = FlowItem(self, x, y, r, label + str(self.flow_uid))
+    def add_flow(self, x, y, r=10, label=None):
+        if label is None:
+            label = self.ask_for_name()
+            if label is None:
+                label = 'Flow' + str(self.flow_uid)
+
+        self.flows[label] = FlowItem(self, x, y, r, label)
         self.flow_uid += 1
 
-    def add_aux(self, x, y, r=10, label='Aux'):
-        aux_item = AuxItem(r=r, label=label + str(self.aux_uid))
+    def add_aux(self, x, y, r=10, label=None):
+        if label is None:
+            label = self.ask_for_name()
+            if label is None:
+                label = 'Aux' + str(self.aux_uid)
+
+        aux_item = AuxItem(r=r, label=label)
         aux_item.setPos(x, y)
         self.addItem(aux_item)
         self.aux_uid += 1
@@ -536,6 +595,13 @@ class ModelCanvas(QGraphicsScene):
         self.connectors[self.connector_uid] = ConnectorItem(self, from_x, from_y, to_x, to_y, angle=angle)
         self.connector_uid += 1
 
+    def ask_for_name(self):
+        name, ok = QInputDialog.getText(self.parent(), 'Input', 'Input variable name:')
+        if ok:
+            return name
+        else:
+            return None
+
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
     def __init__(self):
@@ -547,12 +613,12 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_aux.setCheckable(True)
         self.pushButton_add_connector.setCheckable(True)
 
-        self.pushButton_add_stock.clicked.connect(self.on_pushbutton_add_stock_pushed)
-        self.pushButton_add_flow.clicked.connect(self.on_pushbutton_add_flow_pushed)
-        self.pushButton_add_aux.clicked.connect(self.on_pushbutton_add_aux_pushed)
-        self.pushButton_add_connector.clicked.connect(self.on_pushbutton_add_connector_pushed)
+        self.pushButton_add_stock.clicked.connect(self.on_pushbutton_add_stock_clicked)
+        self.pushButton_add_flow.clicked.connect(self.on_pushbutton_add_flow_clicked)
+        self.pushButton_add_aux.clicked.connect(self.on_pushbutton_add_aux_clicked)
+        self.pushButton_add_connector.clicked.connect(self.on_pushbutton_add_connector_clicked)
 
-        self.model_canvas = ModelCanvas()
+        self.model_canvas = ModelCanvas(self)
         self.graphicsView_interactive_sfd.setAcceptDrops(True)
 
         self.graphicsView_interactive_sfd.setSceneRect(0, 0, self.width(), self.height())
@@ -562,7 +628,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.model_structure = Structure()
 
     # Exclusively check buttons
-    def on_pushbutton_add_stock_pushed(self):
+    def on_pushbutton_add_stock_clicked(self):
         self.model_canvas.working_mode = 'stock'
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
@@ -570,7 +636,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         if not self.pushButton_add_stock.isChecked():
             self.model_canvas.working_mode = None
 
-    def on_pushbutton_add_flow_pushed(self):
+    def on_pushbutton_add_flow_clicked(self):
         self.model_canvas.working_mode = 'flow'
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
@@ -578,7 +644,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         if not self.pushButton_add_flow.isChecked():
             self.model_canvas.working_mode = None
 
-    def on_pushbutton_add_aux_pushed(self):
+    def on_pushbutton_add_aux_clicked(self):
         self.model_canvas.working_mode = 'aux'
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_flow.setChecked(False)
@@ -586,13 +652,19 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         if not self.pushButton_add_aux.isChecked():
             self.model_canvas.working_mode = None
 
-    def on_pushbutton_add_connector_pushed(self):
+    def on_pushbutton_add_connector_clicked(self):
         self.model_canvas.working_mode = 'connector'
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
         if not self.pushButton_add_connector.isChecked():
             self.model_canvas.working_mode = None
+
+    def reset_all_buttons(self):
+        self.pushButton_add_stock.setChecked(False)
+        self.pushButton_add_flow.setChecked(False)
+        self.pushButton_add_aux.setChecked(False)
+        self.pushButton_add_connector.setChecked(False)
 
     @staticmethod
     def name_handler(name):
@@ -647,19 +719,19 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
                 self.model_canvas.add_aux(x, y, label=element)
 
         # draw connectors
-        print('SFD:', self.model_structure.sfd.nodes(data=True))
+        # print('SFD:', self.model_structure.sfd.nodes(data=True))
         for connector in self.model_structure.sfd.edges():
             from_element = connector[0]
-            print('from ele', from_element)
+            # print('from ele', from_element)
             to_element = connector[1]
-            print('to ele', to_element)
+            # print('to ele', to_element)
             if self.model_structure[from_element][to_element]['display']:
                 # Only draw when 'display' == True, avoid FLOW--->STOCK
                 print('    drawing connector from {} to {}'.format(from_element, to_element))
                 from_cord = self.locate_var(from_element)
-                print('from cord', from_cord)
+                # print('from cord', from_cord)
                 to_cord = self.locate_var(to_element)
-                print('to cord', to_cord)
+                # print('to cord', to_cord)
                 angle = self.model_structure[from_element][to_element]['angle']
                 self.model_canvas.add_connector(from_cord[0], from_cord[1], to_cord[0], to_cord[1], angle)
 

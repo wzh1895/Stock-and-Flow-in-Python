@@ -8,7 +8,7 @@ import random
 # from tkinter import filedialog
 # from tkinter import *
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from StockAndFlowInPython.graph_sd.graph_based_engine import Structure, function_names
+from StockAndFlowInPython.graph_sd.graph_engine import Structure, function_names
 from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation
 # from StockAndFlowInPython.sfd_canvas.sfd_canvas_tkinter import SFDCanvas
 

@@ -15,7 +15,7 @@ from StockAndFlowInPython.session_handler import SessionHandler
 from StockAndFlowInPython.structure_utilities.structure_utilities import new_expand_structure, create_causal_link, \
     apply_a_concept_cld, optimize_parameters, import_flow
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import similarity_calc_pattern, categorize_behavior
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
+from StockAndFlowInPython.graph_sd.graph_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR, SUBTRACTION, DIVISION, ADDITION
 from StockAndFlowInPython.sfd_canvas.sfd_canvas_qt import SFDCanvas
 from StockAndFlowInPython.sfd_canvas.interactive_sfd import InteractiveSFD

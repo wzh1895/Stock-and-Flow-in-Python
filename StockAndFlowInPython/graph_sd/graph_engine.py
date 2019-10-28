@@ -675,7 +675,7 @@ def main():
     structure0 = Structure()
     structure0.first_order_positive()
     structure0.simulate(simulation_time=10)
-    structure0.draw_graphs_with_curve()
+    # structure0.draw_graphs_with_curve()
     # structure0.draw_graphs()
     structure0.draw_results()
 

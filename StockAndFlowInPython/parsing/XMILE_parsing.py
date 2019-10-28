@@ -1,5 +1,5 @@
 """Parsing Utility for XMILE file"""
-from StockAndFlowInPython.graph_sd.graph_based_engine import LINEAR, SUBTRACTION, DIVISION, ADDITION, MULTIPLICATION
+from StockAndFlowInPython.graph_sd.graph_engine import LINEAR, SUBTRACTION, DIVISION, ADDITION, MULTIPLICATION
 
 
 name_operator_mapping = {ADDITION: '+', SUBTRACTION: '-', MULTIPLICATION: '*', DIVISION: '/'}

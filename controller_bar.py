@@ -4,7 +4,7 @@ from StockAndFlowInPython.session_handler import SessionHandler
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from StockAndFlowInPython.behaviour_utilities.behaviour_utilities import SimilarityCalculator
-from StockAndFlowInPython.graph_sd.graph_based_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
+from StockAndFlowInPython.graph_sd.graph_engine import STOCK, FLOW, VARIABLE, PARAMETER, CONNECTOR, ALIAS, \
     MULTIPLICATION, LINEAR
 import pandas as pd
 import numpy as np
