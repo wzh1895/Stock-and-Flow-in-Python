@@ -68,14 +68,22 @@ class FlowCoreItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its 
         return path_0
 
     def paint(self, painter, option, widget=None):
+        if self.isSelected():  # the dotted border
+            pen = QPen()
+            pen.setStyle(Qt.DotLine)
+            pen.setColor(Qt.gray)
+            painter.setPen(pen)
+            painter.drawRect(self.boundingRect())
+            pen.setStyle(Qt.SolidLine)
+            pen.setColor(Qt.black)
+            painter.setPen(pen)
+
         painter.drawEllipse(self.central_point, self.r, self.r)
         painter.drawText(self.text_bounding_rect, self.label)
 
     def mouseMoveEvent(self, event):
         super(FlowCoreItem, self).mouseMoveEvent(event)
         self.core_move_signal.emit()  # send self's position to FlowItem. Come after super() for accuracy
-
-
 
 
 class FlowRectItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its signal-slot mechanism
@@ -189,6 +197,11 @@ class FlowLineItem(QGraphicsObject):
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
 
+    def shape(self):
+        path_0 = QPainterPath()
+        path_0.addEllipse(self.p1, 0, 0)  # add an ellipse that takes no place
+        return path_0
+
 
 class FlowItem(object):
     def __init__(self, canvas, x, y, r, label):  # this 'canvas' is the model_canvas itself, used for drawing
@@ -292,6 +305,7 @@ class AuxItem(QGraphicsEllipseItem):
 
 class ConnectorArrowItem(QGraphicsObject):
     connector_arrow_move_signal = pyqtSignal(bool)
+    connector_arrow_selected_signal = pyqtSignal(bool)
 
     def __init__(self):
         super(ConnectorArrowItem, self).__init__()
@@ -313,7 +327,9 @@ class ConnectorArrowItem(QGraphicsObject):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 
-        self.brush = QBrush(Qt.white)
+        self.color = Qt.blue
+        self.brush_color = Qt.white
+        self.brush = QBrush(self.brush_color)
 
     def boundingRect(self):
         return QRectF(QPointF(self.connector_end_arrow_point.x() - 10, self.connector_end_arrow_point.y() - 10),
@@ -325,28 +341,39 @@ class ConnectorArrowItem(QGraphicsObject):
         return path_0
 
     def paint(self, painter, option, widget=None):
-        painter.setBrush(self.brush)
-        painter.setPen(QPen(Qt.blue, 1))
+        if self.if_colliding_with_flow_aux():
+            self.brush_color = self.color
+        else:
+            self.brush_color = Qt.white
+        painter.setBrush(QBrush(self.brush_color))
+        painter.setPen(QPen(self.color, 1))
         painter.drawPolygon(self.connector_end_arrow)
         painter.drawPoint(self.connector_end_arrow_point)
         painter.setPen(QPen(Qt.black, 1))
 
     def mouseMoveEvent(self, event):
+        if self.if_colliding_with_flow_aux():
+            self.is_connected = True
+        else:
+            self.is_connected = False
+
+        super(ConnectorArrowItem, self).mouseMoveEvent(event)
+        self.connector_arrow_move_signal.emit(self.is_connected)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemSelectedChange:
+            self.connector_arrow_selected_signal.emit(value)
+        super(ConnectorArrowItem, self).itemChange(change, value)
+        return value
+
+    def if_colliding_with_flow_aux(self):
         collided_items = self.scene().collidingItems(self)
         stock_collided = False
         # print(collided_items)
         for item in collided_items:
             if type(item) in [FlowCoreItem, AuxItem]:
-                self.brush = QBrush(Qt.blue)
                 stock_collided = True
-        if stock_collided:
-            self.is_connected = True
-        else:
-            self.is_connected = False
-            self.brush = QBrush(Qt.white)
-
-        super(ConnectorArrowItem, self).mouseMoveEvent(event)
-        self.connector_arrow_move_signal.emit(self.is_connected)
+        return stock_collided
 
 
 class ConnectorLineItem(QGraphicsObject):
@@ -354,6 +381,8 @@ class ConnectorLineItem(QGraphicsObject):
         super(ConnectorLineItem, self).__init__()
         self.p1 = QPointF(0, 0)  # root
         self.p2 = QPointF(delta_x, delta_y)  # end
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.color = Qt.blue
 
     def boundingRect(self):
         min_x = min(self.p1.x(), self.p2.x())
@@ -364,7 +393,7 @@ class ConnectorLineItem(QGraphicsObject):
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
-        painter.setPen(QPen(Qt.blue, 1))
+        painter.setPen(QPen(self.color, 1))
         line = QLineF(self.p1, self.p2)
         painter.drawLine(line)
         painter.setPen(QPen(Qt.black, 1))
@@ -381,6 +410,8 @@ class ConnectorArcItem(QGraphicsItem):
         self.rect = rect
         self.start_angle = start_angle
         self.span_angle = span_angle
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.color = Qt.blue
 
     def boundingRect(self):
         return self.rect
@@ -391,13 +422,14 @@ class ConnectorArcItem(QGraphicsItem):
         return path_0
 
     def paint(self, painter, option, widget=None):
-        painter.setPen(QPen(Qt.blue, 1))
+        painter.setPen(QPen(self.color, 1))
         painter.drawArc(self.rect, self.start_angle, self.span_angle)
         painter.setPen(QPen(Qt.black, 1))
 
 
 class ConnectorControllerItem(QGraphicsObject):
     connector_controller_move_signal = pyqtSignal()
+    connector_controller_selected_signal = pyqtSignal(bool)
 
     def __init__(self):
         super(ConnectorControllerItem, self).__init__()
@@ -416,6 +448,12 @@ class ConnectorControllerItem(QGraphicsObject):
         super(ConnectorControllerItem, self).mouseMoveEvent(event)
         self.connector_controller_move_signal.emit()
 
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemSelectedChange:
+            self.connector_controller_selected_signal.emit(value)
+        super(ConnectorControllerItem, self).itemChange(change, value)
+        return value
+
 
 class ConnectorItem(object):
     def __init__(self, canvas, from_x, from_y, to_x=None, to_y=None, angle=0):
@@ -432,7 +470,6 @@ class ConnectorItem(object):
 
         self.line = ConnectorLineItem(delta_x=delta_x, delta_y=delta_y)
         self.line.setPos(self.starting_point)
-        # self.line.setVisible(False)  # by default, the line is not visible; only when it's really a straight line
         self.arc = ConnectorArcItem(QRectF(0, 0, 0, 0), 0, 0)
         self.controller = ConnectorControllerItem()
         self.controller.setPos(from_x, from_y)
@@ -448,6 +485,8 @@ class ConnectorItem(object):
 
         self.arrow.connector_arrow_move_signal.connect(self.on_connector_arrow_move)
         self.controller.connector_controller_move_signal.connect(self.on_connector_controller_move)
+        self.arrow.connector_arrow_selected_signal.connect(self.on_connector_arrow_controller_selected_change)
+        self.controller.connector_controller_selected_signal.connect(self.on_connector_arrow_controller_selected_change)
 
     def on_connector_controller_move(self):
         self.update_line()
@@ -456,6 +495,19 @@ class ConnectorItem(object):
     def on_connector_arrow_move(self, is_connected):
         self.update_line()
         self.update_arc()
+
+    def on_connector_arrow_controller_selected_change(self, value):
+        if value is True:
+            self.line.color = Qt.red
+            self.arc.color = Qt.red
+            self.arrow.color = Qt.red
+        else:
+            self.line.color = Qt.blue
+            self.arc.color = Qt.blue
+            self.arrow.color = Qt.blue
+        self.line.update()
+        self.arc.update()
+        self.arrow.update()
 
     def update_line(self):
         self.line.p2 = self.arrow.pos() - self.line.pos()
@@ -617,6 +669,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_flow.clicked.connect(self.on_pushbutton_add_flow_clicked)
         self.pushButton_add_aux.clicked.connect(self.on_pushbutton_add_aux_clicked)
         self.pushButton_add_connector.clicked.connect(self.on_pushbutton_add_connector_clicked)
+        self.pushButton_del_element.clicked.connect(self.on_pushbutton_delete_clicked)
 
         self.model_canvas = ModelCanvas(self)
         self.graphicsView_interactive_sfd.setAcceptDrops(True)
@@ -665,6 +718,39 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
         self.pushButton_add_connector.setChecked(False)
+
+    # Delete button
+    def on_pushbutton_delete_clicked(self):
+        # model part
+
+        # view part
+        for item in self.model_canvas.selectedItems():
+            if isinstance(item, StockItem):
+                self.model_canvas.removeItem(item)
+            elif isinstance(item, AuxItem):
+                self.model_canvas.removeItem(item)
+            elif isinstance(item, FlowCoreItem):
+                for uid, flow in self.model_canvas.flows.items():
+                    if flow.core == item:
+                        self.model_canvas.removeItem(flow.core)
+                        self.model_canvas.removeItem(flow.line)
+                        self.model_canvas.removeItem(flow.arrow)
+                        self.model_canvas.removeItem(flow.rect)
+            elif isinstance(item, ConnectorControllerItem):
+                for uid, connector in self.model_canvas.connectors.items():
+                    if connector.controller == item:
+                        self.model_canvas.removeItem(connector.controller)
+                        self.model_canvas.removeItem(connector.arrow)
+                        self.model_canvas.removeItem(connector.line)
+                        self.model_canvas.removeItem(connector.arc)
+
+            elif isinstance(item, ConnectorArrowItem):
+                for uid, connector in self.model_canvas.connectors.items():
+                    if connector.arrow == item:
+                        self.model_canvas.removeItem(connector.controller)
+                        self.model_canvas.removeItem(connector.arrow)
+                        self.model_canvas.removeItem(connector.line)
+                        self.model_canvas.removeItem(connector.arc)
 
     @staticmethod
     def name_handler(name):
