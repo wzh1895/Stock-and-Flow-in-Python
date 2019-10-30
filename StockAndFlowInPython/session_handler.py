@@ -291,7 +291,7 @@ class SessionHandler(object):
     #     # except:
     #     #     pass
     #     self.simulation_result1 = SimulationResult()
-    #     self.result_figure = self.model_structure.draw_results(names=[self.selected_variable], rtn=True)
+    #     self.result_figure = self.model_structure.display_results(names=[self.selected_variable], rtn=True)
     #     self.simulation_result1.canvas1 = FigureCanvasTkAgg(self.result_figure, master=self.simulation_result1.top)
     #     self.simulation_result1.canvas1.get_tk_widget().pack(side=TOP)
 

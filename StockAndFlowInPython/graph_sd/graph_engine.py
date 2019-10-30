@@ -107,9 +107,8 @@ class Structure(object):
             self.name_manager = name_manager
             self.uid_element_name = uid_element_name
 
-        self.simulation_time = None
-        self.maximum_steps = 1000
-        self.dt = 0.25
+        self.default_simulation_time = 25
+        self.default_dt = 0.25
 
         self.set_predefined_structure = {'basic_stock_inflow': self.basic_stock_inflow,
                                          'basic_stock_outflow': self.basic_stock_outflow,
@@ -227,7 +226,7 @@ class Structure(object):
         """
         Core function for simulation. Calculating all flows and adjust stocks accordingly based on recursion.
         """
-        # have a dictionary for flows and their values in this dt, to be added to /subtracted from stocks afterward.
+        # have a dictionary for flows and their values in this default_dt, to be added to /subtracted from stocks afterward.
         flows_dt = dict()
 
         # find all flows in the model
@@ -240,7 +239,7 @@ class Structure(object):
         # calculate flows
         for flow in flows_dt.keys():
             flows_dt[flow] = dt * self.calculate(flow)
-        # print('All flows dt:', flows_dt)
+        # print('All flows default_dt:', flows_dt)
 
         # calculate all not visited variables and parameters in this model, in order to update their value list
         # because all flows and stocks must be visited, only V and P are considered.
@@ -310,16 +309,23 @@ class Structure(object):
 
     # Add elements on a stock-and-flow level (work with model file handlers)
     def add_stock(self, name=None, equation=None, x=0, y=0):
-        uid = self.add_element(name, element_type=STOCK, x=x, y=y, value=equation)
+        """
+        :param name: name of the stock
+        :param equation: initial value
+        :param x: x
+        :param y: y
+        :return: uid of the stock
+        """
+        uid = self.add_element(name, element_type=STOCK, x=x, y=y, value=[equation])
         # print('Graph: added stock:', name, 'to graph.')
         return uid
 
     def add_flow(self, name=None, equation=None, x=0, y=0, points=None, flow_from=None, flow_to=None):
         # Decide if the 'equation' is a function or a constant number
-        if type(equation[0]) is int or type(equation[0]) is float:
+        if type(equation) in [int, float] or type(equation[0]) in [int, float]:  # TODO: need to refine: need []?
             # if equation starts with a number
             function = None
-            value = equation  # it's a constant
+            value = [equation]  # it's a constant
         else:
             function = equation  # it's a function
             value = list()
@@ -349,11 +355,11 @@ class Structure(object):
 
     def add_aux(self, name=None, equation=None, x=0, y=0):
         # Decide if this aux is a parameter or variable
-        if type(equation[0]) is int or type(equation[0]) is float:
+        if type(equation) in [int, float] or type(equation[0]) in [int, float]:  # TODO: need to refine: need []?
             # if equation starts with a number, it's a parameter
             if name is None:
                 name = self.name_manager.get_new_name(element_type=PARAMETER)
-            uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=equation)
+            uid = self.add_element(name, element_type=PARAMETER, x=x, y=y, function=None, value=[equation])
         else:
             # It's a variable, has its own function
             if name is None:
@@ -524,13 +530,11 @@ class Structure(object):
         self.sfd.clear()
 
     # Simulate a structure based on a certain set of parameters
-    def simulate(self, simulation_time, dt=0.25):
+    def simulate(self, simulation_time=0, dt=0.25):
         # print('Graph: Simulating...')
-        self.simulation_time = simulation_time
-        self.dt = dt
         if simulation_time == 0:
             # determine how many steps to run; if not specified, use maximum steps
-            total_steps = self.maximum_steps
+            total_steps = int(self.default_simulation_time / self.default_dt)
         else:
             total_steps = int(simulation_time/dt)
 
@@ -546,45 +550,48 @@ class Structure(object):
         return self.sfd.nodes[name]['value']
 
     # Draw results
-    def draw_results(self, names=None, rtn=False):
+    def display_results(self, names=None, rtn=False):
         if names is None:
             names = list(self.sfd.nodes)
 
-        self.figure1 = plt.figure(figsize=(5, 5))
+        self.figure_0 = plt.figure(figsize=(6.4, 4.8),
+                                   facecolor='whitesmoke',
+                                   edgecolor='grey',
+                                   dpi=80)
 
-        # plt.subplot(212)  # operate subplot 2
-        plt.xlabel('Steps (Time: {} / Dt: {})'.format(self.simulation_time, self.dt))
+        plt.xlabel('Steps (Time: {} / Dt: {})'.format(self.default_simulation_time, self.default_dt))
         plt.ylabel('Behavior')
         y_axis_minimum = 0
         y_axis_maximum = 0
         for name in names:
-            # print("Graph: getting min/max for", name)
-            # set the range of axis based on this element's behavior
-            # 0 -> end of period (time), 0 -> 100 (y range)
+            if self.sfd.nodes[name]['value'] is not None:  # otherwise, dont's plot
+                # print("Graph: getting min/max for", name)
+                # set the range of axis based on this element's behavior
+                # 0 -> end of period (time), 0 -> 100 (y range)
 
-            name_minimum = min(self.sfd.nodes[name]['value'])
-            name_maximum = max(self.sfd.nodes[name]['value'])
-            if name_minimum == name_maximum:
-                name_minimum *= 2
-                name_maximum *= 2
-                # print('Graph: Centered this straight line')
+                name_minimum = min(self.sfd.nodes[name]['value'])
+                name_maximum = max(self.sfd.nodes[name]['value'])
+                if name_minimum == name_maximum:
+                    name_minimum *= 2
+                    name_maximum *= 2
+                    # print('Graph: Centered this straight line')
 
-            if name_minimum < y_axis_minimum:
-                y_axis_minimum = name_minimum
+                if name_minimum < y_axis_minimum:
+                    y_axis_minimum = name_minimum
 
-            if name_maximum > y_axis_maximum:
-                y_axis_maximum = name_maximum
+                if name_maximum > y_axis_maximum:
+                    y_axis_maximum = name_maximum
 
-            # print("Graph: Y range: ", y_axis_minimum, '-', y_axis_maximum)
-            plt.axis([0, self.simulation_time/self.dt, y_axis_minimum, y_axis_maximum])
-            t_series = self.sfd.nodes[name]['value']
-            # print("Graph: Time series of {}:".format(name))
-            # for i in range(len(t_series)):
-            #     print("Graph: {0} at DT {1} : {2:8.4f}".format(name, i+1, t_series[i]))
-            plt.plot(t_series, label=name)
+                # print("Graph: Y range: ", y_axis_minimum, '-', y_axis_maximum)
+                plt.axis([0, self.default_simulation_time / self.default_dt, y_axis_minimum, y_axis_maximum])
+                t_series = self.sfd.nodes[name]['value']
+                # print("Graph: Time series of {}:".format(name))
+                # for i in range(len(t_series)):
+                #     print("Graph: {0} at DT {1} : {2:8.4f}".format(name, i+1, t_series[i]))
+                plt.plot(t_series, label=name)
         plt.legend()
         if rtn:  # if called from external, return the figure without show it.
-            return self.figure1
+            return self.figure_0
         else:  # otherwise, show the figure.
             plt.show()
 
@@ -677,7 +684,7 @@ def main():
     structure0.simulate(simulation_time=10)
     # structure0.draw_graphs_with_curve()
     # structure0.draw_graphs()
-    structure0.draw_results()
+    structure0.display_results()
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interactive_sfd
 from StockAndFlowInPython.graph_sd.graph_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR, Structure
 
@@ -151,8 +152,8 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
         self.brush = QBrush(Qt.white)
 
     def boundingRect(self):
-        return QRectF(QPointF(self.end_arrow_point.x()-10, self.end_arrow_point.y()-10),
-                      QPointF(self.end_arrow_point.x()+10, self.end_arrow_point.y()+10))
+        return QRectF(QPointF(self.end_arrow_point.x() - 10, self.end_arrow_point.y() - 10),
+                      QPointF(self.end_arrow_point.x() + 10, self.end_arrow_point.y() + 10))
 
     def paint(self, painter, option, widget=None):
         painter.setBrush(self.brush)
@@ -188,7 +189,7 @@ class FlowLineItem(QGraphicsObject):
         max_x = max(self.p1.x(), self.p2.x())
         min_y = min(self.p1.y(), self.p2.y())
         max_y = max(self.p1.y(), self.p2.y())
-        line_bounding_rect = QRectF(QPointF(min_x-20, min_y-20), QPointF(max_x+20, max_y+20))
+        line_bounding_rect = QRectF(QPointF(min_x - 20, min_y - 20), QPointF(max_x + 20, max_y + 20))
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
@@ -209,9 +210,9 @@ class FlowItem(object):
         self.core = FlowCoreItem(r=r, label=label)
         self.core.setPos(x, y)
         self.rect = FlowRectItem()
-        self.rect.setPos(x-30, y)
+        self.rect.setPos(x - 30, y)
         self.arrow = FlowArrowItem()
-        self.arrow.setPos(x+30, y)
+        self.arrow.setPos(x + 30, y)
         self.line = FlowLineItem()
         self.line.setPos(x, y)
 
@@ -257,7 +258,8 @@ class FlowItem(object):
         self.update_angle()
 
     def repose_flow_core(self):
-        self.core.setPos((self.arrow.pos().x()+self.rect.pos().x())/2, (self.arrow.pos().y()+self.rect.pos().y())/2)
+        self.core.setPos((self.arrow.pos().x() + self.rect.pos().x()) / 2,
+                         (self.arrow.pos().y() + self.rect.pos().y()) / 2)
         self.update_relative_distance()
 
     def update_relative_distance(self):
@@ -267,12 +269,12 @@ class FlowItem(object):
 
     def update_angle(self):
         self.angle = QLineF(self.line.p2, self.line.p1).angle()
-        self.arrow.setRotation(-1*self.angle)
+        self.arrow.setRotation(-1 * self.angle)
 
 
 class AuxItem(QGraphicsEllipseItem):
     def __init__(self, r, label):
-        self.circle_bounding_rect = QRectF(- r, - r, r*2, r*2)
+        self.circle_bounding_rect = QRectF(- r, - r, r * 2, r * 2)
         super(AuxItem, self).__init__(self.circle_bounding_rect)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -389,7 +391,7 @@ class ConnectorLineItem(QGraphicsObject):
         max_x = max(self.p1.x(), self.p2.x())
         min_y = min(self.p1.y(), self.p2.y())
         max_y = max(self.p1.y(), self.p2.y())
-        line_bounding_rect = QRectF(QPointF(min_x-20, min_y-20), QPointF(max_x+20, max_y+20))
+        line_bounding_rect = QRectF(QPointF(min_x - 20, min_y - 20), QPointF(max_x + 20, max_y + 20))
         return line_bounding_rect
 
     def paint(self, painter, option, widget=None):
@@ -547,7 +549,7 @@ class ConnectorItem(object):
             self.angle = self.arc.start_angle / 16 + 90
         else:
             self.angle = self.arc.start_angle / 16 - 90
-        self.arrow.setRotation(-1*self.angle)
+        self.arrow.setRotation(-1 * self.angle)
 
     @staticmethod
     def calculate_circle(pt1, pt2, pt3):
@@ -574,11 +576,13 @@ class ModelCanvas(QGraphicsScene):
         self.working_mode = None
         self.flows = dict()
         self.connectors = dict()
+        self.graphs = dict()  # uid:[name, widget]
 
         self.stock_uid = 1
         self.flow_uid = 1
         self.aux_uid = 1
         self.connector_uid = 1
+        self.graph_uid = 1
 
     def mousePressEvent(self, e):
         # print(self.working_mode)
@@ -603,6 +607,13 @@ class ModelCanvas(QGraphicsScene):
                                               AuxItem]:
                 self.draw_connector(x, y)
                 self.working_mode = None
+        elif self.working_mode == 'graph':
+            # check if there is already something at this point; if so, do nothing.
+            items_at_click_point = self.itemAt(x, y, QTransform())
+            print('Items at clicking point', items_at_click_point)
+            if items_at_click_point is None:
+                self.add_graph(x, y)
+            self.working_mode = None
 
         super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
         self.parent().reset_all_buttons()
@@ -612,11 +623,17 @@ class ModelCanvas(QGraphicsScene):
             label = self.ask_for_name()
             if label is None:
                 label = 'Stock' + str(self.stock_uid)
-
+        # view
         stock_item = StockItem(w=w, h=h, label=label)
         stock_item.setPos(x, y)
         self.addItem(stock_item)
         self.stock_uid += 1
+        # model
+        self.parent().model_structure.add_stock(name=label,
+                                                equation=20,
+                                                x=x,
+                                                y=y)
+        # self.parent().model_structure.print_elements()
 
     def add_flow(self, x, y, r=10, label=None):
         if label is None:
@@ -624,8 +641,19 @@ class ModelCanvas(QGraphicsScene):
             if label is None:
                 label = 'Flow' + str(self.flow_uid)
 
+        # view
         self.flows[label] = FlowItem(self, x, y, r, label)
         self.flow_uid += 1
+        # model
+        self.parent().model_structure.add_flow(name=label,
+                                               equation=30,
+                                               x=x,
+                                               y=y,
+                                               points=[[self.flows[label].line.p1.x(),
+                                                        self.flows[label].line.p1.y()],
+                                                       [self.flows[label].line.p2.x(),
+                                                        self.flows[label].line.p2.y()]]
+                                               )
 
     def add_aux(self, x, y, r=10, label=None):
         if label is None:
@@ -633,26 +661,85 @@ class ModelCanvas(QGraphicsScene):
             if label is None:
                 label = 'Aux' + str(self.aux_uid)
 
+        # view
         aux_item = AuxItem(r=r, label=label)
         aux_item.setPos(x, y)
         self.addItem(aux_item)
         self.aux_uid += 1
+        # model
+        self.parent().model_structure.add_aux(name=label,
+                                              equation=10,
+                                              x=x,
+                                              y=y)
 
     def draw_connector(self, x, y, angle=0):
+        # for manually drawing connector
+        # view
         self.connectors[self.connector_uid] = ConnectorItem(self, x, y, angle=angle)
         self.connector_uid += 1
+        # model
 
     def add_connector(self, from_x, from_y, to_x, to_y, angle):
+        # used when loading an existing model
         print(from_x, from_y, to_x, to_y, angle)
         self.connectors[self.connector_uid] = ConnectorItem(self, from_x, from_y, to_x, to_y, angle=angle)
         self.connector_uid += 1
 
+    def add_graph(self, x, y, element=None):
+        if element is None:
+            element = self.ask_for_element()
+
+            figure_widget_0 = FigureCanvasQTAgg(
+                figure=self.parent().model_structure.display_results(names=[element] if element != 'all' else None,
+                                                                     rtn=True))
+            proxy_widget_0 = self.addWidget(figure_widget_0)
+            proxy_widget_0.setGeometry(QRectF(x - 200, y - 200, 400, 400))  # TODO: figure's alignment
+            proxy_widget_0.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            item_filter_0 = ItemFilter(proxy_widget_0)
+            self.addItem(item_filter_0)
+            proxy_widget_0.installSceneEventFilter(item_filter_0)
+            self.graphs[self.graph_uid] = [element, proxy_widget_0]
+            self.graph_uid += 1
+
     def ask_for_name(self):
-        name, ok = QInputDialog.getText(self.parent(), 'Input', 'Input variable name:')
+        name, ok = QInputDialog.getText(self.parent(), 'Name', 'Input variable name:')
         if ok:
             return name
         else:
             return None
+
+    def ask_for_element(self):
+        name, ok = QInputDialog.getItem(self.parent(),
+                                        'Variable',
+                                        'Select variable:',
+                                        ['all'] + list(self.parent().model_structure.sfd.nodes()),
+                                        0,
+                                        False)
+        if ok:
+            return name
+        else:
+            return None
+
+
+class ItemFilter(QGraphicsItem):
+    def __init__(self, target):
+        super(ItemFilter, self).__init__()
+        self.target = target
+
+    def boundingRect(self):
+        return self.target.boundingRect()
+
+    def paint(self, *args, **kwargs):
+        pass
+
+    def sceneEventFilter(self, watched, event):
+        if watched != self.target:
+            return False
+        if event.type() == QEvent.GraphicsSceneMouseMove:
+            self.target.setPos(self.target.pos() + event.scenePos() - event.lastScenePos())
+            event.setAccepted(True)
+            return True
+        return super(ItemFilter, self).sceneEventFilter(watched, event)
 
 
 class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
@@ -664,12 +751,15 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_flow.setCheckable(True)
         self.pushButton_add_aux.setCheckable(True)
         self.pushButton_add_connector.setCheckable(True)
+        self.pushButton_add_graph.setCheckable(True)
 
         self.pushButton_add_stock.clicked.connect(self.on_pushbutton_add_stock_clicked)
         self.pushButton_add_flow.clicked.connect(self.on_pushbutton_add_flow_clicked)
         self.pushButton_add_aux.clicked.connect(self.on_pushbutton_add_aux_clicked)
         self.pushButton_add_connector.clicked.connect(self.on_pushbutton_add_connector_clicked)
+        self.pushButton_add_graph.clicked.connect(self.on_pushbutton_add_graph_clicked)
         self.pushButton_del_element.clicked.connect(self.on_pushbutton_delete_clicked)
+        self.pushButton_start.clicked.connect(self.on_pushbutton_start_clicked)
 
         self.model_canvas = ModelCanvas(self)
         self.graphicsView_interactive_sfd.setAcceptDrops(True)
@@ -686,6 +776,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
         self.pushButton_add_connector.setChecked(False)
+        self.pushButton_add_graph.setChecked(False)
         if not self.pushButton_add_stock.isChecked():
             self.model_canvas.working_mode = None
 
@@ -694,6 +785,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
         self.pushButton_add_connector.setChecked(False)
+        self.pushButton_add_graph.setChecked(False)
         if not self.pushButton_add_flow.isChecked():
             self.model_canvas.working_mode = None
 
@@ -702,6 +794,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_connector.setChecked(False)
+        self.pushButton_add_graph.setChecked(False)
         if not self.pushButton_add_aux.isChecked():
             self.model_canvas.working_mode = None
 
@@ -710,7 +803,17 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_stock.setChecked(False)
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
+        self.pushButton_add_graph.setChecked(False)
         if not self.pushButton_add_connector.isChecked():
+            self.model_canvas.working_mode = None
+
+    def on_pushbutton_add_graph_clicked(self):
+        self.model_canvas.working_mode = 'graph'
+        self.pushButton_add_stock.setChecked(False)
+        self.pushButton_add_flow.setChecked(False)
+        self.pushButton_add_aux.setChecked(False)
+        self.pushButton_add_connector.setChecked(False)
+        if not self.pushButton_add_graph.isChecked():
             self.model_canvas.working_mode = None
 
     def reset_all_buttons(self):
@@ -718,6 +821,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_flow.setChecked(False)
         self.pushButton_add_aux.setChecked(False)
         self.pushButton_add_connector.setChecked(False)
+        self.pushButton_add_graph.setChecked(False)
 
     # Delete button
     def on_pushbutton_delete_clicked(self):
@@ -751,6 +855,10 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
                         self.model_canvas.removeItem(connector.arrow)
                         self.model_canvas.removeItem(connector.line)
                         self.model_canvas.removeItem(connector.arc)
+
+    # Simulation control
+    def on_pushbutton_start_clicked(self):
+        self.model_structure.simulate()  # TODO: need to change to 'step-based' simulation
 
     @staticmethod
     def name_handler(name):

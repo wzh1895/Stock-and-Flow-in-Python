@@ -1119,7 +1119,7 @@ class CandidateStructureWindow(Toplevel):
 
         # self.selected_candidate_structure.simulation_handler(25)
 
-        result_figure = self.selected_candidate_structure.model_structure.draw_results(
+        result_figure = self.selected_candidate_structure.model_structure.display_results(
             # names=['stock0'],
             rtn=True)
         self.simulation_result_canvas = FigureCanvasTkAgg(figure=result_figure, master=self.fm_display_behaviour)

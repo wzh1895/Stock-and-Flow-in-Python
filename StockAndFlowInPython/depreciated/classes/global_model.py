@@ -131,9 +131,9 @@ class Model(object):
         print('Connector added\tfrom', from_var, '\tto', to_var)
 
     def set_timer(self, start, end, dt, name='time1'):
-        # self.timers[name] = Time(start=start, end=end, dt=dt)
+        # self.timers[name] = Time(start=start, end=end, default_dt=default_dt)
         self.timer = Time(start=start, end=end, dt=dt)
-        print('Time set\tstart:', start, '\tend:', end, '\tdt:', dt)
+        print('Time set\tstart:', start, '\tend:', end, '\tdefault_dt:', dt)
 
     def print_all_variables(self):
         print(self.__structure.nodes(data=True))
@@ -164,11 +164,11 @@ class Model(object):
 
         for stock in self.stocks:
             try:
-                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].inflow]*self.timer.dt)
+                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].inflow]*self.timer.default_dt)
             except:
                 pass
             try:
-                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].outflow]*self.timer.dt)
+                self.__structure.nodes[stock]['var'].change_in_stock(self.flows[self.__structure.nodes[stock]['var'].outflow]*self.timer.default_dt)
             except:
                 pass
 

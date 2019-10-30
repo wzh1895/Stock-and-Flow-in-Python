@@ -353,7 +353,7 @@ class SFDCanvas(Frame):
         a.set_xlabel('Time')
         a.set_ylabel(self.selected_variable)
 
-        figure1 = GraphWindow(self.selected_variable, f)
+        figure_0 = GraphWindow(self.selected_variable, f)
     
     '''
 
