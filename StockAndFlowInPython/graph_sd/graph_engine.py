@@ -292,7 +292,7 @@ class Structure(object):
                     self.sfd.nodes[node]['value'].append(self.sfd.nodes[node]['value'][-1])
                     # print('Stock ', node, ': {:.4f}'.format(self.sfd.nodes[node]['value'][-1]))
 
-    def clear_value(self):
+    def clear_a_run(self):
         """
         Clear values for all nodes
         :return:
@@ -337,7 +337,7 @@ class Structure(object):
         # print('Graph: added flow:', name, 'to graph.')
         return uid
 
-    def create_stock_flow_connection(self, flow_name=None, flow_from=None, flow_to=None):
+    def create_stock_flow_connection(self, flow_name, flow_from=None, flow_to=None):
         """
         Connect stock and flow.
         :param flow_name: The flow's name
@@ -352,6 +352,20 @@ class Structure(object):
         if flow_to is not None:  # Just set up
             self.sfd.nodes[flow_name]['flow_to'] = flow_to
             self.add_causality(flow_name, flow_to, display=False, polarity='positive')
+
+    def remove_stock_flow_connection(self, flow_name, stock_name):
+        """
+        Disconnect stock and flow
+        :param flow_name: The flow's name
+        :param stock_name: The stock this flow no longer connected to
+        :return:
+        """
+        if self.sfd.nodes[flow_name]['flow_from'] == stock_name:
+            self.sfd.remove_edge(flow_name, stock_name)
+            self.sfd.nodes[flow_name]['flow_from'] = None
+        if self.sfd.nodes[flow_name]['flow_to'] == stock_name:
+            self.sfd.remove_edge(flow_name, stock_name)
+            self.sfd.nodes[flow_name]['flow_to'] = None
 
     def add_aux(self, name=None, equation=None, x=0, y=0):
         # Decide if this aux is a parameter or variable
@@ -436,10 +450,6 @@ class Structure(object):
                                    to_element=element[3],
                                    polarity=element[4])
 
-    def add_connector(self, from_element, to_element, angle=0, polarity=None, display=True):
-        uid = self.uid_manager.get_new_uid()
-        self.add_causality(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)
-
     def add_alias(self, uid, of_element, x=0, y=0):
         self.add_element(uid, element_type=ALIAS, x=x, y=y, function=of_element)
         # print('Graph: added alias of', of_element, 'to graph.\n')
@@ -453,19 +463,12 @@ class Structure(object):
         self.sfd.remove_node(name)
         print("Graph: {} is removed from the graph.".format(name))
 
-    def remove_stock_flow_connection(self, name, stock_name):
-        """
-        Disconnect stock and flow
-        :param name: The flow's name
-        :param stock_name: The stock this flow no longer connected to
-        :return:
-        """
-        if self.sfd.nodes[name]['flow_from'] == stock_name:
-            self.sfd.remove_edge(name, stock_name)
-            self.sfd.nodes[name]['flow_from'] = None
-        if self.sfd.nodes[name]['flow_to'] == stock_name:
-            self.sfd.remove_edge(name, stock_name)
-            self.sfd.nodes[name]['flow_to'] = None
+    def add_connector(self, from_element, to_element, angle=0, polarity=None, display=True):
+        uid = self.uid_manager.get_new_uid()
+        self.add_causality(from_element, to_element, uid=uid, angle=angle, polarity=polarity, display=display)
+
+    def delete_connector(self, from_element, to_element):
+        self.sfd.remove_edge(from_element, to_element)
 
     # Set the model to a first order negative feedback loop
     def first_order_negative(self):
@@ -521,10 +524,6 @@ class Structure(object):
             [FLOW,      'flow0',     [4],                                       None,       'stock0',   120,    172,    [[49, 172], [191, 172]]],
         ])
 
-    # Clear a run
-    def clear_a_run(self):
-        self.clear_value()
-
     # Reset a structure
     def reset_a_structure(self):
         self.sfd.clear()
@@ -559,7 +558,9 @@ class Structure(object):
                                    edgecolor='grey',
                                    dpi=80)
 
-        plt.xlabel('Steps (Time: {} / Dt: {})'.format(self.default_simulation_time, self.default_dt))
+        plt.xlabel('Steps {} (Time: {} / Dt: {})'.format(int(self.default_simulation_time/self.default_dt),
+                                                         self.default_simulation_time,
+                                                         self.default_dt))
         plt.ylabel('Behavior')
         y_axis_minimum = 0
         y_axis_maximum = 0

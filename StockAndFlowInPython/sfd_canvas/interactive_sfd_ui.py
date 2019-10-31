@@ -2,13 +2,11 @@
 
 # Form implementation generated from reading ui file 'interactive_sfd_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.1
+# Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
-
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 
 class Ui_widget_interactive_sfd(object):
     def setupUi(self, widget_interactive_sfd):
@@ -53,13 +51,14 @@ class Ui_widget_interactive_sfd(object):
         self.graphicsView_interactive_sfd.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         self.graphicsView_interactive_sfd.setObjectName("graphicsView_interactive_sfd")
         self.verticalLayout.addWidget(self.graphicsView_interactive_sfd)
-        self.widget_simulation_control = QtWidgets.QWidget(widget_interactive_sfd)
-        self.widget_simulation_control.setMaximumSize(QtCore.QSize(16777215, 70))
-        self.widget_simulation_control.setObjectName("widget_simulation_control")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget_simulation_control)
+        self.frame_simulation_control = QtWidgets.QFrame(widget_interactive_sfd)
+        self.frame_simulation_control.setMaximumSize(QtCore.QSize(16777215, 70))
+        self.frame_simulation_control.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_simulation_control.setObjectName("frame_simulation_control")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.frame_simulation_control)
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.widget_simulation_buttons = QtWidgets.QWidget(self.widget_simulation_control)
+        self.widget_simulation_buttons = QtWidgets.QWidget(self.frame_simulation_control)
         self.widget_simulation_buttons.setObjectName("widget_simulation_buttons")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.widget_simulation_buttons)
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -75,14 +74,14 @@ class Ui_widget_interactive_sfd(object):
         self.pushButton_reset.setObjectName("pushButton_reset")
         self.horizontalLayout_3.addWidget(self.pushButton_reset)
         self.horizontalLayout_2.addWidget(self.widget_simulation_buttons)
-        self.simulation_slider = QtWidgets.QSlider(self.widget_simulation_control)
+        self.simulation_slider = QtWidgets.QSlider(self.frame_simulation_control)
         self.simulation_slider.setOrientation(QtCore.Qt.Horizontal)
         self.simulation_slider.setObjectName("simulation_slider")
         self.horizontalLayout_2.addWidget(self.simulation_slider)
-        self.label_time = QtWidgets.QLabel(self.widget_simulation_control)
+        self.label_time = QtWidgets.QLabel(self.frame_simulation_control)
         self.label_time.setObjectName("label_time")
         self.horizontalLayout_2.addWidget(self.label_time)
-        self.verticalLayout.addWidget(self.widget_simulation_control)
+        self.verticalLayout.addWidget(self.frame_simulation_control)
 
         self.retranslateUi(widget_interactive_sfd)
         QtCore.QMetaObject.connectSlotsByName(widget_interactive_sfd)
@@ -96,7 +95,8 @@ class Ui_widget_interactive_sfd(object):
         self.pushButton_add_connector.setText(_translate("widget_interactive_sfd", "Connector"))
         self.pushButton_add_graph.setText(_translate("widget_interactive_sfd", "Graph"))
         self.pushButton_del_element.setText(_translate("widget_interactive_sfd", "Delete"))
-        self.pushButton_start.setText(_translate("widget_interactive_sfd", "Start"))
+        self.pushButton_start.setText(_translate("widget_interactive_sfd", "Run"))
         self.pushButton_pause.setText(_translate("widget_interactive_sfd", "Pause"))
         self.pushButton_reset.setText(_translate("widget_interactive_sfd", "Reset"))
         self.label_time.setText(_translate("widget_interactive_sfd", "00:00"))
+
