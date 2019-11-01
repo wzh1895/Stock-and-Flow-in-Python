@@ -662,8 +662,8 @@ class ModelCanvas(QGraphicsScene):
             if item_at_click_point is None:
                 self.add_graph(x, y)
             self.working_mode = None
-
-        super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
+        else:
+            super(ModelCanvas, self).mousePressEvent(e)  # this line is critical as it passes the event to the original func
         self.parent().reset_all_buttons()
 
     def add_stock(self, x, y, w=40, h=30, label=None):
@@ -791,7 +791,9 @@ class ItemFilter(QGraphicsItem):
         if watched != self.target:
             return False
         if event.type() == QEvent.GraphicsSceneMouseMove:
-            self.target.setPos(self.target.pos() + event.scenePos() - event.lastScenePos())
+            new_pos = self.target.pos() + event.scenePos() - event.lastScenePos()
+            self.target.setPos(new_pos)
+            self.setPos(new_pos)  # to move with the target
             event.setAccepted(True)
             return True
         return super(ItemFilter, self).sceneEventFilter(watched, event)
