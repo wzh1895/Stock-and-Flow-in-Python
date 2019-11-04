@@ -19,7 +19,7 @@ It contains the following functions:
 
 - **Modify stock-and-flow diagrams using clicks and drags**
 
-![ScreenShot](./screenshots/screenShot_14.png)
+![ScreenShot](./screenshots/screenShot_15.png)
 
 ## How to use
 
