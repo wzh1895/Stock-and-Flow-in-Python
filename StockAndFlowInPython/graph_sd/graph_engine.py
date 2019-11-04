@@ -387,6 +387,16 @@ class Structure(object):
         # print('Graph: added aux', name, 'to graph.')
         return uid
 
+    def get_equation(self, name):
+        if self.sfd.nodes[name]['element_type'] == STOCK:
+            # if the node is a stock
+            return self.sfd.nodes[name]['value'][0]  # just return its first value (initial).
+        elif self.sfd.nodes[name]['function'] is None:
+            # if the node does not have a function and not a stock, then it's constant
+            return self.sfd.nodes[name]['value'][0]  # use its latest value
+        else:  # it's not a constant value but a function  #
+            return self.sfd.nodes[name]['function']
+
     def replace_equation(self, name, new_equation):
         """
         Replace the equation of a variable.

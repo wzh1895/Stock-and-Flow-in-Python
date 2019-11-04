@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from StockAndFlowInPython.sfd_canvas.interactive_sfd_ui import Ui_widget_interactive_sfd
+from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation, equation_to_text
 from StockAndFlowInPython.graph_sd.graph_engine import STOCK, FLOW, VARIABLE, PARAMETER, ALIAS, CONNECTOR, Structure
 
 
@@ -633,10 +634,24 @@ class ModelCanvas(QGraphicsScene):
         self.connector_uid = 1
         self.graph_uid = 1
 
+        self.item_label_under_editing = None
+
+    def mouseDoubleClickEvent(self, e):
+        x = e.scenePos().x()
+        y = e.scenePos().y()
+        item_at_click_point = self.itemAt(x, y, QTransform())
+        self.item_label_under_editing = item_at_click_point.label
+        print('Item at double clicking point', item_at_click_point)
+        self.parent().textEdit_equation.setText(
+            equation_to_text(self.parent().model_structure.get_equation(item_at_click_point.label)))
+
+
     def mousePressEvent(self, e):
         # print(self.working_mode)
         x = e.scenePos().x()
         y = e.scenePos().y()
+        item_at_click_point = self.itemAt(x, y, QTransform())
+        print('Item at clicking point', item_at_click_point)
         if self.working_mode == 'stock':
             self.add_stock(x, y)
             self.working_mode = None
@@ -648,11 +663,9 @@ class ModelCanvas(QGraphicsScene):
             self.working_mode = None
         elif self.working_mode == 'connector':
             # check if there is a stock/flow/aux at this point; if not, do nothing.
-            item_at_click_point = self.itemAt(x, y, QTransform())
-            print('Items at clicking point', item_at_click_point)
             if type(item_at_click_point) in [StockItem,
-                                              FlowCoreItem,
-                                              AuxItem]:
+                                             FlowCoreItem,
+                                             AuxItem]:
                 self.draw_connector(x, y, from_item=item_at_click_point)
                 self.working_mode = None
         elif self.working_mode == 'graph':
@@ -748,11 +761,11 @@ class ModelCanvas(QGraphicsScene):
                                                                      rtn=True))
             proxy_widget_0 = self.addWidget(figure_widget_0)
             proxy_widget_0.setGeometry(QRectF(x - 200, y - 200, 400, 400))  # TODO: figure's alignment
-            proxy_widget_0.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            proxy_widget_0.setFlag(QGraphicsItem.ItemIsSelectable)
             item_filter_0 = ItemFilter(proxy_widget_0)
             self.addItem(item_filter_0)
             proxy_widget_0.installSceneEventFilter(item_filter_0)
-            self.graphs[self.graph_uid] = [element, proxy_widget_0]
+            self.graphs[self.graph_uid] = [element, figure_widget_0, proxy_widget_0, item_filter_0]
             self.graph_uid += 1
 
     def ask_for_name(self):
@@ -792,6 +805,7 @@ class ItemFilter(QGraphicsItem):
             return False
         if event.type() == QEvent.GraphicsSceneMouseMove:
             new_pos = self.target.pos() + event.scenePos() - event.lastScenePos()
+            self.target.setSelected(True)
             self.target.setPos(new_pos)
             self.setPos(new_pos)  # to move with the target
             event.setAccepted(True)
@@ -817,6 +831,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
         self.pushButton_add_graph.clicked.connect(self.on_pushbutton_add_graph_clicked)
         self.pushButton_del_element.clicked.connect(self.on_pushbutton_delete_clicked)
         self.pushButton_start.clicked.connect(self.on_pushbutton_start_clicked)
+        self.pushButton_apply.clicked.connect(self.on_pushbutton_apply_clicked)
 
         self.model_canvas = ModelCanvas(self)
         self.graphicsView_interactive_sfd.setAcceptDrops(True)
@@ -882,6 +897,7 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
 
     # Delete button
     def on_pushbutton_delete_clicked(self):
+        print('selected items:', self.model_canvas.selectedItems())
         for item in self.model_canvas.selectedItems():
             if isinstance(item, StockItem):
                 # view
@@ -920,7 +936,32 @@ class InteractiveSFD(QWidget, Ui_widget_interactive_sfd):
                         self.model_canvas.removeItem(connector.arrow)
                         self.model_canvas.removeItem(connector.line)
                         self.model_canvas.removeItem(connector.arc)
+                # model
+            elif isinstance(item, QGraphicsProxyWidget):
+                # view
+                for uid, graph in self.model_canvas.graphs.items():
+                    if graph[2] == item:
+                        print('found proxy widget')
+                        self.model_canvas.removeItem(graph[2])
+                        self.model_canvas.removeItem(graph[3])
+                # model
 
+            elif isinstance(item, ItemFilter):
+                # view
+                for uid, graph in self.model_canvas.graphs.items():
+                    if graph[3] == item:
+                        print('found item filter')
+                        self.model_canvas.removeItem(graph[2])
+                        self.model_canvas.removeItem(graph[3])
+                # model
+
+    def on_pushbutton_apply_clicked(self):
+        text = self.textEdit_equation.toPlainText()
+        if text != '':
+            equation = text_to_equation(text)
+            print(equation)
+            self.model_structure.replace_equation(name=self.model_canvas.item_label_under_editing,
+                                                  new_equation=equation)
 
     # Simulation control
     def on_pushbutton_start_clicked(self):

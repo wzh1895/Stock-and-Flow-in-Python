@@ -90,13 +90,68 @@
     </widget>
    </item>
    <item>
-    <widget class="QGraphicsView" name="graphicsView_interactive_sfd">
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-     </property>
-     <property name="dragMode">
-      <enum>QGraphicsView::NoDrag</enum>
-     </property>
+    <widget class="QWidget" name="widget_canvas_properties" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <property name="leftMargin">
+       <number>2</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>2</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QGraphicsView" name="graphicsView_interactive_sfd">
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+        <property name="dragMode">
+         <enum>QGraphicsView::NoDrag</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDockWidget" name="dockWidget_properties">
+        <property name="maximumSize">
+         <size>
+          <width>300</width>
+          <height>524287</height>
+         </size>
+        </property>
+        <property name="floating">
+         <bool>false</bool>
+        </property>
+        <property name="windowTitle">
+         <string>Properties</string>
+        </property>
+        <widget class="QWidget" name="dockWidgetContents">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_equation">
+            <property name="text">
+             <string>Equation:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="textEdit_equation"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_apply">
+            <property name="text">
+             <string>Apply</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>

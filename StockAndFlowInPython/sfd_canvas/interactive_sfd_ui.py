@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'interactive_sfd_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_widget_interactive_sfd(object):
     def setupUi(self, widget_interactive_sfd):
@@ -46,11 +48,36 @@ class Ui_widget_interactive_sfd(object):
         self.pushButton_del_element.setObjectName("pushButton_del_element")
         self.horizontalLayout.addWidget(self.pushButton_del_element)
         self.verticalLayout.addWidget(self.frame_modifier)
-        self.graphicsView_interactive_sfd = QtWidgets.QGraphicsView(widget_interactive_sfd)
+        self.widget_canvas_properties = QtWidgets.QWidget(widget_interactive_sfd)
+        self.widget_canvas_properties.setObjectName("widget_canvas_properties")
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.widget_canvas_properties)
+        self.horizontalLayout_4.setContentsMargins(2, 0, 2, 0)
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.graphicsView_interactive_sfd = QtWidgets.QGraphicsView(self.widget_canvas_properties)
         self.graphicsView_interactive_sfd.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.graphicsView_interactive_sfd.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         self.graphicsView_interactive_sfd.setObjectName("graphicsView_interactive_sfd")
-        self.verticalLayout.addWidget(self.graphicsView_interactive_sfd)
+        self.horizontalLayout_4.addWidget(self.graphicsView_interactive_sfd)
+        self.dockWidget_properties = QtWidgets.QDockWidget(self.widget_canvas_properties)
+        self.dockWidget_properties.setMaximumSize(QtCore.QSize(300, 524287))
+        self.dockWidget_properties.setFloating(False)
+        self.dockWidget_properties.setObjectName("dockWidget_properties")
+        self.dockWidgetContents = QtWidgets.QWidget()
+        self.dockWidgetContents.setObjectName("dockWidgetContents")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.dockWidgetContents)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label_equation = QtWidgets.QLabel(self.dockWidgetContents)
+        self.label_equation.setObjectName("label_equation")
+        self.verticalLayout_2.addWidget(self.label_equation)
+        self.textEdit_equation = QtWidgets.QTextEdit(self.dockWidgetContents)
+        self.textEdit_equation.setObjectName("textEdit_equation")
+        self.verticalLayout_2.addWidget(self.textEdit_equation)
+        self.pushButton_apply = QtWidgets.QPushButton(self.dockWidgetContents)
+        self.pushButton_apply.setObjectName("pushButton_apply")
+        self.verticalLayout_2.addWidget(self.pushButton_apply)
+        self.dockWidget_properties.setWidget(self.dockWidgetContents)
+        self.horizontalLayout_4.addWidget(self.dockWidget_properties)
+        self.verticalLayout.addWidget(self.widget_canvas_properties)
         self.frame_simulation_control = QtWidgets.QFrame(widget_interactive_sfd)
         self.frame_simulation_control.setMaximumSize(QtCore.QSize(16777215, 70))
         self.frame_simulation_control.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -95,8 +122,10 @@ class Ui_widget_interactive_sfd(object):
         self.pushButton_add_connector.setText(_translate("widget_interactive_sfd", "Connector"))
         self.pushButton_add_graph.setText(_translate("widget_interactive_sfd", "Graph"))
         self.pushButton_del_element.setText(_translate("widget_interactive_sfd", "Delete"))
+        self.dockWidget_properties.setWindowTitle(_translate("widget_interactive_sfd", "Properties"))
+        self.label_equation.setText(_translate("widget_interactive_sfd", "Equation:"))
+        self.pushButton_apply.setText(_translate("widget_interactive_sfd", "Apply"))
         self.pushButton_start.setText(_translate("widget_interactive_sfd", "Run"))
         self.pushButton_pause.setText(_translate("widget_interactive_sfd", "Pause"))
         self.pushButton_reset.setText(_translate("widget_interactive_sfd", "Reset"))
         self.label_time.setText(_translate("widget_interactive_sfd", "00:00"))
-
