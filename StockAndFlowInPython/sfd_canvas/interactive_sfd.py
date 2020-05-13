@@ -210,7 +210,6 @@ class FlowArrowItem(QGraphicsObject):  # Inherit from QGraphicsObject to use its
             self.brush = QBrush(Qt.white)
 
 
-
 class FlowLineItem(QGraphicsObject):
     def __init__(self, parent_flow):
         super(FlowLineItem, self).__init__()
@@ -422,6 +421,7 @@ class ConnectorArrowItem(QGraphicsObject):
                                                                        to_element=self.connected_flow_aux.label)
             self.connected_flow_aux = None  # with a delay
         return flow_aux_collided
+
 
 class ConnectorLineItem(QGraphicsObject):
     def __init__(self, delta_x, delta_y, parent_connector):
@@ -645,7 +645,6 @@ class ModelCanvas(QGraphicsScene):
         self.parent().textEdit_equation.setText(
             equation_to_text(self.parent().model_structure.get_equation(item_at_click_point.label)))
 
-
     def mousePressEvent(self, e):
         # print(self.working_mode)
         x = e.scenePos().x()
@@ -711,7 +710,7 @@ class ModelCanvas(QGraphicsScene):
         self.flow_uid += 1
         # model
         self.parent().model_structure.add_flow(name=label,
-                                               equation=30,
+                                               equation=[30],
                                                x=x,
                                                y=y,
                                                points=[[flow_item.line.p1.x(),
@@ -735,7 +734,7 @@ class ModelCanvas(QGraphicsScene):
         self.aux_uid += 1
         # model
         self.parent().model_structure.add_aux(name=label,
-                                              equation=10,
+                                              equation=[10],
                                               x=x,
                                               y=y)
 

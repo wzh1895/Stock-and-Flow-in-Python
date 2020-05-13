@@ -15,10 +15,6 @@ from StockAndFlowInPython.parsing.XMILE_parsing import text_to_equation
 SLEEP_TIME = 0
 
 
-def name_handler(name):
-    return name.replace(' ', '_').replace('\n', '_')
-
-
 class SessionHandler(object):
     def __init__(self, model_structure=None):
         # backends
@@ -31,6 +27,7 @@ class SessionHandler(object):
         self.variables_in_model = None
         self.selected_variable = None
         self.simulation_time = 75
+        self.time_step = 0.25
 
     # def file_load(self):
     #     self.filename = filedialog.askopenfilename()
@@ -72,9 +69,10 @@ class SessionHandler(object):
     #     self.draw_graph_network()
     #     self.variables_in_model = list(self.model_structure.sfd.nodes)
 
-    def simulation_handler(self, simulation_time):
+    def simulation_handler(self, simulation_time, time_step=0.25):
         self.model_structure.clear_a_run()
-        self.model_structure.simulate(simulation_time=simulation_time)
+        self.model_structure.simulate(simulation_time=simulation_time,
+                                      dt=time_step)
 
     def add_angle_to_eqn(self, name, eqn):
         if eqn[0] in function_names:
@@ -343,9 +341,13 @@ class SessionHandler(object):
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
             equation = [equation]
         else:
+            if type(equation) is str:
+                equation = text_to_equation(equation)
             for linked_var in equation[1:]:  # loop all parameters the function takes
-                if type(linked_var) is list:  # it's a name+angle instead of a number
-                    linked_vars.append(linked_var[0])  # confirm the name to 'linked_vars'
+                # if type(linked_var) is list:  # it's a name+angle instead of a number
+                #     linked_vars.append(linked_var[0])  # confirm the name to 'linked_vars'
+                if type(linked_var) is str:
+                    linked_vars.append(linked_var)
         print('    Building flow:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
@@ -413,9 +415,13 @@ class SessionHandler(object):
         if type(equation) is int or type(equation) is float:  # if equation is number, wrap it into []
             equation = [equation]
         else:
+            if type(equation) is str:
+                equation = text_to_equation(equation)
             for linked_var in equation[1:]:  # loop all parameters the function takes
-                if type(linked_var) is list:  # it's a name instead of a number
-                    linked_vars.append(linked_var[0])
+                # if type(linked_var) is list:  # it's a name+angle instead of a number
+                #     linked_vars.append(linked_var[0])  # confirm the name to 'linked_vars'
+                if type(linked_var) is str:
+                    linked_vars.append(linked_var)
         print('    Building aux:', name, 'is linked to', linked_vars)
 
         if x == 0 or y == 0:  # if x or y not specified, automatically generate it.
